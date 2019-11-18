@@ -1,3 +1,0 @@
-secret_key: "@@ETRI_SECRET@@"
-access_key: "etri"
-duration: 1m
