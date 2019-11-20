@@ -150,3 +150,5 @@ endpoints:
         secure_key: "###TEST_SECURE_KEY###"
         access_ids:
           - test
+          - test2
+          - acorn

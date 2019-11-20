@@ -14,13 +14,14 @@ RUN mkdir -p /app/conf
 WORKDIR /app
 ADD go.mod .
 ADD main.go .
-ADD entrypoint.sh .
+#ADD entrypoint.sh .
 
 # build the binary
 RUN CGO_ENABLED=0 go build -o ./hmac_server -v ./...
 RUN chmod +x ./hmac_server
-RUN chmod +x ./entrypoint.sh
+#RUN chmod +x ./entrypoint.sh
 
-ENTRYPOINT [ "./entrypoint.sh" ]
+#ENTRYPOINT [ "./entrypoint.sh" ]
+ENTRYPOINT [ "./hmac_server" ]
 
 EXPOSE 8010
