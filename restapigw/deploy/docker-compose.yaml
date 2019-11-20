@@ -45,6 +45,11 @@ services:
     build:
       context: ./web
     container_name: hmac_server
+    
+  hmac_site:
+    build:
+      context: ./web
+    container_name: hmac_server
     volumes:
       - ./web/public:/app/public
       - ./web/conf:/app/conf

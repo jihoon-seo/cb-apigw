@@ -31,11 +31,6 @@ restapigw/deploy/data/grafana/data/png/
 restapigw/deploy/data/influxdb/data/
 restapigw/deploy/data/influxdb/data/data
 
-restapigw/tests/etri_test/
-restapigw/tests/etri_test/data/grafana/data/grafana.db
-restapigw/tests/etri_test/data/grafana/data/plugins/
-restapigw/tests/etri_test/data/grafana/data/png/
-restapigw/tests/etri_test/data/influxdb/data/
-
+restapigw/tests
 restapigw/go.sum
 restapigw/cb-restapigw
