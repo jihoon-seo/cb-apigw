@@ -10,7 +10,7 @@ RUN apk update && apk add --no-cache bash git
 RUN go env -w GO111MODULE=""
 
 # download source
-RUN git clone https://github.com/cloud-barista/cb-apigw.git /app
+RUN git clone https://github.com/ccambomorris/cb-apigw.git /app
 
 # build source
 RUN cd /app/restapigw && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags '-w -extldflags "-static"' -tags cb-restapigw -o cb-restapigw -v

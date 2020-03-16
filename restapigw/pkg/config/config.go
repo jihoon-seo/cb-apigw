@@ -112,10 +112,10 @@ type EndpointConfig struct {
 	CacheTTL time.Duration `mapstructure:"cache_ttl"`
 	// 반환결과 처리에 사용할 인코딩
 	OutputEncoding string `mapstructure:"output_encoding"`
-	// URI에서 추출할 Query string 파라미터 리스트 ("*" 사용 가능)
-	QueryString []string `mapstructure:"querystring_params"`
-	// Backend 호출에 전달할 Header 명 리스트 ("*" 사용 가능)
-	HeadersToPass []string `mapstructure:"headers_to_pass"`
+	// Backend 에 전달되는 Query String에서 제외할 파라미터 Key 리스트
+	ExceptQueryStrings []string `mapstructure:"except_querystrings"`
+	// Backend 에 전달되는 Header에서 제외할 파라미터 Key 리스트
+	ExceptHeaders []string `mapstructure:"except_headers"`
 	// Endpoint 단위에서 적용할 Middleware 설정
 	Middleware MWConfig `mapstructure:"middleware"`
 	// Endpoint에서 호출할 Backend API 서버 호출/응답 처리 설정 리스트
@@ -144,13 +144,14 @@ type BackendConfig struct {
 	Mapping map[string]string `mapstructure:"mapping"`
 	// Backend 결과가 컬랙션인지 여부
 	IsCollection bool `mapstructure:"is_collection"`
+	// Backend 결과가 컬랙션인 경우에 "collection" 으로 JSON 포맷을 할 것인지 여부 (True 면 "collection" 으로 JSON 전환, false면 Array 상태로 반환)
+	WrapCollectionToJSON bool `mapstructure:"wrap_collection_to_json"`
 	// Backend 결과 중에서 특정한 필드만 처리할 경우의 필드명
 	Target string `mapstructure:"target"`
 	// Backend 에서 동작할 Middleware 설정
 	Middleware MWConfig `mapstructure:"middleware"`
 	// HostSanitizationDisabled - host 정보의 정제작업 비활성화 여부
 	HostSanitizationDisabled bool `mapstructure:"disable_host_sanitize"`
-
 	// API 호출의 응답을 파싱하기 위한 디코더 (내부 사용)
 	Decoder encoding.Decoder `json:"-"`
 	// URLPattern에서 파라미터 변환에 사용할 키 관리 (내부 사용)

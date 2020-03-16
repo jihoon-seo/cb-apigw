@@ -3,7 +3,7 @@ name: cb-restapigw
 port: 8000
 cache_ttl: 3600s
 timeout: 5m
-debug: true
+debug: false
 host:
   - "http://localhost:8100"
 middleware:
@@ -46,6 +46,11 @@ middleware:
     allow_credentials: true
 endpoints:
   - endpoint: "/splash"
+    except_querystrings:
+      - "name"
+      - "querystring"
+    except_headers:
+      - "Testing"
     backend:
       - url_pattern: "/shop/campaigns.json"
         whitelist:
@@ -141,7 +146,8 @@ endpoints:
     method: GET
     backend:
       - url_pattern: "/destinations/2.json"
-        is_collection: true
+        #wrap_collection: true
+        #is_collection: true
   - endpoint: "/private/custom"
     backend:
       - url_pattern: "/user/1.json"

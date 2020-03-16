@@ -161,7 +161,7 @@ endpoints:
   # List all namespace
   - endpoint: "/ns"
     method: GET
-    headers_to_pass:
+    except_headers:
       - username
       - password
     backend:
@@ -201,7 +201,7 @@ endpoints:
   # Register image with id, with info
   - endpoint: "/ns/{ns_id}/resources/image"
     method: POST
-    querystring_params:
+    except_querystrings:
       - "*"
     backend:
       - host: "http://localhost:1323"
@@ -389,7 +389,7 @@ endpoints:
   # Get MCIS and status, suspend, resume, reboot, terminate
   - endpoint: "/ns/{ns_id}/mcis/{mcis_id}"
     method: GET
-    querystring_params:
+    except_querystrings:
       - "*"
     backend:
       - host: "http://localhost:1323"
@@ -421,7 +421,7 @@ endpoints:
   # Get individual VM and status, suspend, resume, reboot, terminate
   - endpoint: "/ns/{ns_id}/mcis/{mcis_id}/vm/{vm_id}"
     method: GET
-    querystring_params:
+    except_querystrings:
       - "*"
     backend:
       - host: "http://localhost:1323"
@@ -451,7 +451,7 @@ endpoints:
   # Create Image-TBD
   - endpoint: "/vmimage"
     method: POST
-    querystring_params:
+    except_querystrings:
       - "*"
     backend:
       - host: "http://localhost:1024"
@@ -459,7 +459,7 @@ endpoints:
   # List VM Images
   - endpoint: "/vmimage"
     method: GET
-    querystring_params:
+    except_querystrings:
       - "*"
     backend:
       - host: "http://localhost:1024"
@@ -468,7 +468,7 @@ endpoints:
   # Get VM Image
   - endpoint: "/vmimage/{image_id}"
     method: GET
-    querystring_params:
+    except_querystrings:
       - "*"
     backend:
       - host: "http://localhost:1024"
@@ -476,7 +476,7 @@ endpoints:
   # Delete VM Image
   - endpoint: "/vmimage/{image_id}"
     method: DELETE
-    querystring_params:
+    except_querystrings:
       - "*"
     backend:
       - host: "http://localhost:1024"
@@ -485,7 +485,7 @@ endpoints:
   # Create Virtual Network
   - endpoint: "/vnetwork"
     method: POST
-    querystring_params:
+    except_querystrings:
       - "*"
     backend:
       - host: "http://localhost:1024"
@@ -493,7 +493,7 @@ endpoints:
   # List Virtual Networks
   - endpoint: "/vnetwork"
     method: GET
-    querystring_params:
+    except_querystrings:
       - "*"
     backend:
       - host: "http://localhost:1024"
@@ -502,7 +502,7 @@ endpoints:
   # Get Virtual Network
   - endpoint: "/vnetwork/{vnet_id}"
     method: GET
-    querystring_params:
+    except_querystrings:
       - "*"
     backend:
       - host: "http://localhost:1024"
@@ -510,7 +510,7 @@ endpoints:
   # Delete Virtual Network
   - endpoint: "/vnetwork/{vnet_id}"
     method: DELETE
-    querystring_params:
+    except_querystrings:
       - "*"
     backend:
       - host: "http://localhost:1024"
@@ -519,7 +519,7 @@ endpoints:
   # Create Public IP
   - endpoint: "/publicip"
     method: POST
-    querystring_params:
+    except_querystrings:
       - "*"
     backend:
       - host: "http://localhost:1024"
@@ -527,7 +527,7 @@ endpoints:
   # List Public IPs
   - endpoint: "/publicip"
     method: GET
-    querystring_params:
+    except_querystrings:
       - "*"
     backend:
       - host: "http://localhost:1024"
@@ -536,7 +536,7 @@ endpoints:
   # Get Public IP
   - endpoint: "/publicip/{publicip_id}"
     method: GET
-    querystring_params:
+    except_querystrings:
       - "*"
     backend:
       - host: "http://localhost:1024"
@@ -544,7 +544,7 @@ endpoints:
   # Delete Public IP
   - endpoint: "/publicip/{publicip_id}"
     method: DELETE
-    querystring_params:
+    except_querystrings:
       - "*"
     backend:
       - host: "http://localhost:1024"
@@ -553,7 +553,7 @@ endpoints:
   # Create VNIc
   - endpoint: "/vnic"
     method: POST
-    querystring_params:
+    except_querystrings:
       - "*"
     backend:
       - host: "http://localhost:1024"
@@ -561,7 +561,7 @@ endpoints:
   # List VNIcs
   - endpoint: "/vnic"
     method: GET
-    querystring_params:
+    except_querystrings:
       - "*"
     backend:
       - host: "http://localhost:1024"
@@ -570,7 +570,7 @@ endpoints:
   # Get VNIc
   - endpoint: "/vnic/{vnic_id}"
     method: GET
-    querystring_params:
+    except_querystrings:
       - "*"
     backend:
       - host: "http://localhost:1024"
@@ -578,7 +578,7 @@ endpoints:
   # Delete VNIc
   - endpoint: "/vnic/{vnic_id}"
     method: DELETE
-    querystring_params:
+    except_querystrings:
       - "*"
     backend:
       - host: "http://localhost:1024"
@@ -587,7 +587,7 @@ endpoints:
   # Create SecurityGroup
   - endpoint: "/securitygroup"
     method: POST
-    querystring_params:
+    except_querystrings:
       - "*"
     backend:
       - host: "http://localhost:1024"
@@ -595,7 +595,7 @@ endpoints:
   # List SecurityGroups
   - endpoint: "/securitygroup"
     method: GET
-    querystring_params:
+    except_querystrings:
       - "*"
     backend:
       - host: "http://localhost:1024"
@@ -604,7 +604,7 @@ endpoints:
   # Get SecurityGroup
   - endpoint: "/securitygroup/{securitygroup_id}"
     method: GET
-    querystring_params:
+    except_querystrings:
       - "*"
     backend:
       - host: "http://localhost:1024"
@@ -612,7 +612,7 @@ endpoints:
   # Delete SecurityGroup
   - endpoint: "/securitygroup/{securitygroup_id}"
     method: DELETE
-    querystring_params:
+    except_querystrings:
       - "*"
     backend:
       - host: "http://localhost:1024"
@@ -621,7 +621,7 @@ endpoints:
   # Create KeyPair
   - endpoint: "/keypair"
     method: POST
-    querystring_params:
+    except_querystrings:
       - "*"
     backend:
       - host: "http://localhost:1024"
@@ -629,7 +629,7 @@ endpoints:
   # List KeyPairs
   - endpoint: "/keypair"
     method: GET
-    querystring_params:
+    except_querystrings:
       - "*"
     backend:
       - host: "http://localhost:1024"
@@ -638,7 +638,7 @@ endpoints:
   # Get KeyPair
   - endpoint: "/keypair/{keypair_id}"
     method: GET
-    querystring_params:
+    except_querystrings:
       - "*"
     backend:
       - host: "http://localhost:1024"
@@ -646,7 +646,7 @@ endpoints:
   # Delete KeyPair
   - endpoint: "/keypair/{keypair_id}"
     method: DELETE
-    querystring_params:
+    except_querystrings:
       - "*"
     backend:
       - host: "http://localhost:1024"
@@ -655,7 +655,7 @@ endpoints:
   # Start VM
   - endpoint: "/vm"
     method: POST
-    querystring_params:
+    except_querystrings:
       - "*"
     backend:
       - host: "http://localhost:1024"
@@ -663,7 +663,7 @@ endpoints:
   # List VMs
   - endpoint: "/vm"
     method: GET
-    querystring_params:
+    except_querystrings:
       - "*"
     backend:
       - host: "http://localhost:1024"
@@ -672,7 +672,7 @@ endpoints:
   # Get VM
   - endpoint: "/vm/{vm_id}"
     method: GET
-    querystring_params:
+    except_querystrings:
       - "*"
     backend:
       - host: "http://localhost:1024"
@@ -680,7 +680,7 @@ endpoints:
   # Terminate VM
   - endpoint: "/vm/{vm_id}"
     method: DELETE
-    querystring_params:
+    except_querystrings:
       - "*"
     backend:
       - host: "http://localhost:1024"
@@ -689,7 +689,7 @@ endpoints:
   # List VM Status
   - endpoint: "/vmstatus"
     method: GET
-    querystring_params:
+    except_querystrings:
       - "*"
     backend:
       - host: "http://localhost:1024"
@@ -698,7 +698,7 @@ endpoints:
   # Get VM Status
   - endpoint: "/vmstatus/{vm_id}"
     method: GET
-    querystring_params:
+    except_querystrings:
       - "*"
     backend:
       - host: "http://localhost:1024"
@@ -707,7 +707,7 @@ endpoints:
   # Suspend VM, resume, reboot
   - endpoint: "/controlvm/{vm_id}"
     method: GET
-    querystring_params:
+    except_querystrings:
       - "*"
     backend:
       - host: "http://localhost:1024"

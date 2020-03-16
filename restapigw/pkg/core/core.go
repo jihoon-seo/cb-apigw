@@ -71,3 +71,13 @@ func GetInt64(data map[string]interface{}, key string) int64 {
 	}
 	return 0
 }
+
+// ContainsString returns true if a string is present in a iteratee.
+func ContainsString(s []string, v string) bool {
+	for _, vv := range s {
+		if vv == v {
+			return true
+		}
+	}
+	return false
+}

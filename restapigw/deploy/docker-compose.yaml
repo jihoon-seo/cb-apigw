@@ -45,11 +45,6 @@ services:
     build:
       context: ./web
     container_name: hmac_server
-    
-  hmac_site:
-    build:
-      context: ./web
-    container_name: hmac_server
     volumes:
       - ./web/public:/app/public
       - ./web/conf:/app/conf
@@ -57,18 +52,18 @@ services:
       - "8010:8010"
 
   # CB-RESTAPIGW SERVICE
-  cb-restapigw:
-    build:
-      context: ./cb-restapigw
-    container_name: cb-restapigw
-    volumes:
-      - ./cb-restapigw/conf:/app/conf
-    ports:
-      - "8000:8000"
-    depends_on:
-      - influxdb
-      - jaeger
-      - hmac_site
-      - fake_api
+  # cb-restapigw:
+  #   build:
+  #     context: ./cb-restapigw
+  #   container_name: cb-restapigw
+  #   volumes:
+  #     - ./cb-restapigw/conf:/app/conf
+  #   ports:
+  #     - "8000:8000"
+  #   depends_on:
+  #     - influxdb
+  #     - jaeger
+  #     - hmac_site
+  #     - fake_api
 
     

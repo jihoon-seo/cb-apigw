@@ -8,6 +8,7 @@ import (
 
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/proxy"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/router"
 	"github.com/gin-gonic/gin"
@@ -41,28 +42,43 @@ func EndpointHandler(eConf *config.EndpointConfig, proxy proxy.Proxy) gin.Handle
 	return CustomErrorEndpointHandler(eConf, proxy, router.DefaultToHTTPError)
 }
 
-// NewRequest - 지정한 Header 정보와 Query string 정보를 반영하는 Gin Context 기반의 Request 생성
-func NewRequest(headersToSend []string) func(*gin.Context, []string) *proxy.Request {
-	if len(headersToSend) == 0 {
-		headersToSend = router.HeadersToSend
-	}
+// NewRequest - 제외할 Header 정보와 Query string 정보를 반영하는 Gin Context 기반의 Request 생성
+func NewRequest(exceptHeaders []string) func(*gin.Context, []string) *proxy.Request {
+	return func(c *gin.Context, exceptQueryStrings []string) *proxy.Request {
+		logger := logging.NewLogger()
 
-	return func(c *gin.Context, queryString []string) *proxy.Request {
 		params := make(map[string]string, len(c.Params))
 		for _, param := range c.Params {
 			params[strings.Title(param.Key)] = param.Value
 		}
 
-		headers := make(map[string][]string, 2+len(headersToSend))
-
-		for _, k := range headersToSend {
-			if k == requestParamsAsterisk {
-				headers = c.Request.Header
-				break
+		// Header Check - All pass with blacklist
+		headers := make(map[string][]string)
+		for k, v := range c.Request.Header {
+			except := false
+			for i := range exceptHeaders {
+				key := textproto.CanonicalMIMEHeaderKey(exceptHeaders[i])
+				if k == key {
+					except = true
+					break
+				}
 			}
+			if !except && !core.ContainsString(router.HeadersToNotSend, k) {
+				tmp := make([]string, len(v))
+				copy(tmp, v)
+				headers[k] = tmp
+			}
+		}
 
-			if h, ok := c.Request.Header[textproto.CanonicalMIMEHeaderKey(k)]; ok {
-				headers[k] = h
+		// 필수 Header 정보 설정
+		for _, k := range router.HeadersToSend {
+			key := textproto.CanonicalMIMEHeaderKey(k)
+			// 현재 없는 경우
+			if _, ok := headers[key]; !ok {
+				// Requst Header에 있는 경우
+				if h, ok := c.Request.Header[key]; ok {
+					headers[k] = h
+				}
 			}
 		}
 
@@ -74,16 +90,18 @@ func NewRequest(headersToSend []string) func(*gin.Context, []string) *proxy.Requ
 			headers["X-Forwarded-Via"] = router.UserAgentHeaderValue
 		}
 
-		query := make(map[string][]string, len(queryString))
-		queryValues := c.Request.URL.Query()
-		for i := range queryString {
-			if queryString[i] == requestParamsAsterisk {
-				query = c.Request.URL.Query()
-				break
-			}
+		//map[Accept:[*/*] Accept-Encoding:[gzip, deflate, br] Cache-Control:[no-cache] Connection:[keep-alive] Postman-Token:[f031a2c9-0f23-4182-89d7-2f42666973e9] Testing:[header check] User-Agent:[PostmanRuntime/7.22.0] X-Forwarded-For:[::1] X-Forwarded-Via:[cb-restapigw version 0.1.0]]
+		//invalid character 'x' looking for beginning of value invalid character 'x' looking for beginning of value
 
-			if v, ok := queryValues[queryString[i]]; ok && len(v) > 0 {
-				query[queryString[i]] = v
+		logger.Debugf(">>> Passed Headers: %+v", headers)
+
+		// QueryString Check - All pass with blacklist
+		query := c.Request.URL.Query()
+
+		// Black list 적용
+		if exceptQueryStrings != nil {
+			for i := range exceptQueryStrings {
+				delete(query, exceptQueryStrings[i])
 			}
 		}
 
@@ -101,13 +119,13 @@ func NewRequest(headersToSend []string) func(*gin.Context, []string) *proxy.Requ
 func CustomErrorEndpointHandler(eConf *config.EndpointConfig, proxy proxy.Proxy, errF router.ToHTTPError) gin.HandlerFunc {
 	cacheControlHeaderValue := fmt.Sprintf("public, max-age=%d", int(eConf.CacheTTL.Seconds()))
 	isCacheEnabled := eConf.CacheTTL.Seconds() != 0
-	requestGenerator := NewRequest(eConf.HeadersToPass)
+	requestGenerator := NewRequest(eConf.ExceptHeaders)
 	render := getRender(eConf)
 
 	return func(c *gin.Context) {
 		requestCtx, cancel := context.WithTimeout(c, eConf.Timeout)
 		c.Header(core.AppHeaderName, fmt.Sprintf("Version %s", core.AppVersion))
-		response, err := proxy(requestCtx, requestGenerator(c, eConf.QueryString))
+		response, err := proxy(requestCtx, requestGenerator(c, eConf.ExceptQueryStrings))
 		select {
 		case <-requestCtx.Done():
 			if err == nil {

@@ -28,8 +28,10 @@ var (
 	MessageResponseHeaderName = "X-" + core.AppName + "-Messages"
 	// CompleteResponseHeaderName - Response 정상 여부를 클라이언트에 표시할 Header 명
 	CompleteResponseHeaderName = "X-" + core.AppName + "-Completed"
-	// HeadersToSend - Router에 도착한 Request에서 Proxy로 전달할 Header 정보들
+	// HeadersToSend - Router에 도착한 Request에서 Proxy로 전달할 필수 Header 정보들
 	HeadersToSend = []string{"Content-Type"}
+	// HeadersToNotSend - Router에 도착한 Request에서 Proxy로 전달하지 않을 Header 정보들
+	HeadersToNotSend = []string{"Accept-Encoding"}
 	// UserAgentHeaderValue - Proxy로 전달할 User-Agent Header 값
 	UserAgentHeaderValue = []string{core.AppUserAgent}
 

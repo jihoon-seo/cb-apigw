@@ -35,6 +35,7 @@ func JSONCollectionDecoder(r io.Reader, v *map[string]interface{}) error {
 	if err := d.Decode(&collection); err != nil {
 		return err
 	}
+	// Backend 결과 Array를 처리하기 위한 식별자 설정
 	*(v) = map[string]interface{}{"collection": collection}
 	return nil
 }

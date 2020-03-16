@@ -10,6 +10,7 @@ import (
 
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/encoding"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/transport/http/client"
 )
 
@@ -44,11 +45,14 @@ func NewHTTPProxyWithHTTPExecutor(bconf *config.BackendConfig, hre client.HTTPRe
 // NewHTTPProxyDetailed - 지정된 BackendConfig와 HTTP Reqeust Executor와 응답 처리에 사용할 StatusHandler, Response Parser를 설정한 Proxy 반환
 func NewHTTPProxyDetailed(bconf *config.BackendConfig, hre client.HTTPRequestExecutor, hsh client.HTTPStatusHandler, hrp HTTPResponseParser) Proxy {
 	return func(ctx context.Context, req *Request) (*Response, error) {
+		logger := logging.NewLogger()
+
 		reqToBackend, err := http.NewRequest(strings.ToTitle(req.Method), req.URL.String(), req.Body)
 		if err != nil {
 			return nil, err
 		}
 
+		// Backend 호출에 필요한 Header 정보 설정
 		reqToBackend.Header = make(map[string][]string, len(req.Headers))
 		for k, v := range req.Headers {
 			tmp := make([]string, len(v))
@@ -63,6 +67,17 @@ func NewHTTPProxyDetailed(bconf *config.BackendConfig, hre client.HTTPRequestExe
 				}
 			}
 		}
+
+		// Backend 호출에 필요한 Query String 정보 설정
+		if req.Query != nil {
+			q := reqToBackend.URL.Query()
+			for k, v := range req.Query {
+				q.Add(k, v[0])
+			}
+			reqToBackend.URL.RawQuery = q.Encode()
+		}
+
+		logger.Debugf(">> Backend call url : %s", reqToBackend.URL.String())
 
 		// Backed 호출
 		resp, err := hre(ctx, reqToBackend)
@@ -79,7 +94,7 @@ func NewHTTPProxyDetailed(bconf *config.BackendConfig, hre client.HTTPRequestExe
 
 		// 응답이 없어서 상태 확인이 안되는 경우
 		if resp == nil && err != nil {
-		 	return nil, err
+			return nil, err
 		}
 
 		// Response Status 처리

@@ -57,10 +57,10 @@ func (r *Request) Clone() Request {
 
 // ===== [ Public Functions ] =====
 
-// CloneHeaders - 지정한 Header 정보 복제
-func CloneHeaders(headers map[string][]string) map[string][]string {
-	m := make(map[string][]string, len(headers))
-	for k, v := range headers {
+// CloneMapValues - map[string][]string 형식의 정보를 복제
+func CloneMapValues(values map[string][]string) map[string][]string {
+	m := make(map[string][]string, len(values))
+	for k, v := range values {
 		tmp := make([]string, len(v))
 		copy(tmp, v)
 		m[k] = tmp
@@ -80,7 +80,8 @@ func CloneParams(params map[string]string) map[string]string {
 // CloneRequest - 지정한 Request에 대한 Deep Copy를 처리
 func CloneRequest(r *Request) *Request {
 	clone := r.Clone()
-	clone.Headers = CloneHeaders(r.Headers)
+	clone.Headers = CloneMapValues(r.Headers)
 	clone.Params = CloneParams(r.Params)
+	clone.Query = CloneMapValues(r.Query)
 	return &clone
 }

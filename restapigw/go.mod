@@ -25,23 +25,26 @@ require (
 	github.com/rackspace/gophercloud v1.0.0 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a
 	github.com/rs/cors v1.7.0
-	github.com/sirupsen/logrus v1.2.0
+	github.com/sirupsen/logrus v1.4.2
 	github.com/snowzach/rotatefilehook v0.0.0-20180327172521-2f64f265f58c // indirect
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/viper v1.4.0
 	github.com/unrolled/secure v1.0.4
 	github.com/valyala/fasttemplate v1.1.0 // indirect
 	github.com/xujiajun/nutsdb v0.4.0 // indirect
+	gitlab.com/ccambo/msfl-go-core v0.0.0-20200305103633-bfeef0906f71
+	gitlab.com/ccambo/ngt-starter v0.0.0-20200227104644-41c8926bf3b4
 	go.etcd.io/etcd v3.3.17+incompatible // indirect
 	go.opencensus.io v0.22.1
-	golang.org/x/crypto v0.0.0-20190605123033-f99c8df09eb5 // indirect
 	golang.org/x/net v0.0.0-20190921015927-1a5e07d1ff72 // indirect
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e // indirect
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v8 v8.18.2 // indirect
-	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	gopkg.in/yaml.v2 v2.2.2
-	gopkg.in/yaml.v3 v3.0.0-20190924164351-c8b7dadae555
+	gopkg.in/yaml.v3 v3.0.0-20191120175047-4206685974f2
 )
 
-replace github.com/ugorji/go v1.1.4 => github.com/ugorji/go/codec v0.0.0-20190204201341-e444a5086c43
+replace (
+	github.com/cloud-barista/cb-apigw/restapigw => /Users/morris/Workspaces/etri/sources/cb-apigw/restapigw
+	github.com/ugorji/go v1.1.4 => github.com/ugorji/go/codec v0.0.0-20190204201341-e444a5086c43
+)

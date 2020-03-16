@@ -20,6 +20,8 @@ var (
 	CompleteResponseHeaderName = http.CompleteResponseHeaderName
 	// HeadersToSend - Route로 전달된 Request에서 Proxy로 전달할 설정에 지정된 Header들 정보
 	HeadersToSend = http.HeadersToSend
+	// HeadersToNotSend - Router로 전달된 Request에서 Proxy로 전달죄지 않을 Header들 정보
+	HeadersToNotSend = http.HeadersToNotSend
 	// UserAgentHeaderValue - Proxy Request에 설정할 User-Agent Header 값
 	UserAgentHeaderValue = http.UserAgentHeaderValue
 
