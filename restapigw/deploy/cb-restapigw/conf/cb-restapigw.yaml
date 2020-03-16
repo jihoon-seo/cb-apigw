@@ -147,7 +147,7 @@ endpoints:
       - url_pattern: "/user/1.json"
     middleware:
       mw-auth:
-        secure_key: "###TEST_SECURE_KEY###"
+        secure_key: "###TEST_SECURE_KEY223###"
         access_ids:
           - test
           - test2
