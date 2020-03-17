@@ -438,7 +438,7 @@ Configuration 설정은 `YAML` 포맷을 사용한다.
       "destination_id": 1
     }
     ```
-  - is_collection: 응답의 결과가 객체가 아닌 컬랙션인 경우 "collection" 이라는 필드의 객체 형식으로 응답을 반환
+  - is_collection: 응답의 결과가 객체가 아닌 컬랙션인 경우 `wrap_collection_to_json` 설정이 true인 경우는 "collection" 이라는 필드의 객체 형식으로 응답을 반환하고, 그 외의 경우는 Array인 상태로 반환한다.
     ```yaml
     backend:
       - url_pattern: "/destinations/2.json"
@@ -474,7 +474,7 @@ Configuration 설정은 `YAML` 포맷을 사용한다.
       "Manhattan",
       "Grand Canyon"
     ]
-    # 필터링된 데이터
+    # 필터링된 데이터 (wrap_collection_to_json = true인 경우)
     {
       "collection": [
         "Mount Rushmore",

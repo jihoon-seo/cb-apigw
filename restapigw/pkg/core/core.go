@@ -12,6 +12,10 @@ const (
 	AppHeaderName = "X-CB-RESTAPIGW"
 	// AppUserAgent - Backend 전달에 사용할 User Agent Header 값
 	AppUserAgent = AppName + " version " + AppVersion
+	// CollectionTag - Backend의 Array를 Json 객체의 데이터로 반환 처리를 위한 Tag Name
+	CollectionTag = "collection"
+	// WrappingTag = Backend의 Array 직접 반환 처리를 위한 Tag Name
+	WrappingTag = "!!wrapping!!"
 )
 
 // ===== [ Types ] =====

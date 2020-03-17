@@ -11,17 +11,17 @@ middleware:
     router_enabled: true
     proxy_enabled: true
     backend_enabled: true
-    collection_period: 10s
+    collection_period: 100s
     expose_metrics: false
     listen_address: 0.0.0.0:9000
     influxdb:
       address: "http://localhost:8086"
       database: cbrestapigw
-      reporting_period: 11s
+      reporting_period: 60s
       buffer_size: 0 
   mw-opencensus:
     sample_rate: 100
-    reporting_period: 1s
+    reporting_period: 60s
     enabled_layers:
       router: true
       proxy: true
@@ -146,8 +146,10 @@ endpoints:
     method: GET
     backend:
       - url_pattern: "/destinations/2.json"
-        #wrap_collection: true
-        #is_collection: true
+        wrap_collection_to_json: true
+        is_collection: true
+        mapping:
+          "collection": "data"
   - endpoint: "/private/custom"
     backend:
       - url_pattern: "/user/1.json"

@@ -1,3 +1,4 @@
+// Package proxy - Backend의 결과들을 Merge 처리하는 Merging 패키지
 package proxy
 
 import (

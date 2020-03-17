@@ -68,7 +68,7 @@ $ docker-compose up --build
     - 외부 site를 Backend로 사용 확인
     - Path variable 사용 확인
   - http://localhost:8000/collection
-    - 결과가 JSON 객체가 아닌 Collection인 경우에 "collection" 이라는 필드로 JSON 구성 반환 확인
+    - 결과가 JSON 객체가 아닌 Collection인 경우에 core.CollectionTag ("collection") 이라는 필드로 JSON 구성 반환 확인
   - http://localhost:8000/private/custom
     - HMAC 기반 인증 동작 확인
     - HMAC 기능 검증 (Hash 인증, Access IDs, Duration)에 따른 401 발생 확인
@@ -141,7 +141,7 @@ $ docker-compose down
             | mapping | 응답 데이터 중에서 지정한 필드를 지정한 이름으로 변경 |  |  |
             | target | 응답 데이터 중에서 지정한 필드만을 반환함 </br>나머지 필드들은 모두 제외 됨 |  |  |
             | is_collection | 응답 결과가 JSON객체가 아닌 컬랙션인 경우 |  | false |
-            | wrap_collection_to_json | 응답 결과가 Array인 경우 (is_collection: true) 에 응답을 "collection" 으로 묶은 JSON 객체로 전환할지 여부 |  | true |
+            | wrap_collection_to_json | 응답 결과가 Array인 경우 (is_collection: true) 에 응답을 core.CollectionTag ("collection") 으로 묶은 JSON 객체로 전환할지 여부 |  | true |
 
 ### 현재 지원되는 Middleware 들은 다음과 같다.
 - Service 레벨
@@ -401,7 +401,7 @@ $ docker-compose down
       "destination_id": 1
     }
     ```
-  - is_collection: 응답의 결과가 객체가 아닌 컬랙션인 경우 `wrap_collection_to_json` 설정이 true인 경우는 "collection" 이라는 필드의 객체 형식으로 응답을 반환하고, 그 외의 경우는 그대로 반환한다.
+  - is_collection: 응답의 결과가 객체가 아닌 컬랙션인 경우 `wrap_collection_to_json` 설정이 true인 경우는 "collection" 이라는 필드의 객체 형식으로 응답을 반환하고, 그 외의 경우는 Array인 상태로 반환한다.
     ```yaml
     backend:
       - url_pattern: "/destinations/2.json"
@@ -438,7 +438,7 @@ $ docker-compose down
       "Manhattan",
       "Grand Canyon"
     ]
-    # 필터링된 데이터
+    # 필터링된 데이터 (wrap_collection_to_json = true인 경우)
     {
       "collection": [
         "Mount Rushmore",

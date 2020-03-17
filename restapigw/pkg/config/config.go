@@ -144,7 +144,7 @@ type BackendConfig struct {
 	Mapping map[string]string `mapstructure:"mapping"`
 	// Backend 결과가 컬랙션인지 여부
 	IsCollection bool `mapstructure:"is_collection"`
-	// Backend 결과가 컬랙션인 경우에 "collection" 으로 JSON 포맷을 할 것인지 여부 (True 면 "collection" 으로 JSON 전환, false면 Array 상태로 반환)
+	// Backend 결과가 컬랙션인 경우에 core.CollectionTag ("collection") 으로 JSON 포맷을 할 것인지 여부 (True 면 core.CollectionTag ("collection") 으로 JSON 전환, false면 Array 상태로 반환)
 	WrapCollectionToJSON bool `mapstructure:"wrap_collection_to_json"`
 	// Backend 결과 중에서 특정한 필드만 처리할 경우의 필드명
 	Target string `mapstructure:"target"`
@@ -374,7 +374,7 @@ func (sConf *ServiceConfig) initBackendDefaults(epIdx, bIdx int) {
 		backend.Method = endpoint.Method
 	}
 	backend.Timeout = endpoint.Timeout
-	backend.Decoder = encoding.Get(strings.ToLower(backend.Encoding))(backend.IsCollection)
+	backend.Decoder = encoding.Get(strings.ToLower(backend.Encoding))(backend.IsCollection, backend.WrapCollectionToJSON)
 }
 
 // initBackendURLMappings - Backend에 지정된 파라미터 정보들을 이후에 사용할 수 있도록 초기화
