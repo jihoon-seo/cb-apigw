@@ -51,664 +51,652 @@ endpoints:
   ##############
 
   # Register Cloud Driver
-  - endpoint: "/driver"
+  - endpoint: "/spider/driver"
     method: POST
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/driver"
+        url_pattern: "/spider/driver"
   # List Cloud Driver
-  - endpoint: "/driver"
+  - endpoint: "/spider/driver"
     method: GET
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/driver"
-        is_collection: true
+        url_pattern: "/spider/driver"
   # Get Cloud Driver
-  - endpoint: "/driver/{driver_name}"
+  - endpoint: "/spider/driver/{driver_name}"
     method: GET
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/driver/{driver_name}"
+        url_pattern: "/spider/driver/{driver_name}"
   # Unregister Cloud Driver
-  - endpoint: "/driver/{driver_name}"
+  - endpoint: "/spider/driver/{driver_name}"
     method: DELETE
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/driver/{driver_name}"
+        url_pattern: "/spider/driver/{driver_name}"
 
   # Register Cloud Credential
-  - endpoint: "/credential"
+  - endpoint: "/spider/credential"
     method: POST
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/credential"
+        url_pattern: "/spider/credential"
   # List Cloud Credential
-  - endpoint: "/credential"
+  - endpoint: "/spider/credential"
     method: GET
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/credential"
-        is_collection: true
+        url_pattern: "/spider/credential"
   # Get Cloud Credential
-  - endpoint: "/credential/{credential_name}"
+  - endpoint: "/spider/credential/{credential_name}"
     method: GET
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/credential/{credential_name}"
+        url_pattern: "/spider/credential/{credential_name}"
   # Unregister Cloud Credential
-  - endpoint: "/credential/{credential_name}"
+  - endpoint: "/spider/credential/{credential_name}"
     method: DELETE
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/credential/{credential_name}"
+        url_pattern: "/spider/credential/{credential_name}"
 
   # Register Cloud Region
-  - endpoint: "/region"
+  - endpoint: "/spider/region"
     method: POST
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/region"
+        url_pattern: "/spider/region"
   # List Cloud Region
-  - endpoint: "/region"
+  - endpoint: "/spider/region"
     method: GET
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/region"
-        is_collection: true
+        url_pattern: "/spider/region"
   # Get Cloud Region
-  - endpoint: "/region/{region_name}"
+  - endpoint: "/spider/region/{region_name}"
     method: GET
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/region/{region_name}"
+        url_pattern: "/spider/region/{region_name}"
   # Unregister Cloud Region
-  - endpoint: "/region/{region_name}"
+  - endpoint: "/spider/region/{region_name}"
     method: DELETE
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/region/{region_name}"
+        url_pattern: "/spider/region/{region_name}"
 
   # Create Cloud Connection Configuration
-  - endpoint: "/connectionconfig"
+  - endpoint: "/spider/connectionconfig"
     method: POST
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/connectionconfig"
+        url_pattern: "/spider/connectionconfig"
   # List Cloud Connection Configuration
-  - endpoint: "/connectionconfig"
+  - endpoint: "/spider/connectionconfig"
     method: GET
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/connectionconfig"
-        is_collection: true
+        url_pattern: "/spider/connectionconfig"
   # Get Cloud Connection Configuration
-  - endpoint: "/connectionconfig/{config_name}"
+  - endpoint: "/spider/connectionconfig/{config_name}"
     method: GET
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/connectionconfig/{config_name}"
+        url_pattern: "/spider/connectionconfig/{config_name}"
   # Delete Cloud Connection Configuration
-  - endpoint: "/connectionconfig/{config_name}"
+  - endpoint: "/spider/connectionconfig/{config_name}"
     method: DELETE
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/connectionconfig/{config_name}"
+        url_pattern: "/spider/connectionconfig/{config_name}"
 
   #################
   # For Tumblebug
   #################
   
   # List all namespace
-  - endpoint: "/ns"
+  - endpoint: "/tumblebug/ns"
     method: GET
     except_headers:
       - username
       - password
     backend:
       - host: "http://cb-tumblebug:1323"
-        url_pattern: "/ns"
+        url_pattern: "/tumblebug/ns"
   # Create namespace
-  - endpoint: "/ns"
+  - endpoint: "/tumblebug/ns"
     method: POST
     backend:
       - host: "http://cb-tumblebug:1323"
-        url_pattern: "/ns"
+        url_pattern: "/tumblebug/ns"
   # Get namespace
-  - endpoint: "/ns/{ns_id}"
+  - endpoint: "/tumblebug/ns/{ns_id}"
     method: GET
     backend:
       - host: "http://cb-tumblebug:1323"
-        url_pattern: "/ns/{ns_id}"
+        url_pattern: "/tumblebug/ns/{ns_id}"
   # Delete namespace
-  - endpoint: "/ns/{ns_id}"
+  - endpoint: "/tumblebug/ns/{ns_id}"
     method: DELETE
     backend:
       - host: "http://cb-tumblebug:1323"
-        url_pattern: "/ns/{ns_id}"
+        url_pattern: "/tumblebug/ns/{ns_id}"
   # Delete all namespace
-  - endpoint: "/ns"
+  - endpoint: "/tumblebug/ns"
     method: DELETE
     backend:
       - host: "http://cb-tumblebug:1323"
-        url_pattern: "/ns"
+        url_pattern: "/tumblebug/ns"
 
   # List all Images
-  - endpoint: "/ns/{ns_id}/resources/image"
+  - endpoint: "/tumblebug/ns/{ns_id}/resources/image"
     method: GET
     backend:
       - host: "http://cb-tumblebug:1323"
-        url_pattern: "/ns/{ns_id}/resources/image"
+        url_pattern: "/tumblebug/ns/{ns_id}/resources/image"
   # Register image with id, with info
-  - endpoint: "/ns/{ns_id}/resources/image"
+  - endpoint: "/tumblebug/ns/{ns_id}/resources/image"
     method: POST
     except_querystrings:
       - "*"
     backend:
       - host: "http://cb-tumblebug:1323"
-        url_pattern: "/ns/{ns_id}/resources/image"
+        url_pattern: "/tumblebug/ns/{ns_id}/resources/image"
   # Get image info
-  - endpoint: "/ns/{ns_id}/resources/image/{image_id}"
+  - endpoint: "/tumblebug/ns/{ns_id}/resources/image/{image_id}"
     method: GET
     backend:
       - host: "http://cb-tumblebug:1323"
-        url_pattern: "/ns/{ns_id}/resources/image/{image_id}"
+        url_pattern: "/tumblebug/ns/{ns_id}/resources/image/{image_id}"
   # Delete image
-  - endpoint: "/ns/{ns_id}/resources/image/{image_id}"
+  - endpoint: "/tumblebug/ns/{ns_id}/resources/image/{image_id}"
     method: DELETE
     backend:
       - host: "http://cb-tumblebug:1323"
-        url_pattern: "/ns/{ns_id}/resources/image/{image_id}"
+        url_pattern: "/tumblebug/ns/{ns_id}/resources/image/{image_id}"
   # Delete all images
-  - endpoint: "/ns/{ns_id}/resources/image"
+  - endpoint: "/tumblebug/ns/{ns_id}/resources/image"
     method: DELETE
     backend:
       - host: "http://cb-tumblebug:1323"
-        url_pattern: "/ns/{ns_id}/resources/image"
+        url_pattern: "/tumblebug/ns/{ns_id}/resources/image"
 
   # Register spec with info
-  - endpoint: "/ns/{ns_id}/resources/spec"
+  - endpoint: "/tumblebug/ns/{ns_id}/resources/spec"
     method: POST
     backend:
       - host: "http://cb-tumblebug:1323"
-        url_pattern: "/ns/{ns_id}/resources/spec"
+        url_pattern: "/tumblebug/ns/{ns_id}/resources/spec"
   # List all specs
-  - endpoint: "/ns/{ns_id}/resources/spec"
+  - endpoint: "/tumblebug/ns/{ns_id}/resources/spec"
     method: GET
     backend:
       - host: "http://cb-tumblebug:1323"
-        url_pattern: "/ns/{ns_id}/resources/spec"
+        url_pattern: "/tumblebug/ns/{ns_id}/resources/spec"
   # Get spec
-  - endpoint: "/ns/{ns_id}/resources/spec/{spec_id}"
+  - endpoint: "/tumblebug/ns/{ns_id}/resources/spec/{spec_id}"
     method: GET
     backend:
       - host: "http://cb-tumblebug:1323"
-        url_pattern: "/ns/{ns_id}/resources/spec/{spec_id}"
+        url_pattern: "/tumblebug/ns/{ns_id}/resources/spec/{spec_id}"
   # Delete spec
-  - endpoint: "/ns/{ns_id}/resources/spec/{spec_id}"
+  - endpoint: "/tumblebug/ns/{ns_id}/resources/spec/{spec_id}"
     method: DELETE
     backend:
       - host: "http://cb-tumblebug:1323"
-        url_pattern: "/ns/{ns_id}/resources/spec/{spec_id}"
+        url_pattern: "/tumblebug/ns/{ns_id}/resources/spec/{spec_id}"
   # Delete all specs
-  - endpoint: "/ns/{ns_id}/resources/spec"
+  - endpoint: "/tumblebug/ns/{ns_id}/resources/spec"
     method: DELETE
     backend:
       - host: "http://cb-tumblebug:1323"
-        url_pattern: "/ns/{ns_id}/resources/spec"
+        url_pattern: "/tumblebug/ns/{ns_id}/resources/spec"
 
   # Create sshKey
-  - endpoint: "/ns/{ns_id}/resources/sshKey"
+  - endpoint: "/tumblebug/ns/{ns_id}/resources/sshKey"
     method: POST
     backend:
       - host: "http://cb-tumblebug:1323"
-        url_pattern: "/ns/{ns_id}/resources/sshKey"
+        url_pattern: "/tumblebug/ns/{ns_id}/resources/sshKey"
   # List all sshKeys
-  - endpoint: "/ns/{ns_id}/resources/sshKey"
+  - endpoint: "/tumblebug/ns/{ns_id}/resources/sshKey"
     method: GET
     backend:
       - host: "http://cb-tumblebug:1323"
-        url_pattern: "/ns/{ns_id}/resources/sshKey"
+        url_pattern: "/tumblebug/ns/{ns_id}/resources/sshKey"
   # Get sshKey
-  - endpoint: "/ns/{ns_id}/resources/sshKey/{sshkey_id}"
+  - endpoint: "/tumblebug/ns/{ns_id}/resources/sshKey/{sshkey_id}"
     method: GET
     backend:
       - host: "http://cb-tumblebug:1323"
-        url_pattern: "/ns/{ns_id}/resources/sshKey/{sshkey_id}"
+        url_pattern: "/tumblebug/ns/{ns_id}/resources/sshKey/{sshkey_id}"
   # Delete sshKey
-  - endpoint: "/ns/{ns_id}/resources/sshKey/{sshkey_id}"
+  - endpoint: "/tumblebug/ns/{ns_id}/resources/sshKey/{sshkey_id}"
     method: DELETE
     backend:
       - host: "http://cb-tumblebug:1323"
-        url_pattern: "/ns/{ns_id}/resources/sshKey/{sshkey_id}"
+        url_pattern: "/tumblebug/ns/{ns_id}/resources/sshKey/{sshkey_id}"
   # Delete all sshKeys
-  - endpoint: "/ns/{ns_id}/resources/sshKey"
+  - endpoint: "/tumblebug/ns/{ns_id}/resources/sshKey"
     method: DELETE
     backend:
       - host: "http://cb-tumblebug:1323"
-        url_pattern: "/ns/{ns_id}/resources/sshKey"
+        url_pattern: "/tumblebug/ns/{ns_id}/resources/sshKey"
 
   # Create network
-  - endpoint: "/ns/{ns_id}/resources/network"
+  - endpoint: "/tumblebug/ns/{ns_id}/resources/network"
     method: POST
     backend:
       - host: "http://cb-tumblebug:1323"
-        url_pattern: "/ns/{ns_id}/resources/network"
+        url_pattern: "/tumblebug/ns/{ns_id}/resources/network"
   # List all networks
-  - endpoint: "/ns/{ns_id}/resources/network"
+  - endpoint: "/tumblebug/ns/{ns_id}/resources/network"
     method: GET
     backend:
       - host: "http://cb-tumblebug:1323"
-        url_pattern: "/ns/{ns_id}/resources/network"
+        url_pattern: "/tumblebug/ns/{ns_id}/resources/network"
   # Get network
-  - endpoint: "/ns/{ns_id}/resources/network/{network_id}"
+  - endpoint: "/tumblebug/ns/{ns_id}/resources/network/{network_id}"
     method: GET
     backend:
       - host: "http://cb-tumblebug:1323"
-        url_pattern: "/ns/{ns_id}/resources/network/{network_id}"
+        url_pattern: "/tumblebug/ns/{ns_id}/resources/network/{network_id}"
   # Delete network
-  - endpoint: "/ns/{ns_id}/resources/network/{network_id}"
+  - endpoint: "/tumblebug/ns/{ns_id}/resources/network/{network_id}"
     method: DELETE
     backend:
       - host: "http://cb-tumblebug:1323"
-        url_pattern: "/ns/{ns_id}/resources/network/{network_id}"
+        url_pattern: "/tumblebug/ns/{ns_id}/resources/network/{network_id}"
   # Delete all networks
-  - endpoint: "/ns/{ns_id}/resources/network"
+  - endpoint: "/tumblebug/ns/{ns_id}/resources/network"
     method: DELETE
     backend:
       - host: "http://cb-tumblebug:1323"
-        url_pattern: "/ns/{ns_id}/resources/network"
+        url_pattern: "/tumblebug/ns/{ns_id}/resources/network"
 
   # Create securityGroup
-  - endpoint: "/ns/{ns_id}/resources/securityGroup"
+  - endpoint: "/tumblebug/ns/{ns_id}/resources/securityGroup"
     method: POST
     backend:
       - host: "http://cb-tumblebug:1323"
-        url_pattern: "/ns/{ns_id}/resources/securityGroup"
+        url_pattern: "/tumblebug/ns/{ns_id}/resources/securityGroup"
   # List all securityGroups
-  - endpoint: "/ns/{ns_id}/resources/securityGroup"
+  - endpoint: "/tumblebug/ns/{ns_id}/resources/securityGroup"
     method: GET
     backend:
       - host: "http://cb-tumblebug:1323"
-        url_pattern: "/ns/{ns_id}/resources/securityGroup"
+        url_pattern: "/tumblebug/ns/{ns_id}/resources/securityGroup"
   # Get securityGroup
-  - endpoint: "/ns/{ns_id}/resources/securityGroup/{securityGroup_id}"
+  - endpoint: "/tumblebug/ns/{ns_id}/resources/securityGroup/{securityGroup_id}"
     method: GET
     backend:
       - host: "http://cb-tumblebug:1323"
-        url_pattern: "/ns/{ns_id}/resources/securityGroup/{securityGroup_id}"
+        url_pattern: "/tumblebug/ns/{ns_id}/resources/securityGroup/{securityGroup_id}"
   # Delete securityGroup
-  - endpoint: "/ns/{ns_id}/resources/securityGroup/{securityGroup_id}"
+  - endpoint: "/tumblebug/ns/{ns_id}/resources/securityGroup/{securityGroup_id}"
     method: DELETE
     backend:
       - host: "http://cb-tumblebug:1323"
-        url_pattern: "/ns/{ns_id}/resources/securityGroup/{securityGroup_id}"
+        url_pattern: "/tumblebug/ns/{ns_id}/resources/securityGroup/{securityGroup_id}"
   # Delete all securityGroups
-  - endpoint: "/ns/{ns_id}/resources/securityGroup"
+  - endpoint: "/tumblebug/ns/{ns_id}/resources/securityGroup"
     method: DELETE
     backend:
       - host: "http://cb-tumblebug:1323"
-        url_pattern: "/ns/{ns_id}/resources/securityGroup"
+        url_pattern: "/tumblebug/ns/{ns_id}/resources/securityGroup"
 
   # Create publicIP
-  - endpoint: "/ns/{ns_id}/resources/publicIp"
+  - endpoint: "/tumblebug/ns/{ns_id}/resources/publicIp"
     method: POST
     backend:
       - host: "http://cb-tumblebug:1323"
-        url_pattern: "/ns/{ns_id}/resources/publicIp"
+        url_pattern: "/tumblebug/ns/{ns_id}/resources/publicIp"
   # List all publicIPs
-  - endpoint: "/ns/{ns_id}/resources/publicIp"
+  - endpoint: "/tumblebug/ns/{ns_id}/resources/publicIp"
     method: GET
     backend:
       - host: "http://cb-tumblebug:1323"
-        url_pattern: "/ns/{ns_id}/resources/publicIp"
+        url_pattern: "/tumblebug/ns/{ns_id}/resources/publicIp"
   # Get publicIP
-  - endpoint: "/ns/{ns_id}/resources/publicIp/{publicIp_id}"
+  - endpoint: "/tumblebug/ns/{ns_id}/resources/publicIp/{publicIp_id}"
     method: GET
     backend:
       - host: "http://cb-tumblebug:1323"
-        url_pattern: "/ns/{ns_id}/resources/publicIp/{publicIp_id}"
+        url_pattern: "/tumblebug/ns/{ns_id}/resources/publicIp/{publicIp_id}"
   # Delete publicIP
-  - endpoint: "/ns/{ns_id}/resources/publicIp/{publicIp_id}"
+  - endpoint: "/tumblebug/ns/{ns_id}/resources/publicIp/{publicIp_id}"
     method: DELETE
     backend:
       - host: "http://cb-tumblebug:1323"
-        url_pattern: "/ns/{ns_id}/resources/publicIp/{publicIp_id}"
+        url_pattern: "/tumblebug/ns/{ns_id}/resources/publicIp/{publicIp_id}"
   # Delete all publicIPs
-  - endpoint: "/ns/{ns_id}/resources/publicIp"
+  - endpoint: "/tumblebug/ns/{ns_id}/resources/publicIp"
     method: DELETE
     backend:
       - host: "http://cb-tumblebug:1323"
-        url_pattern: "/ns/{ns_id}/resources/publicIp"
+        url_pattern: "/tumblebug/ns/{ns_id}/resources/publicIp"
 
   # Create MCIS
-  - endpoint: "/ns/{ns_id}/mcis"
+  - endpoint: "/tumblebug/ns/{ns_id}/mcis"
     method: POST
     backend:
       - host: "http://cb-tumblebug:1323"
-        url_pattern: "/ns/{ns_id}/mcis"
+        url_pattern: "/tumblebug/ns/{ns_id}/mcis"
   # Get MCIS and status, suspend, resume, reboot, terminate
-  - endpoint: "/ns/{ns_id}/mcis/{mcis_id}"
+  - endpoint: "/tumblebug/ns/{ns_id}/mcis/{mcis_id}"
     method: GET
     except_querystrings:
       - "*"
     backend:
       - host: "http://cb-tumblebug:1323"
-        url_pattern: "/ns/{ns_id}/mcis/{mcis_id}"
+        url_pattern: "/tumblebug/ns/{ns_id}/mcis/{mcis_id}"
   # List all MCISs
-  - endpoint: "/ns/{ns_id}/mcis"
+  - endpoint: "/tumblebug/ns/{ns_id}/mcis"
     method: GET
     backend:
       - host: "http://cb-tumblebug:1323"
-        url_pattern: "/ns/{ns_id}/mcis"
+        url_pattern: "/tumblebug/ns/{ns_id}/mcis"
   # Delete MCIS info
-  - endpoint: "/ns/{ns_id}/mcis/{mcis_id}"
+  - endpoint: "/tumblebug/ns/{ns_id}/mcis/{mcis_id}"
     method: DELETE
     backend:
       - host: "http://cb-tumblebug:1323"
-        url_pattern: "/ns/{ns_id}/mcis/{mcis_id}"
+        url_pattern: "/tumblebug/ns/{ns_id}/mcis/{mcis_id}"
   # Delete all MCIS info
-  - endpoint: "/ns/{ns_id}/mcis"
+  - endpoint: "/tumblebug/ns/{ns_id}/mcis"
     method: DELETE
     backend:
       - host: "http://cb-tumblebug:1323"
-        url_pattern: "/ns/{ns_id}/mcis"
+        url_pattern: "/tumblebug/ns/{ns_id}/mcis"
   # Add VM to MCIS
-  - endpoint: "/ns/{ns_id}/mcis/{mcis_id}/vm"
+  - endpoint: "/tumblebug/ns/{ns_id}/mcis/{mcis_id}/vm"
     method: POST
     backend:
       - host: "http://cb-tumblebug:1323"
-        url_pattern: "/ns/{ns_id}/mcis/{mcis_id}/vm"  
+        url_pattern: "/tumblebug/ns/{ns_id}/mcis/{mcis_id}/vm"  
   # Get individual VM and status, suspend, resume, reboot, terminate
-  - endpoint: "/ns/{ns_id}/mcis/{mcis_id}/vm/{vm_id}"
+  - endpoint: "/tumblebug/ns/{ns_id}/mcis/{mcis_id}/vm/{vm_id}"
     method: GET
     except_querystrings:
       - "*"
     backend:
       - host: "http://cb-tumblebug:1323"
-        url_pattern: "/ns/{ns_id}/mcis/{mcis_id}/vm/{vm_id}"
+        url_pattern: "/tumblebug/ns/{ns_id}/mcis/{mcis_id}/vm/{vm_id}"
   # Delete individual VM info
-  - endpoint: "/ns/{ns_id}/mcis/{mcis_id}/vm/{vm_id}"
+  - endpoint: "/tumblebug/ns/{ns_id}/mcis/{mcis_id}/vm/{vm_id}"
     method: DELETE
     backend:
       - host: "http://cb-tumblebug:1323"
-        url_pattern: "/ns/{ns_id}/mcis/{mcis_id}/vm/{vm_id}"
+        url_pattern: "/tumblebug/ns/{ns_id}/mcis/{mcis_id}/vm/{vm_id}"
   # Recommend MCIS config
   #######################
   ## GIN (HttpRoute) 의 Parameter wildcard 문제 때문에 {mcis_id} 와 recommend를 동일한 수준에서 설정이 불가 (By Designed) 하므로
   ## 이를 다른 수준의 URL 로 설정함.
   ## 이 문제는 다른 Engine으로 교체해서 문제가 되는지 여부를 재 검증해 봐야 함.
   #######################
-  - endpoint: "/ns/{ns_id}/mcisrecommend"
+  - endpoint: "/tumblebug/ns/{ns_id}/mcisrecommend"
     method: POST
     backend:
       - host: "http://cb-tumblebug:1323"
-        url_pattern: "/ns/{ns_id}/mcis/recommend"
+        url_pattern: "/tumblebug/ns/{ns_id}/mcis/recommend"
 
   #############################
   # For Tumblebug with Spider
   #############################
 
   # Create Image-TBD
-  - endpoint: "/vmimage"
+  - endpoint: "/spider/vmimage"
     method: POST
     except_querystrings:
       - "*"
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/vmimage"
+        url_pattern: "/spider/vmimage"
   # List VM Images
-  - endpoint: "/vmimage"
+  - endpoint: "/spider/vmimage"
     method: GET
     except_querystrings:
       - "*"
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/vmimage"
-        is_collection: true
+        url_pattern: "/spider/vmimage"
   # Get VM Image
-  - endpoint: "/vmimage/{image_id}"
+  - endpoint: "/spider/vmimage/{image_id}"
     method: GET
     except_querystrings:
       - "*"
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/vmimage/{image_id}"
+        url_pattern: "/spider/vmimage/{image_id}"
   # Delete VM Image
-  - endpoint: "/vmimage/{image_id}"
+  - endpoint: "/spider/vmimage/{image_id}"
     method: DELETE
     except_querystrings:
       - "*"
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/vmimage/{image_id}"
+        url_pattern: "/spider/vmimage/{image_id}"
 
   # Create Virtual Network
-  - endpoint: "/vnetwork"
+  - endpoint: "/spider/vnetwork"
     method: POST
     except_querystrings:
       - "*"
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/vnetwork"
+        url_pattern: "/spider/vnetwork"
   # List Virtual Networks
-  - endpoint: "/vnetwork"
+  - endpoint: "/spider/vnetwork"
     method: GET
     except_querystrings:
       - "*"
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/vnetwork"
-        is_collection: true
+        url_pattern: "/spider/vnetwork"
   # Get Virtual Network
-  - endpoint: "/vnetwork/{vnet_id}"
+  - endpoint: "/spider/vnetwork/{vnet_id}"
     method: GET
     except_querystrings:
       - "*"
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/vnetwork/{vnet_id}"
+        url_pattern: "/spider/vnetwork/{vnet_id}"
   # Delete Virtual Network
-  - endpoint: "/vnetwork/{vnet_id}"
+  - endpoint: "/spider/vnetwork/{vnet_id}"
     method: DELETE
     except_querystrings:
       - "*"
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/vnetwork/{vnet_id}"
+        url_pattern: "/spider/vnetwork/{vnet_id}"
 
   # Create Public IP
-  - endpoint: "/publicip"
+  - endpoint: "/spider/publicip"
     method: POST
     except_querystrings:
       - "*"
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/publicip"
+        url_pattern: "/spider/publicip"
   # List Public IPs
-  - endpoint: "/publicip"
+  - endpoint: "/spider/publicip"
     method: GET
     except_querystrings:
       - "*"
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/publicip"
-        is_collection: true
+        url_pattern: "/spider/publicip"
   # Get Public IP
-  - endpoint: "/publicip/{publicip_id}"
+  - endpoint: "/spider/publicip/{publicip_id}"
     method: GET
     except_querystrings:
       - "*"
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/publicip/{publicip_id}"
+        url_pattern: "/spider/publicip/{publicip_id}"
   # Delete Public IP
-  - endpoint: "/publicip/{publicip_id}"
+  - endpoint: "/spider/publicip/{publicip_id}"
     method: DELETE
     except_querystrings:
       - "*"
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/publicip/{publicip_id}"
+        url_pattern: "/spider/publicip/{publicip_id}"
 
   # Create VNIc
-  - endpoint: "/vnic"
+  - endpoint: "/spider/vnic"
     method: POST
     except_querystrings:
       - "*"
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/vnic"
+        url_pattern: "/spider/vnic"
   # List VNIcs
-  - endpoint: "/vnic"
+  - endpoint: "/spider/vnic"
     method: GET
     except_querystrings:
       - "*"
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/vnic"
-        is_collection: true
+        url_pattern: "/spider/vnic"
   # Get VNIc
-  - endpoint: "/vnic/{vnic_id}"
+  - endpoint: "/spider/vnic/{vnic_id}"
     method: GET
     except_querystrings:
       - "*"
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/vnic/{vnic_id}"
+        url_pattern: "/spider/vnic/{vnic_id}"
   # Delete VNIc
-  - endpoint: "/vnic/{vnic_id}"
+  - endpoint: "/spider/vnic/{vnic_id}"
     method: DELETE
     except_querystrings:
       - "*"
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/vnic/{vnic_id}"
+        url_pattern: "/spider/vnic/{vnic_id}"
 
   # Create SecurityGroup
-  - endpoint: "/securitygroup"
+  - endpoint: "/spider/securitygroup"
     method: POST
     except_querystrings:
       - "*"
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/securitygroup"
+        url_pattern: "/spider/securitygroup"
   # List SecurityGroups
-  - endpoint: "/securitygroup"
+  - endpoint: "/spider/securitygroup"
     method: GET
     except_querystrings:
       - "*"
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/securitygroup"
-        is_collection: true
+        url_pattern: "/spider/securitygroup"
   # Get SecurityGroup
-  - endpoint: "/securitygroup/{securitygroup_id}"
+  - endpoint: "/spider/securitygroup/{securitygroup_id}"
     method: GET
     except_querystrings:
       - "*"
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/securitygroup/{securitygroup_id}"
+        url_pattern: "/spider/securitygroup/{securitygroup_id}"
   # Delete SecurityGroup
-  - endpoint: "/securitygroup/{securitygroup_id}"
+  - endpoint: "/spider/securitygroup/{securitygroup_id}"
     method: DELETE
     except_querystrings:
       - "*"
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/securitygroup/{securitygroup_id}"
+        url_pattern: "/spider/securitygroup/{securitygroup_id}"
 
   # Create KeyPair
-  - endpoint: "/keypair"
+  - endpoint: "/spider/keypair"
     method: POST
     except_querystrings:
       - "*"
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/keypair"
+        url_pattern: "/spider/keypair"
   # List KeyPairs
-  - endpoint: "/keypair"
+  - endpoint: "/spider/keypair"
     method: GET
     except_querystrings:
       - "*"
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/keypair"
-        is_collection: true
+        url_pattern: "/spider/keypair"
   # Get KeyPair
-  - endpoint: "/keypair/{keypair_id}"
+  - endpoint: "/spider/keypair/{keypair_id}"
     method: GET
     except_querystrings:
       - "*"
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/keypair/{keypair_id}"
+        url_pattern: "/spider/keypair/{keypair_id}"
   # Delete KeyPair
-  - endpoint: "/keypair/{keypair_id}"
+  - endpoint: "/spider/keypair/{keypair_id}"
     method: DELETE
     except_querystrings:
       - "*"
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/keypair/{keypair_id}"
+        url_pattern: "/spider/keypair/{keypair_id}"
 
   # Start VM
-  - endpoint: "/vm"
+  - endpoint: "/spider/vm"
     method: POST
     except_querystrings:
       - "*"
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/vm"
+        url_pattern: "/spider/vm"
   # List VMs
-  - endpoint: "/vm"
+  - endpoint: "/spider/vm"
     method: GET
     except_querystrings:
       - "*"
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/vm"
-        is_collection: true
+        url_pattern: "/spider/vm"
   # Get VM
-  - endpoint: "/vm/{vm_id}"
+  - endpoint: "/spider/vm/{vm_id}"
     method: GET
     except_querystrings:
       - "*"
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/vm/{vm_id}"
+        url_pattern: "/spider/vm/{vm_id}"
   # Terminate VM
-  - endpoint: "/vm/{vm_id}"
+  - endpoint: "/spider/vm/{vm_id}"
     method: DELETE
     except_querystrings:
       - "*"
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/vm/{vm_id}"
+        url_pattern: "/spider/vm/{vm_id}"
   
   # List VM Status
-  - endpoint: "/vmstatus"
+  - endpoint: "/spider/vmstatus"
     method: GET
     except_querystrings:
       - "*"
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/vmstatus"
-        is_collection: true
+        url_pattern: "/spider/vmstatus"
   # Get VM Status
-  - endpoint: "/vmstatus/{vm_id}"
+  - endpoint: "/spider/vmstatus/{vm_id}"
     method: GET
     except_querystrings:
       - "*"
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/vmstatus/{vm_id}"
+        url_pattern: "/spider/vmstatus/{vm_id}"
 
   # Suspend VM, resume, reboot
-  - endpoint: "/controlvm/{vm_id}"
+  - endpoint: "/spider/controlvm/{vm_id}"
     method: GET
     except_querystrings:
       - "*"
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "/controlvm/{vm_id}"
+        url_pattern: "/spider/controlvm/{vm_id}"

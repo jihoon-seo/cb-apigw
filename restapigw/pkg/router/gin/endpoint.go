@@ -43,7 +43,7 @@ func EndpointHandler(eConf *config.EndpointConfig, proxy proxy.Proxy) gin.Handle
 }
 
 // NewRequest - 제외할 Header 정보와 Query string 정보를 반영하는 Gin Context 기반의 Request 생성
-func NewRequest(exceptHeaders []string) func(*gin.Context, []string) *proxy.Request {
+func NewRequest(eConf *config.EndpointConfig) func(*gin.Context, []string) *proxy.Request {
 	return func(c *gin.Context, exceptQueryStrings []string) *proxy.Request {
 		logger := logging.NewLogger()
 
@@ -56,8 +56,8 @@ func NewRequest(exceptHeaders []string) func(*gin.Context, []string) *proxy.Requ
 		headers := make(map[string][]string)
 		for k, v := range c.Request.Header {
 			except := false
-			for i := range exceptHeaders {
-				key := textproto.CanonicalMIMEHeaderKey(exceptHeaders[i])
+			for i := range eConf.ExceptHeaders {
+				key := textproto.CanonicalMIMEHeaderKey(eConf.ExceptHeaders[i])
 				if k == key {
 					except = true
 					break
@@ -105,10 +105,17 @@ func NewRequest(exceptHeaders []string) func(*gin.Context, []string) *proxy.Requ
 			}
 		}
 
+		// Bypass인 경우 실제 호출 경로 설정
+		path := ""
+		if eConf.IsBypass {
+			path = c.Request.URL.Path
+		}
+
 		return &proxy.Request{
 			Method:  c.Request.Method,
 			Query:   query,
 			Body:    c.Request.Body,
+			Path:    path,
 			Params:  params,
 			Headers: headers,
 		}
@@ -119,7 +126,7 @@ func NewRequest(exceptHeaders []string) func(*gin.Context, []string) *proxy.Requ
 func CustomErrorEndpointHandler(eConf *config.EndpointConfig, proxy proxy.Proxy, errF router.ToHTTPError) gin.HandlerFunc {
 	cacheControlHeaderValue := fmt.Sprintf("public, max-age=%d", int(eConf.CacheTTL.Seconds()))
 	isCacheEnabled := eConf.CacheTTL.Seconds() != 0
-	requestGenerator := NewRequest(eConf.ExceptHeaders)
+	requestGenerator := NewRequest(eConf)
 	render := getRender(eConf)
 
 	return func(c *gin.Context) {

@@ -24,23 +24,15 @@ RUN cd /go/src/github.com/cloud-barista/cb-spider/api-runtime/rest-runtime && CG
 ## Stage 2 - Applicaiton Setup
 ##############################################################    
 
-#FROM scratch
-#FROM alpine:latest
-#FROM busybox:latest
 FROM ubuntu:latest
 
 # Set working directory and files
 WORKDIR /app
 
 COPY --from=builder /go/src/github.com/cloud-barista/cb-spider/api-runtime/rest-runtime/cb-spider .
-COPY --from=builder /go/src/github.com/cloud-barista/cb-spider/cloud-driver-libs ./cloud-dirvier-libs
+COPY --from=builder /go/src/github.com/cloud-barista/cb-spider/cloud-driver-libs ./cloud-driver-libs
 COPY --from=builder /go/src/github.com/cloud-barista/cb-spider/conf ./conf 
 COPY --from=builder /go/src/github.com/cloud-barista/cb-spider/setup.env .
-
-# COPY --from=builder /go/src/github.com/cloud-barista/cb-spider/api-runtime/rest-runtime/cb-spider . && \
-#      --from=builder /go/src/github.com/cloud-barista/cb-spider/cloud-driver-libs ./cloud-dirvier-libs && \
-#      --from=builder /go/src/github.com/cloud-barista/cb-spider/conf ./conf && \
-#      --from=builder /go/src/github.com/cloud-barista/cb-spider/setup.env .
 
 # Change setup.env
 RUN sed -i "s|$GOPATH/src/github.com/cloud-barista/cb-spider|/app|g" ./setup.env
@@ -48,9 +40,6 @@ RUN sed -i "s|$GOPATH/src/github.com/cloud-barista/cb-spider|/app|g" ./setup.env
 COPY ./run.sh .
 
 CMD [ "./run.sh" ]
-
-#RUN source ./setup.env
-#RUN ./cb-spider
 
 EXPOSE 1024
 

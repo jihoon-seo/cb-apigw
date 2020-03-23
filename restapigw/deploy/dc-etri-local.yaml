@@ -34,6 +34,15 @@ services:
       - "14268:14268"
       - "16686:16686"
 
+  # Fake API
+  fake_api:
+    image: jaxgeller/lwan
+    container_name: fake_api
+    volumes:
+      - ./data/lwan:/lwan/wwwroot
+    ports:
+      - "8100:8080"
+
   # CB-SPIDER
   cb-spider:
     build:
@@ -51,16 +60,3 @@ services:
       - "1323:1323"
     depends_on:
       - cb-spider
-
-  # CB-RESTAPIGW
-  cb-restapigw:
-    build:
-      context: ./cb-restapigw
-    container_name: cb-restapigw
-    ports:
-      - "8000:8000"
-    depends_on:
-      - influxdb
-      - jaeger
-      - cb-spider
-      - cb-tumblebug
