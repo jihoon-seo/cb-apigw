@@ -21,7 +21,7 @@ middleware:
       buffer_size: 0 
   mw-opencensus:
     sample_rate: 100
-    reporting_period: 60s
+    reporting_period: 3s
     enabled_layers:
       router: true
       proxy: true

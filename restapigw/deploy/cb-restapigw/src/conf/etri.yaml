@@ -2,16 +2,14 @@ version: 1
 name: cb-restapigw
 port: 8000
 cache_ttl: 3600s
-timeout: 5m
-debug: false
-host:
-  - "http://localhost:8100"
+timeout: 30s
+debug: true
 middleware:
   mw-metrics:
     router_enabled: true
     proxy_enabled: true
     backend_enabled: true
-    collection_period: 100s
+    collection_period: 20s
     expose_metrics: false
     listen_address: 0.0.0.0:9000
     influxdb:
@@ -36,6 +34,8 @@ middleware:
     allow_methods:
       - POST
       - GET
+      - PUT
+      - DELETE
     allow_headers:
       - Origin
       - Authorization
@@ -158,3 +158,21 @@ endpoints:
         secure_key: "###TEST_SECURE_KEY###"
         access_ids:
           - etri
+
+  ##############
+  # For Spider
+  ##############
+  - endpoint: "/spider"
+    bypass: true
+    backend:
+      - host: "http://cb-spider:1024"
+        url_pattern: "*"
+
+  #################
+  # For Tumblebug
+  #################
+  - endpoint: "/tumblebug"
+    bypass: true
+    backend:
+      - host: "http://cb-tumblebug:1323"
+        url_pattern: "*"

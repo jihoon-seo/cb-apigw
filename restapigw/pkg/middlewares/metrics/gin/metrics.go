@@ -106,10 +106,17 @@ func NewHTTPHandlerFactory(rm *metrics.RouterMetrics, hf ginRouter.HandlerFactor
 	return func(eConf *config.EndpointConfig, p proxy.Proxy) gin.HandlerFunc {
 		next := hf(eConf, p)
 		// Endpoint 응답관련 Metric 처리기 등록
-		rm.RegisterResponseWriterMetrics(eConf.Endpoint)
+		//rm.RegisterResponseWriterMetrics(eConf.Endpoint)
 		return func(c *gin.Context) {
+			name := eConf.Endpoint
+			// Bypass인 경우 실제 호출 URL로 처리
+			if eConf.IsBypass {
+				name = c.Request.URL.Path
+			}
+			rm.RegisterResponseWriterMetrics(name)
+
 			// Metric 처리기를 반영한 Gin Response Writer 생성
-			rw := &ginResponseWriter{c.Writer, eConf.Endpoint, time.Now(), rm}
+			rw := &ginResponseWriter{c.Writer, name, time.Now(), rm}
 			c.Writer = rw
 			// Router 연결 Metric 처리
 			rm.Connection()

@@ -45,18 +45,22 @@ services:
 
   # CB-SPIDER
   cb-spider:
-    build:
-      context: ./cb-spider
+    image: cloudbaristahub/cb-spider:v0.1-20200319
     container_name: cb-spider
     ports:
       - "1024:1024"
+    volumes:
+      - ./data/cb-spider:/root/go/src/github.com/cloud-barista/cb-spider/meta_db/dat
 
   # CB-TUMBLEBUG
   cb-tumblebug:
-    build:
-      context: ./cb-tumblebug
+    image: cloudbaristahub/cb-tumblebug:v0.1-20200313
     container_name: cb-tumblebug
     ports:
       - "1323:1323"
+    volumes:
+      - ./data/cb-tumblebug:/app/meta_db/dat
+    environment:
+      - SPIDER_URL=http://localhost:8000/spider
     depends_on:
       - cb-spider

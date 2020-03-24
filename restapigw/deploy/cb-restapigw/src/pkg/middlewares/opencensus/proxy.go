@@ -24,7 +24,7 @@ const (
 // ===== [ Public Functions ] =====
 
 // CallChain - 지정한 이름을 기준으로 순차적으로 실행되는 Call chain 함수 반환
-func CallChain(name string) proxy.CallChain {
+func CallChain(tag string, isBypass bool, url string) proxy.CallChain {
 	if !IsProxyEnabled() {
 		return proxy.EmptyChain
 	}
@@ -38,6 +38,13 @@ func CallChain(name string) proxy.CallChain {
 
 		return func(ctx context.Context, req *proxy.Request) (*proxy.Response, error) {
 			var span *trace.Span
+			var name = tag + " "
+			if isBypass {
+				name += req.Path
+			} else {
+				name += url
+			}
+
 			ctx, span = trace.StartSpan(trace.NewContext(ctx, fromContext(ctx)), name)
 			resp, err := next[0](ctx, req)
 			if err != nil {
@@ -70,7 +77,7 @@ func ProxyFactory(pf proxy.Factory) proxy.FactoryFunc {
 		if err != nil {
 			return next, err
 		}
-		return CallChain("[proxy] " + eConf.Endpoint)(next), nil
+		return CallChain("[proxy]", eConf.IsBypass, eConf.Endpoint)(next), nil
 	}
 }
 
@@ -80,6 +87,6 @@ func BackendFactory(bf proxy.BackendFactory) proxy.BackendFactory {
 		return bf
 	}
 	return func(bConf *config.BackendConfig) proxy.Proxy {
-		return CallChain("[backend] " + bConf.URLPattern)(bf(bConf))
+		return CallChain("[backend]", bConf.URLPattern == "/*", bConf.URLPattern)(bf(bConf))
 	}
 }

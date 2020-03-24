@@ -104,6 +104,8 @@ type ServiceConfig struct {
 type EndpointConfig struct {
 	// 클라이언트에 노출될 URL 패턴
 	Endpoint string `mapstructure:"endpoint"`
+	// Bypass 처리 여부
+	IsBypass bool `mapstructure:"bypass"`
 	// Endpoint에 대한 HTTP 메서드 (GET, POST, PUT, etc) (기본값: GET)
 	Method string `mapstructure:"method"`
 	// Endpoint 처리 시간 (기본값: 서비스 값 사용)

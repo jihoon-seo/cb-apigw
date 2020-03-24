@@ -116,7 +116,7 @@ func NewHTTPProxyDetailed(bconf *config.BackendConfig, hre client.HTTPRequestExe
 	}
 }
 
-// NewRequestBuilderChain - Creates a proxy chain that parses the request params received from the outter layer and generates the path to the backend endpoint
+// NewRequestBuilderChain - Request 파라미터와 Backend Path를 설정한 Proxy 호출 체인을 생성한다.
 func NewRequestBuilderChain(bConf *config.BackendConfig) CallChain {
 	return func(next ...Proxy) Proxy {
 		if len(next) > 1 {
@@ -124,8 +124,11 @@ func NewRequestBuilderChain(bConf *config.BackendConfig) CallChain {
 		}
 		return func(ctx context.Context, req *Request) (*Response, error) {
 			r := req.Clone()
-			r.GeneratePath(bConf.URLPattern)
-			r.Method = bConf.Method
+			// Bypass가 아닌 경우는 Path와 Method를 설정에 맞도록 재 구성
+			if bConf.URLPattern != "/*" {
+				r.GeneratePath(bConf.URLPattern)
+				r.Method = bConf.Method
+			}
 
 			// =====
 			// FIXME: Loadbalancer가 추가되면 아래의 부분은 Loadbalancer 처리로 대체

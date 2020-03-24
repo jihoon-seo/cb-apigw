@@ -31,7 +31,6 @@ COPY --from=builder /app/cb-restapigw .
 COPY --from=builder /app/conf ./conf
 
 ENTRYPOINT [ "/app/cb-restapigw", "-c", "/app/conf/cb-restapigw.yaml", "-d", "run" ]
-#CMD [ "/bin/bash" ]
 
 EXPOSE 8000
 
