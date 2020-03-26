@@ -4,7 +4,7 @@
 
 FROM golang:alpine AS builder
 
-RUN apk update && apk add --no-cache bash git 
+RUN apk update && apk add --no-cache bash git && apk --no-cache add ca-certificates
 
 # set go environemnts
 RUN go env -w GO111MODULE=""
@@ -27,10 +27,11 @@ RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 
 WORKDIR /app
 
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /app/cb-restapigw .
 COPY --from=builder /app/conf ./conf
 
-ENTRYPOINT [ "/app/cb-restapigw", "-c", "/app/conf/cb-restapigw.yaml", "-d", "run" ]
+ENTRYPOINT [ "/app/cb-restapigw", "-c", "/app/conf/etri.yaml", "-d", "run" ]
 
 EXPOSE 8000
 

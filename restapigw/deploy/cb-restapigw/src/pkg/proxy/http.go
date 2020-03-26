@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/encoding"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/transport/http/client"
@@ -23,6 +24,13 @@ type responseError interface {
 	Error() string
 	Name() string
 	StatusCode() int
+}
+
+// wrappedError - Defines interface for Wrapped response error
+type wrappedError interface {
+	Error() error
+	StatusCode() int
+	Message() string
 }
 
 // ===== [ Implementations ] =====
@@ -106,7 +114,9 @@ func NewHTTPProxyDetailed(bconf *config.BackendConfig, hre client.HTTPRequestExe
 						fmt.Sprintf("error_%s", t.Name()): t,
 					},
 					Metadata: Metadata{StatusCode: t.StatusCode()},
-				}, nil
+				}, err
+			} else if we, ok := err.(core.WrappedError); ok {
+				return nil, we
 			}
 			return nil, err
 		}

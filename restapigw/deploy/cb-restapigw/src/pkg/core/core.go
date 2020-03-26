@@ -1,6 +1,13 @@
 // Package core - Defines variables/constants and provides utilty functions
 package core
 
+import (
+	"bytes"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+)
+
 // ===== [ Constants and Variables ] =====
 
 const (
@@ -20,11 +27,42 @@ const (
 
 // ===== [ Types ] =====
 
+// WrappedError - 원본 오류를 관리하는 오류 형식
+type WrappedError struct {
+	code          int
+	message       string
+	originalError error
+}
+
 // ===== [ Implementations ] =====
+
+// Code - Wrapping된 오류 코드 반환
+func (we WrappedError) Code() int {
+	return we.code
+}
+
+// Error - 오류 메시지 반환
+func (we WrappedError) Error() string {
+	return fmt.Sprintf("%d, %s", we.code, we.message)
+}
+
+// GetError - 원본 오류 반환
+func (we WrappedError) GetError() error {
+	return we.originalError
+}
 
 // ===== [ Private Functions ] =====
 
 // ===== [ Public Functions ] =====
+
+// NewWrappedError - 원본 오류를 관리하는 오류 생성
+func NewWrappedError(code int, message string, originalError error) error {
+	return WrappedError{
+		code:          code,
+		message:       message,
+		originalError: originalError,
+	}
+}
 
 // GetStrings - 지정된 맵 데이터에서 지정된 이름에 해당하는 데이터를 []string 으로 반환
 func GetStrings(data map[string]interface{}, name string) []string {
@@ -84,4 +122,19 @@ func ContainsString(s []string, v string) bool {
 		}
 	}
 	return false
+}
+
+// GetResponseString - http.Response Body를 문자열로 반환
+func GetResponseString(resp *http.Response) (string, error) {
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	defer func() {
+		resp.Body.Close()
+		resp.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+	}()
+
+	return string(body), nil
 }

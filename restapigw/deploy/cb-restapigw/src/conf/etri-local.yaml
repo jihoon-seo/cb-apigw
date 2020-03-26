@@ -2,7 +2,7 @@ version: 1
 name: cb-restapigw
 port: 8000
 cache_ttl: 3600s
-timeout: 10s
+timeout: 5m
 debug: true
 host:
   - "http://localhost:8100"
@@ -11,7 +11,7 @@ middleware:
     router_enabled: true
     proxy_enabled: true
     backend_enabled: true
-    collection_period: 5s
+    collection_period: 60s
     expose_metrics: false
     listen_address: 0.0.0.0:9000
     influxdb:

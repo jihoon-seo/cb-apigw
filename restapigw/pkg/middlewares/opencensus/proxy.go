@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/proxy"
 	"go.opencensus.io/trace"
 )
@@ -52,7 +53,18 @@ func CallChain(tag string, isBypass bool, url string) proxy.CallChain {
 					if resp != nil {
 						span.SetStatus(trace.Status{Code: int32(resp.Metadata.StatusCode), Message: err.Error()})
 					} else {
-						span.SetStatus(trace.Status{Code: 500, Message: err.Error()})
+						if we, ok := err.(core.WrappedError); ok {
+
+							if tag != "[backend]" {
+								err = we.GetError()
+								span.SetStatus(trace.Status{Code: 500, Message: err.Error()})
+							} else {
+								// Backend 호출의 경우는 원본 오류 메시지를 그대로 출력
+								span.SetStatus(trace.Status{Code: int32(we.Code()), Message: we.Error()})
+							}
+						} else {
+							span.SetStatus(trace.Status{Code: 500, Message: err.Error()})
+						}
 					}
 				} else {
 					span.AddAttributes(trace.BoolAttribute("error", true))
