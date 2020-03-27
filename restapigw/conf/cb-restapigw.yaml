@@ -444,6 +444,33 @@ endpoints:
       - host: "http://cb-tumblebug:1323"
         url_pattern: "/tumblebug/ns/{ns_id}/mcis/{mcis_id}/vm/{vm_id}"
 
+  # Get ConnConfig List
+  - endpoint: "/tumblebug/connConfig"
+    method: GET
+    querystring_params:
+      - "*"
+    backend:
+      - host: "http://cb-tumblebug:1323"
+        url_pattern: "/tumblebug/connConfig"
+
+  # Get ConnConfig
+  - endpoint: "/tumblebug/connConfig/{connConfig_name}"
+    method: GET
+    querystring_params:
+      - "*"
+    backend:
+      - host: "http://cb-tumblebug:1323"
+        url_pattern: "/tumblebug/connConfig/{connConfig_name}"
+
+  # Get Region
+  - endpoint: "/tumblebug/region/{region_name}"
+    method: GET
+    querystring_params:
+      - "*"
+    backend:
+      - host: "http://cb-tumblebug:1323"
+        url_pattern: "/tumblebug/region/{region_name}"
+
   #############################
   # For Tumblebug with Spider
   #############################
@@ -651,6 +678,40 @@ endpoints:
     backend:
       - host: "http://cb-spider:1024"
         url_pattern: "/spider/keypair/{keypair_id}"
+
+  # List Specs of one region
+  - endpoint: "/spider/vmspec/{region}"
+    method: GET
+    querystring_params:
+      - "*"
+    backend:
+      - host: "http://cb-spider:1024"
+        url_pattern: "/spider/vmspec/{region}"
+  # Get Spec
+  - endpoint: "/spider/vmspec/{region}/{spec_name}"
+    method: GET
+    querystring_params:
+      - "*"
+    backend:
+      - host: "http://cb-spider:1024"
+        url_pattern: "/spider/vmspec/{region}/{spec_name}"
+
+  # List Specs' original info of one region
+  - endpoint: "/spider/vmorgspec/{region}"
+    method: GET
+    querystring_params:
+      - "*"
+    backend:
+      - host: "http://cb-spider:1024"
+        url_pattern: "/spider/vmorgspec/{region}"
+  # Get Spec's original info
+  - endpoint: "/spider/vmorgspec/{region}/{spec_name}"
+    method: GET
+    querystring_params:
+      - "*"
+    backend:
+      - host: "http://cb-spider:1024"
+        url_pattern: "/spider/vmorgspec/{region}/{spec_name}"
 
   # Start VM
   - endpoint: "/spider/vm"
