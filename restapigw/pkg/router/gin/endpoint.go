@@ -112,12 +112,13 @@ func NewRequest(eConf *config.EndpointConfig) func(*gin.Context, []string) *prox
 		}
 
 		return &proxy.Request{
-			Method:  c.Request.Method,
-			Query:   query,
-			Body:    c.Request.Body,
-			Path:    path,
-			Params:  params,
-			Headers: headers,
+			IsBypass: eConf.IsBypass,
+			Method:   c.Request.Method,
+			Query:    query,
+			Body:     c.Request.Body,
+			Path:     path,
+			Params:   params,
+			Headers:  headers,
 		}
 	}
 }

@@ -135,7 +135,7 @@ func NewRequestBuilderChain(bConf *config.BackendConfig) CallChain {
 		return func(ctx context.Context, req *Request) (*Response, error) {
 			r := req.Clone()
 			// Bypass가 아닌 경우는 Path와 Method를 설정에 맞도록 재 구성
-			if bConf.URLPattern != "/*" {
+			if !req.IsBypass {
 				r.GeneratePath(bConf.URLPattern)
 				r.Method = bConf.Method
 			}

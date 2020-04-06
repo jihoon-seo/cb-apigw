@@ -95,7 +95,7 @@ func NewProxyCallChain(layer, name string, pm *ProxyMetrics) proxy.CallChain {
 		return func(ctx context.Context, request *proxy.Request) (*proxy.Response, error) {
 			// Bypass Backend URLPattern을 실제 URL Path로 변경
 			urlPath := name
-			if urlPath == "/*" || layer == "pipe" {
+			if request.IsBypass || layer == "pipe" {
 				urlPath = request.Path
 			}
 
