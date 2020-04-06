@@ -68,6 +68,7 @@ func NewHTTPProxyDetailed(bconf *config.BackendConfig, hre client.HTTPRequestExe
 			reqToBackend.Header[k] = tmp
 		}
 
+		// Body Size 정보 설정
 		if req.Body != nil {
 			if v, ok := req.Headers["Content-Length"]; ok && len(v) == 1 && v[0] != "chunked" {
 				if size, err := strconv.Atoi(v[0]); err == nil {
