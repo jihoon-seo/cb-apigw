@@ -10,7 +10,7 @@ CB-RESTAPIGW는 PoC (Proof of Concepts) 수준의 RESTful API Gateway 기능을 
 
 ## [설치]
 
-설치는 Ubuntu 18.04 기준으로 한다.
+설치는 Ubuntu Latest 버전을 기준으로 한다.
 
 - **Git 설치**
   ```shell
@@ -19,17 +19,18 @@ CB-RESTAPIGW는 PoC (Proof of Concepts) 수준의 RESTful API Gateway 기능을 
   ```
 
 - **Go 설치 (v1.12 이상)**
-  - https://golang.org/dl 에서 최신 버전 확인 (현재 1.13.4)
+  - https://golang.org/dl 에서 최신 버전 확인 (현재 1.14.1)
   - 다운로드 및 설치
     ```shell
-    # wget https://dl.google.com/go/go1.13.4.linux-amd64.tar.gz
-    # tar -C /usr/local -xzf go1.13.4.linux-amd64.tar.gz
-    # export PATH=$PATH:/usr/local/go/bin
-    # which go
+    $ wget https://dl.google.com/go/go1.14.1.linux-amd64.tar.gz
+    $ tar -C /usr/local -xzf go1.13.4.linux-amd64.tar.gz
+    $ export PATH=$PATH:/usr/local/go/bin
+    $ which go
     /usr/local/go/bin/go
-    # go version
-    go version go1.13.4 linux/amd64
-    # go env
+    $ go version
+    go version go1.14.1 linux/amd64
+    $ go env
+    GO111MODULE="on"
     GOARCH="amd64"
     GOBIN=""
     GOCACHE="/root/.cache/go-build"
@@ -65,8 +66,8 @@ CB-RESTAPIGW는 PoC (Proof of Concepts) 수준의 RESTful API Gateway 기능을 
       ```
     - 적용을 위한 bash 재 실행
       ```shell
-      # source ~/.bashrc
-      # . ~/.bashrc
+      $ source ~/.bashrc
+      $ . ~/.bashrc
       ```
 
 - **소스 다운로드**
@@ -77,13 +78,13 @@ CB-RESTAPIGW는 PoC (Proof of Concepts) 수준의 RESTful API Gateway 기능을 
 - **빌드**
   - Mac 환경
     ```shell
-    # cd cb-apigw/restapigw
-    # make build
+    $ cd cb-apigw/restapigw
+    $ make build
     ```
   - Linux 환경
     ```shell
-    # cd cb-apigw/restapigw
-    # go build -tags cb-restapigw -o cb-restapigw -v
+    $ cd cb-apigw/restapigw
+    $ go build -tags cb-restapigw -o cb-restapigw -v
     ```
 
 ## [설정]
@@ -114,11 +115,11 @@ Configuration 설정은 `YAML` 포맷을 사용한다.
 
           | 설정 | 내용 | 필수 | 기본값 |
           |---|---|:-:|---|
-          | endpoint | 클라이언트에 노출할 URL | 필수 |  |
+          | endpoint | 클라이언트에 노출할 URL (".../*bypass" 로 지정하면 API G/W의 기능을 사용하지 않는 Bypass 처리로 동작) | 필수 |  |
           | method | REST 요청 메서드 (GET/PUT/POST/DELETE/...) |  | GET |
           | timeout | 엔드포인트 처리 제한 시간 </br>지정하지 않으면 서비스에 지정한 timeout 사용 |  | 2s |
-          | querystring_params | 클라이언트 요청에서 백엔드 요청으로 전달할 쿼리스트링 리스트 |  |  |
-          | headers_to_pass | 클라이언트 요청에서 백엔드 요청으로 전달할 헤더 명 리스트 |  |  |
+          | except_querystrings | 클라이언트 요청에서 백엔드 요청으로 전달할 때 제외할 쿼리스트링 리스트 (기본은 전체 전달)|  |  |
+          | except_headers | 클라이언트 요청에서 백엔드 요청으로 전달할 때 제외할 헤더 명 리스트 (기본은 전체 전달) |  |  |
 
         - Backend List
           - Backend 설정
@@ -127,14 +128,34 @@ Configuration 설정은 `YAML` 포맷을 사용한다.
             |---|---|:-:|---|
             | host | 백엔드 호스트 및 포트 </br>지정하지 않으면 서비스에 지정한 host 사용|  |  |
             | method | 백엔드 요청 메서드 </br>지정하지 않으면 endpoint에 지정된 메서드 사용  |  | GET |
-            | url_pattern | 백엔드 요청 URL 패턴 | 필수 |  |
+            | url_pattern | 백엔드 요청 URL 패턴 ("bypass" 로 지정하면 API G/W의 기능을 사용하지 않는 Bypass 처리로 동작)| 필수 |  |
             | timeout | 백엔드 처리 제한 시간 |  | 2s |
             | group | 응답 데이터를 지정한 이름으로 묶어서 반환 |  |  |
             | blacklist | 응답 데이터 중에서 제외할 필드들 </br>나머지 필드들은 그대로 반환 됨 |  |  |
             | whitelist | 응답 데이터 중에서 추출할 필드들 </br>나머지 필드들은 모두 제외 됨 |  |  |
             | mapping | 응답 데이터 중에서 지정한 필드를 지정한 이름으로 변경 |  |  |
             | target | 응답 데이터 중에서 지정한 필드만을 반환함 </br>나머지 필드들은 모두 제외 됨 |  |  |
-            | is_collection | 응답 결과가 JSON객체가 아닌 컬랙션인 경우 |  | false |
+            | wrap_collection_to_json | 응답 결과가 컬랙션인 경우에 JSON 객체로 반환 여부 (true이면 collection 을 "collection" 필드로 JSON 반환, false이면 collection 상태로 반환) |  | false |
+            | is_collection | 응답 결과가 JSON객체가 아닌 컬랙션인 경우 ("collection" 필드로 컬랙션을 Wrapping한 JSON 반환하며, mapping 정책에 따라서 필드명 변경 가능) |  | false |
+
+### Bypass 설정하는 방법
+  - 위에서 설명한 설정 중에서 Endpoint 와 Backend 설정을 조정해서 사용한다.
+  - 적용 예
+    ```yaml
+    ...
+      - endpoint: "/<prefix_url>/*bypass"
+        - backend:
+            - host: "http//<apiserver_host>:<apiserver_port>"
+              url_pattern: "*bypass"
+    ...
+
+> Notes
+> ---
+> - **<font color="red">endpoint 와 url_pattern 에는 `*bypass` 라는 접미사를 사용한다.</font>**
+> - 단일 Endpoint 기준으로 동작한다.
+> - 각 Endpoint에 대해 단일 Backend 설정만 가능하다.
+> - API G/W의 기능인 Filtering 기능 등을 사용할 수 없다. (그대로 전달하는 기능만 가능)
+> - 특정 Method로 제한할 수 없기 때문에 전체 Method를 대상으로 운영된다. (실제 API Server에서 해당 Method를 검증해야 한다)
 
 ### 현재 지원되는 Middleware 들은 다음과 같다.
 - Service 레벨
@@ -202,6 +223,7 @@ Configuration 설정은 `YAML` 포맷을 사용한다.
       mw-proxy:
         sequential: true        # 지정한 여러 백엔드를 순차적으로 처리할지 여부
     ```
+
 - Backend 레벨
   - **HTTPCACHE (Backend Reponse cache)**
     ```yaml
@@ -241,6 +263,11 @@ Configuration 설정은 `YAML` 포맷을 사용한다.
     ```
 
 ### 현재 지원되는 응답 데이터 처리용 필터들은 다음과 같다.
+
+> Notes
+> ---
+> **<font color="red">Bypass 처리를 한 경우는 특정 Endpoint, Backend를 대상으로 하는 것이 아니므로 응답 데이터 처리를 적용할 수 없다.</font>**
+
   - **whitelist** : 응답 결과중에서 추출할 필드들 지정, nested field들은 '.' 을 사용해서 설정 가능
     ```yaml
     backend:
@@ -394,7 +421,7 @@ Configuration 설정은 `YAML` 포맷을 사용한다.
       "destination_id": 1
     }
     ```
-  - is_collection: 응답의 결과가 객체가 아닌 컬랙션인 경우 "collection" 이라는 필드의 객체 형식으로 응답을 반환
+  - is_collection: 응답의 결과가 객체가 아닌 컬랙션인 경우 `wrap_collection_to_json` 설정이 true인 경우는 "collection" 이라는 필드의 객체 형식으로 응답을 반환하고, 그 외의 경우는 Array인 상태로 반환한다. `단 "collection" 필드명은 Mapping 처리를 통해서 다른 이름으로 변경 가능하다`
     ```yaml
     backend:
       - url_pattern: "/destinations/2.json"
@@ -430,7 +457,7 @@ Configuration 설정은 `YAML` 포맷을 사용한다.
       "Manhattan",
       "Grand Canyon"
     ]
-    # 필터링된 데이터
+    # 필터링된 데이터 (wrap_collection_to_json = true인 경우)
     {
       "collection": [
         "Mount Rushmore",
@@ -734,6 +761,14 @@ Configuration 설정은 `YAML` 포맷을 사용한다.
             - https://api.github.com
           url_pattern: "/users/{user}"
           disable_host_sanitize: true
+    - endpoint: "/collection"
+      method: GET
+      backend:
+        - url_pattern: "/destinations/2.json"
+          wrap_collection_to_json: true
+          is_collection: true
+          mapping:
+            "collection": "data"
     - endpoint: "/private/custom"
       backend:
         - url_pattern: "/user/1.json"
@@ -747,15 +782,20 @@ Configuration 설정은 `YAML` 포맷을 사용한다.
 
 ## [실행]
 
-> Notes
-> ---
-> 실행 및 테스트는 다음과 같은 오픈 소스들을 사용한다.
-> - 내부 API 서버는 **jaxgeller/lwan** Docker image를 사용해서 Fake API로 사용.
-> - 서비스 Metrics는 **InfluxDB + Grafana** 를 사용.
-> - Trace 정보는 **Opencensus + Jaeger** 를 사용.
-> 
-> <b>테스트를 위한 설정은 /deploy/docker-compose.yaml을 기준으로 Fake-API 부분을 용도에 맞도록 변경하고 설정을 맞춰서 사용.</b>
-> <b>HMAC 관련된 Server 기능은 내부 테스트를 위한 것으로 공식적으로는 지원하지 않음.</b>
+### Background 서비스들 실행
+
+- 내부 API 서버 (Fake API) 는 **jaxgeller/lwan** Docker image를 사용해서 Fake API로 사용.
+- API G/W Metrics는 **InfluxDB + Grafana** 를 사용.
+- API G/W Trace 정보는 **Opencensus + Jaeger** 를 사용.
+
+API G/W 실행 테스트를 위한 백그라운드 서비스들은 `Deploy` 폴더에 구성되어 있으므로 이를 활용한다.
+
+- <b>테스트를 위한 설정은 /deploy/docker-compose.yaml을 기준으로 Fake-API 부분을 용도에 맞도록 변경하고 설정을 맞춰서 사용.</b>
+- <b>HMAC 관련된 Server 기능은 내부 테스트를 위한 것으로 공식적으로는 지원하지 않음.</b>
+
+실행 방법은 deploy/READ.md 참조
+
+### 소스 빌드 및 실행
 
 - **실행 명령**
   - 바이너리 빌드
@@ -797,7 +837,6 @@ Configuration 설정은 `YAML` 포맷을 사용한다.
   - [Postman으로 작성된 문서](https://documenter.getpostman.com/view/1735092/SW15wbJf?version=latest#c720d518-1830-4283-b512-5153ef879747)를 참고
   - _**HMAC 적용 부분은 내부 검증용으로 공식적으로는 지원하지 않음**_
   - API 호출의 결과는 CB-RESTAPIGW 수행 기준으로 판단한다.
-    
 
 - **클라이언트의 결과 확인**
 
@@ -814,3 +853,18 @@ Configuration 설정은 `YAML` 포맷을 사용한다.
     - Response Header의 오류 메시지 여부 **`(X-Cb-Restapigw-Messages)`**
       - 각 Backend 별 발생한 오류 메시지를 **"\n"** 구분자로 연결한 문자열 처리
       - 모두 정상이라면 **`(X-Cb-Restapigw-Messages)`** Header 정보가 존재하지 않는다.
+
+### Docker Container 실행
+
+백그라운드 서비스들을 구동한 후에 API G/W를 Docker 기반으로 생성하여 실행한다.
+
+1. Docker Image 생성
+   ```shell
+   docker build -t cb-restapigw -f ./Dockerfile .
+   ```
+
+2. Docker Contaienr 실행
+   ```shell
+   docker run --network deploy_default -p 8000:8000 cb-restapigw
+   ```
+   * 상기 명령어의 `--network deploy_default` 는 Background 서비스가 docker-compose로 동작하면서 구성된 Docker Bridge Network의 이름이다. 별도 옵션을 주지 않았기 때문에 folder 명을 기준으로 생성된 이름을 가진다.
