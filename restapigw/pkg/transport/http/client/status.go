@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
 )
 
 // ===== [ Constants and Variables ] =====
@@ -59,7 +60,14 @@ func (r HTTPResponseError) StatusCode() int {
 // DefaultHTTPStatusHandler - Request/Response 기준으로 StatusCode를 처리하는 기본 HTTPStatusHandler
 func DefaultHTTPStatusHandler(ctx context.Context, resp *http.Response) (*http.Response, error) {
 	if resp == nil || (resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated) {
-		// TODO: 반환된 결과를 그대로 반환하는 것도 검토해 볼 필요 있음
+		if resp != nil {
+			msg, err := core.GetResponseString(resp)
+			if err != nil {
+				return nil, ErrInvalidStatusCode
+			}
+
+			return nil, core.NewWrappedError(resp.StatusCode, msg, ErrInvalidStatusCode)
+		}
 		return nil, ErrInvalidStatusCode
 	}
 	return resp, nil

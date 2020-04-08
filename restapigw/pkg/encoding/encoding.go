@@ -15,7 +15,7 @@ var (
 	// 기본 Decoder들을 관리하는 Registry
 	decoders = initDecoderRegister()
 	// 기본 제공되는 Decoder들 정의
-	defaultDecoders = map[string]func(bool) func(io.Reader, *map[string]interface{}) error{
+	defaultDecoders = map[string]func(bool, bool) func(io.Reader, *map[string]interface{}) error{
 		JSON:   NewJSONDecoder,
 		STRING: NewStringDecoder,
 		NOOP:   noOpDecoderFactory,
@@ -28,19 +28,21 @@ var (
 type Decoder func(io.Reader, *map[string]interface{}) error
 
 // DecoderFactory - CollectionDecoder나 EntityDecoder를 반환하는 함수 형식
-type DecoderFactory func(bool) func(io.Reader, *map[string]interface{}) error
+type DecoderFactory func(bool, bool) func(io.Reader, *map[string]interface{}) error
 
 // ===== [ Implementations ] =====
 
 // ===== [ Private Functions ] =====
 
 // noOpDecoderFactory - NO-OP Decoder를 반환하는 팩토리
-func noOpDecoderFactory(_ bool) func(io.Reader, *map[string]interface{}) error { return NoOpDecoder }
+func noOpDecoderFactory(_ bool, _ bool) func(io.Reader, *map[string]interface{}) error {
+	return NoOpDecoder
+}
 
 // ===== [ Public Functions ] =====
 
 // Register - 지정된 이름으로 Decoder 등록
-func Register(name string, dec func(bool) func(io.Reader, *map[string]interface{}) error) error {
+func Register(name string, dec func(bool, bool) func(io.Reader, *map[string]interface{}) error) error {
 	return decoders.Register(name, dec)
 }
 

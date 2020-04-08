@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/encoding"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/proxy"
 	"github.com/gin-gonic/gin"
@@ -68,7 +69,17 @@ func jsonRender(c *gin.Context, res *proxy.Response) {
 		c.JSON(status, emptyResponse)
 		return
 	}
-	c.JSON(status, res.Data)
+
+	// WrappingTag가 설정된 경우는 Array인 상태로 반환한다.
+	var data interface{}
+	if v, ok := res.Data[core.WrappingTag]; ok {
+		delete(res.Data, core.WrappingTag)
+		data = res.Data[v.(string)]
+	} else {
+		data = res.Data
+	}
+
+	c.JSON(status, data)
 }
 
 // stringRender - 단순 문자열에 대한 Render 처리

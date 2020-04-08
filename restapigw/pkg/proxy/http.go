@@ -9,7 +9,9 @@ import (
 	"strings"
 
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/encoding"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/transport/http/client"
 )
 
@@ -22,6 +24,13 @@ type responseError interface {
 	Error() string
 	Name() string
 	StatusCode() int
+}
+
+// wrappedError - Defines interface for Wrapped response error
+type wrappedError interface {
+	Error() error
+	StatusCode() int
+	Message() string
 }
 
 // ===== [ Implementations ] =====
@@ -44,12 +53,14 @@ func NewHTTPProxyWithHTTPExecutor(bconf *config.BackendConfig, hre client.HTTPRe
 // NewHTTPProxyDetailed - 지정된 BackendConfig와 HTTP Reqeust Executor와 응답 처리에 사용할 StatusHandler, Response Parser를 설정한 Proxy 반환
 func NewHTTPProxyDetailed(bconf *config.BackendConfig, hre client.HTTPRequestExecutor, hsh client.HTTPStatusHandler, hrp HTTPResponseParser) Proxy {
 	return func(ctx context.Context, req *Request) (*Response, error) {
+		logger := logging.NewLogger()
+
 		reqToBackend, err := http.NewRequest(strings.ToTitle(req.Method), req.URL.String(), req.Body)
 		if err != nil {
 			return nil, err
 		}
 
-		// Header 정보 설정
+		// Backend 호출에 필요한 Header 정보 설정
 		reqToBackend.Header = make(map[string][]string, len(req.Headers))
 		for k, v := range req.Headers {
 			tmp := make([]string, len(v))
@@ -66,7 +77,7 @@ func NewHTTPProxyDetailed(bconf *config.BackendConfig, hre client.HTTPRequestExe
 			}
 		}
 
-		// Query String 정보 설정
+		// Backend 호출에 필요한 Query String 정보 설정
 		if req.Query != nil {
 			q := reqToBackend.URL.Query()
 			for k, v := range req.Query {
@@ -74,6 +85,8 @@ func NewHTTPProxyDetailed(bconf *config.BackendConfig, hre client.HTTPRequestExe
 			}
 			reqToBackend.URL.RawQuery = q.Encode()
 		}
+
+		logger.Debugf(">> Backend call url : %s", reqToBackend.URL.String())
 
 		// Backed 호출
 		resp, err := hre(ctx, reqToBackend)
@@ -102,7 +115,9 @@ func NewHTTPProxyDetailed(bconf *config.BackendConfig, hre client.HTTPRequestExe
 						fmt.Sprintf("error_%s", t.Name()): t,
 					},
 					Metadata: Metadata{StatusCode: t.StatusCode()},
-				}, nil
+				}, err
+			} else if we, ok := err.(core.WrappedError); ok {
+				return nil, we
 			}
 			return nil, err
 		}
@@ -112,7 +127,7 @@ func NewHTTPProxyDetailed(bconf *config.BackendConfig, hre client.HTTPRequestExe
 	}
 }
 
-// NewRequestBuilderChain - Creates a proxy chain that parses the request params received from the outter layer and generates the path to the backend endpoint
+// NewRequestBuilderChain - Request 파라미터와 Backend Path를 설정한 Proxy 호출 체인을 생성한다.
 func NewRequestBuilderChain(bConf *config.BackendConfig) CallChain {
 	return func(next ...Proxy) Proxy {
 		if len(next) > 1 {
@@ -120,8 +135,11 @@ func NewRequestBuilderChain(bConf *config.BackendConfig) CallChain {
 		}
 		return func(ctx context.Context, req *Request) (*Response, error) {
 			r := req.Clone()
-			r.GeneratePath(bConf.URLPattern)
-			r.Method = bConf.Method
+			// Bypass가 아닌 경우는 Path와 Method를 설정에 맞도록 재 구성
+			if !req.IsBypass {
+				r.GeneratePath(bConf.URLPattern)
+				r.Method = bConf.Method
+			}
 
 			// =====
 			// FIXME: Loadbalancer가 추가되면 아래의 부분은 Loadbalancer 처리로 대체

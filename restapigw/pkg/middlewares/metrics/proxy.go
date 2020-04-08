@@ -87,20 +87,27 @@ func NewProxyMetrics(parent *metrics.Registry) *ProxyMetrics {
 
 // NewProxyCallChain - Metrics 처리를 수행하는 Proxy 호출 체인 생성
 func NewProxyCallChain(layer, name string, pm *ProxyMetrics) proxy.CallChain {
-	registerProxyCallChainMetrics(layer, name, pm)
 	return func(next ...proxy.Proxy) proxy.Proxy {
 		if len(next) > 1 {
 			panic(proxy.ErrTooManyProxies)
 		}
 
 		return func(ctx context.Context, request *proxy.Request) (*proxy.Response, error) {
+			// Bypass Backend URLPattern을 실제 URL Path로 변경
+			urlPath := name
+			if request.IsBypass || layer == "pipe" {
+				urlPath = request.Path
+			}
+
+			registerProxyCallChainMetrics(layer, urlPath, pm)
+
 			begin := time.Now()
 			resp, err := next[0](ctx, request)
 
 			go func(duration int64, resp *proxy.Response, err error) {
 				errored := strconv.FormatBool(err != nil)
 				completed := strconv.FormatBool(resp != nil && resp.IsComplete)
-				labels := "layer." + layer + ".name." + name + ".complete." + completed + ".error." + errored
+				labels := "layer." + layer + ".name." + urlPath + ".complete." + completed + ".error." + errored
 				pm.Counter("requests." + labels).Inc(1)
 				pm.Histogram("latency." + labels).Update(duration)
 			}(time.Since(begin).Nanoseconds(), resp, err)

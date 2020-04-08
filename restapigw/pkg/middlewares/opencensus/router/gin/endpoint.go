@@ -29,6 +29,7 @@ type handler struct {
 	Handler          gin.HandlerFunc
 	StartOptions     trace.StartOptions
 	IsPublicEndpoint bool
+	IsByPassEndpoint bool
 }
 
 // ===== [ Implementations ] =====
@@ -48,6 +49,11 @@ func (h *handler) HandlerFunc(c *gin.Context) {
 
 // startTrace - 지정된 Gin ResponseWriter와 Http Request 정보를 Trace 정보와 연동될 수 있도록 처리
 func (h *handler) startTrace(_ gin.ResponseWriter, r *http.Request) (*http.Request, func()) {
+	// Bypass인 경우는 Handler Name을 실제 호출 경로로 변경한다.
+	if h.IsByPassEndpoint {
+		h.name = "[endpoint] " + r.URL.Path
+	}
+
 	ctx := r.Context()
 	var span *trace.Span
 	sc, ok := h.extractSpanContext(r)
@@ -64,6 +70,7 @@ func (h *handler) startTrace(_ gin.ResponseWriter, r *http.Request) (*http.Reque
 			})
 		}
 	}
+
 	span.AddAttributes(requestAttrs(r)...)
 	return r.WithContext(ctx), span.End
 }
@@ -130,6 +137,7 @@ func HandlerFunc(eConf *config.EndpointConfig, next gin.HandlerFunc, hf propagat
 		StartOptions: trace.StartOptions{
 			SpanKind: trace.SpanKindServer,
 		},
+		IsByPassEndpoint: eConf.IsBypass,
 	}
 	return h.HandlerFunc
 }

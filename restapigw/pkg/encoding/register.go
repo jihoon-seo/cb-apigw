@@ -18,16 +18,16 @@ type DecoderRegister struct {
 // ===== [ Implementations ] =====
 
 // Register - 지정한 이름으로 Decorder 등록 구현
-func (r *DecoderRegister) Register(name string, dec func(bool) func(io.Reader, *map[string]interface{}) error) error {
+func (r *DecoderRegister) Register(name string, dec func(bool, bool) func(io.Reader, *map[string]interface{}) error) error {
 	r.data.Register(name, dec)
 	return nil
 }
 
 // Get - 지정한 이름에 해당하는 Decoder 반환
-func (r *DecoderRegister) Get(name string) func(bool) func(io.Reader, *map[string]interface{}) error {
+func (r *DecoderRegister) Get(name string) func(bool, bool) func(io.Reader, *map[string]interface{}) error {
 	for _, n := range []string{name, JSON} {
 		if v, ok := r.data.Get(n); ok {
-			if dec, ok := v.(func(bool) func(io.Reader, *map[string]interface{}) error); ok {
+			if dec, ok := v.(func(bool, bool) func(io.Reader, *map[string]interface{}) error); ok {
 				return dec
 			}
 		}

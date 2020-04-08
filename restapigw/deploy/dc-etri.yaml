@@ -34,6 +34,7 @@ services:
       - "14268:14268"
       - "16686:16686"
 
+  # Fake API
   fake_api:
     image: jaxgeller/lwan
     container_name: fake_api
@@ -41,13 +42,25 @@ services:
       - ./data/lwan:/lwan/wwwroot
     ports:
       - "8100:8080"
-    
-  hmac_site:
-    build:
-      context: ./web
-    container_name: hmac_server
-    volumes:
-      - ./web/public:/app/public
-      - ./web/conf:/app/conf
+
+  # CB-SPIDER
+  cb-spider:
+    image: cloudbaristahub/cb-spider:v0.1.2-20200403
+    container_name: cb-spider
     ports:
-      - "8010:8010"
+      - "1024:1024"
+    volumes:
+      - ./data/cb-spider:/root/go/src/github.com/cloud-barista/cb-spider/meta_db/dat
+
+  # CB-TUMBLEBUG
+  cb-tumblebug:
+    image: cloudbaristahub/cb-tumblebug:v0.1-20200327    
+    container_name: cb-tumblebug
+    ports:
+      - "1323:1323"
+    volumes:
+      - ./data/cb-tumblebug:/app/meta_db/dat
+    environment:
+      - SPIDER_URL=http://192.168.1.32:8000/spider
+    depends_on:
+      - cb-spider

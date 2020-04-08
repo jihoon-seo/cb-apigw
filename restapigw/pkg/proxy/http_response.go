@@ -1,3 +1,4 @@
+// Package proxy - Backend의 반환 결과를 Router에서 처리하기 위한 Response 객체로 변환처리하는 패키지
 package proxy
 
 import (
@@ -48,6 +49,7 @@ func DefaultHTTPResponseParserFactory(conf HTTPResponseParserConfig) HTTPRespons
 		if err != nil {
 			return nil, err
 		}
+
 		newResponse := Response{Data: data, IsComplete: true}
 		newResponse = conf.EntityFormatter.Format(newResponse)
 		return &newResponse, nil

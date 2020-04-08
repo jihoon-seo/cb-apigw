@@ -1,9 +1,11 @@
+// Package proxy - Backend 결과에 대한 Mapping, Whitelist, Blacklist 등의 처리를 수행하는 Formatter 패키지
 package proxy
 
 import (
 	"strings"
 
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core/flatmap/tree"
 )
 
@@ -57,6 +59,12 @@ func (ef entityFormatter) Format(resEntity Response) Response {
 		// Mapping 처리
 		for formerKey, newKey := range ef.Mapping {
 			if v, ok := resEntity.Data[formerKey]; ok {
+				// Collection Wrapping에 대한 정보 재 처리
+				if _, ok := resEntity.Data[core.CollectionTag]; ok {
+					if _, ok := resEntity.Data[core.WrappingTag]; ok {
+						resEntity.Data[core.WrappingTag] = newKey
+					}
+				}
 				resEntity.Data[newKey] = v
 				delete(resEntity.Data, formerKey)
 			}

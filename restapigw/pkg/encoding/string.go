@@ -31,6 +31,6 @@ func StringDecoder(r io.Reader, v *map[string]interface{}) error {
 }
 
 // NewStringDecoder - 단순 문자열을 위한 Decoder 생성
-func NewStringDecoder(_ bool) func(io.Reader, *map[string]interface{}) error {
+func NewStringDecoder(_ bool, _ bool) func(io.Reader, *map[string]interface{}) error {
 	return StringDecoder
 }
