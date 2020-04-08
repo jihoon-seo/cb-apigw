@@ -140,8 +140,27 @@ $ docker-compose down
             | whitelist | 응답 데이터 중에서 추출할 필드들 </br>나머지 필드들은 모두 제외 됨 |  |  |
             | mapping | 응답 데이터 중에서 지정한 필드를 지정한 이름으로 변경 |  |  |
             | target | 응답 데이터 중에서 지정한 필드만을 반환함 </br>나머지 필드들은 모두 제외 됨 |  |  |
-            | is_collection | 응답 결과가 JSON객체가 아닌 컬랙션인 경우 |  | false |
-            | wrap_collection_to_json | 응답 결과가 Array인 경우 (is_collection: true) 에 응답을 core.CollectionTag ("collection") 으로 묶은 JSON 객체로 전환할지 여부 |  | true |
+            | wrap_collection_to_json | 응답 결과가 컬랙션인 경우에 JSON 객체로 반환 여부 (true이면 collection 을 "collection" 필드로 JSON 반환, false이면 collection 상태로 반환) |  | false |
+            | is_collection | 응답 결과가 JSON객체가 아닌 컬랙션인 경우 ("collection" 필드로 컬랙션을 Wrapping한 JSON 반환하며, mapping 정책에 따라서 필드명 변경 가능) |  | false |
+
+### Bypass 설정하는 방법
+  - 위에서 설명한 설정 중에서 Endpoint 와 Backend 설정을 조정해서 사용한다.
+  - 적용 예
+    ```yaml
+    ...
+      - endpoint: "/<prefix_url>/*bypass"
+        - backend:
+            - host: "http//<apiserver_host>:<apiserver_port>"
+              url_pattern: "*bypass"
+    ...
+
+> Notes
+> ---
+> - **<font color="red">endpoint 와 url_pattern 에는 `*bypass` 라는 접미사를 사용한다.</font>**
+> - 단일 Endpoint 기준으로 동작한다.
+> - 각 Endpoint에 대해 단일 Backend 설정만 가능하다.
+> - API G/W의 기능인 Filtering 기능 등을 사용할 수 없다. (그대로 전달하는 기능만 가능)
+> - 특정 Method로 제한할 수 없기 때문에 전체 Method를 대상으로 운영된다. (실제 API Server에서 해당 Method를 검증해야 한다)
 
 ### Bypass 설정하는 방법
   - 위에서 설명한 설정 중에서 Endpoint 와 Backend 설정을 조정해서 사용한다.
@@ -267,6 +286,11 @@ $ docker-compose down
     ```
 
 ### 현재 지원되는 응답 데이터 처리용 필터들은 다음과 같다.
+
+> Notes
+> ---
+> **<font color="red">Bypass 처리를 한 경우는 특정 Endpoint, Backend를 대상으로 하는 것이 아니므로 응답 데이터 처리를 적용할 수 없다.</font>**
+
   - **whitelist** : 응답 결과중에서 추출할 필드들 지정, nested field들은 '.' 을 사용해서 설정 가능
     ```yaml
     backend:
