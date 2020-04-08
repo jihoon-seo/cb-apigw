@@ -23,8 +23,20 @@ $ docker-compose up --build
 
 실행된 어플리케이션은 다음과 같습니다.
 
-- **<font color="red">RESTAPIGW : localhost:8000</font>**
-  - REST API G/W 서비스입니다. cb-spider 및 cb-tumblebug를 호출합니다.
+> Notes
+> ---
+> Background 서비스들을 실행하는 배포입니다.  
+> Background 서비스들을 docker-compose로 실행한 후에 아래의 명령으로 API G/W를 별도 컨테이너로 구동해서 테스트를 진행합니다.  
+> 
+> ```shell
+> $ cd ..
+> # Docker Image Build
+> $ docker build -t cb-restapigw .
+> # Docker Container 실행
+> $ docker run -itd --network deploy_default -p 8000:8000 cb-restapigw
+> ```
+>
+
 - **<font color="red">InfluxDB : localhost:8086</font>**
   -  RESTAPIGW에서 Metrics 데이터를 저장하는 DB 서버입니다.
 - **<font color="red">Grafana : localhost:3100</font>**
