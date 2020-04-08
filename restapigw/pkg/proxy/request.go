@@ -12,13 +12,14 @@ import (
 
 // Request - Proxy 구간에서 사용할 Request 구조
 type Request struct {
-	Method  string
-	URL     *url.URL
-	Query   url.Values
-	Path    string
-	Body    io.ReadCloser
-	Params  map[string]string
-	Headers map[string][]string
+	IsBypass bool
+	Method   string
+	URL      *url.URL
+	Query    url.Values
+	Path     string
+	Body     io.ReadCloser
+	Params   map[string]string
+	Headers  map[string][]string
 }
 
 // ===== [ Implementations ] =====
@@ -44,13 +45,14 @@ func (r *Request) GeneratePath(urlPattern string) {
 // Clone - Request 복제 (단, Thread-safe가 아니므로 Thread-safe가 필요한 경우는 "CloneRequest" 사용)
 func (r *Request) Clone() Request {
 	return Request{
-		Method:  r.Method,
-		URL:     r.URL,
-		Query:   r.Query,
-		Path:    r.Path,
-		Body:    r.Body,
-		Params:  r.Params,
-		Headers: r.Headers,
+		IsBypass: r.IsBypass,
+		Method:   r.Method,
+		URL:      r.URL,
+		Query:    r.Query,
+		Path:     r.Path,
+		Body:     r.Body,
+		Params:   r.Params,
+		Headers:  r.Headers,
 	}
 }
 

@@ -45,7 +45,7 @@ services:
 
   # CB-SPIDER
   cb-spider:
-    image: cloudbaristahub/cb-spider:v0.1-20200319
+    image: cloudbaristahub/cb-spider:v0.1-20200326    
     container_name: cb-spider
     ports:
       - "1024:1024"
@@ -54,7 +54,7 @@ services:
 
   # CB-TUMBLEBUG
   cb-tumblebug:
-    image: cloudbaristahub/cb-tumblebug:v0.1-20200313
+    image: cloudbaristahub/cb-tumblebug:v0.1-20200327    
     container_name: cb-tumblebug
     ports:
       - "1323:1323"

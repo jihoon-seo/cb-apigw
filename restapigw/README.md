@@ -8,50 +8,6 @@ CB-RESTAPIGW는 PoC (Proof of Concepts) 수준의 RESTful API Gateway 기능을 
 - [설정](#설정)
 - [실행](#실행)
 
-## Tasks
-
-- `4월`까지 적용할 대상
-  - ~~#1. QueryString 누락되는 부분 처리~~
-    - ~~#1.1. Header, QueryString은 기본적으로 통과시킨다.~~
-    - ~~#1.2. Configuration 상에 Blacklist를 관리한다.~~
-    - ~~#1.3. Blacklist를 기준으로 Header, QueryString을 제외처리한다.~~
-  - #2. Json Array Return 처리 방식
-    - #2.1. Configuration에 array_to_json: true/false 를 설정해서 Array 반환여부를 결정한다.
-    - #2.2. is_collection은 Backend의 반환이 Array인지 여부를 판단하는 것으로 한정한다.
-    - #2.3. array_to_json 과 is_collection 을 복합해서 결과를 구성한다.
-      - is_collection: true 인 경우
-        - array_to_json: true 인 경우 반환값 >>> { "collection" = [ ... ] }
-        - array_to_json: false 인 경우 반환값 >>> [ ... ]
-      - is_collection: false 인 경우 (Default)
-        - array_to_jon 설정에 관계없이 Backend 반환을 그대로 사용
-  - #3. Bypass Routing 규칙 적용
-    - #3.1. "spider/...", "tumblebug/..." 과 같이 추가 설정 없이 그대로 통과시키는 Routing 규칙 구성
-    - #3.2. #1에 언급한 경우는 무조건 통과 처리를 하는 것으로 구성. (개별적인 설정을 할 수 없음. N개의 구성이 1개의 구성으로 통합되는 형식이므로 무조건 통과)
-    - #3.3. Backend에서 반환되는 결과 값들도 모두 그대로 전달. (개별적인 설정을 할 수 없음. N개의 구성이 1개의 구성으로 통합되는 형식이므로 무조건 통과)
-  - #4. Rate Limit 규칙 적용
-    - #4.1. Rate Limit의 기준은 `초당 호출 건 수`를 기준으로 적용한다.
-    - #4.2. Rate Limit 측정 대상은 2개로 나눈다.
-      - #4.2.1 `maxRate` 는 전체 호출을 기준으로 한다. (Endpoint 호출 기준)
-      - #4.2.2 `clientMaxRate` 는 특정 식별 가능한 클라이언트 호출을 기준으로 한다. (Endpoint by client 호출 기준)
-        - #4.2.2.1. 클라이언트를 IP 기준으로 식별 : `Client IP`
-        - #4.2.2.2. 클라이언트를 특정 Header를 기준으로 식별 : `Header key/value`
-    - #4.3. Limit를 초과하는 경우
-      - #4.3.1. maxRate 설정을 초과하는 경우는 `503: Service unavailable` 반환
-      - #4.3.2. clientMaxRate 설정을 초과하는 경우는 `429: Too many request` 반환
-
-
-- `10월`까지 적용할 대상
-
-  - $5. 구조 재 설계 (엔진 교체) 및 Pluggable Architecture 적용
-  - #6. 동적 구성 (관리 API, Route 정보 저장, 관리 API)
-  - #7. Global Tracing (PoC)
-  - #8. Load Balancing
-  
-- `차기 년도 (3rd)` 적용 대상
-  - Circuit Breaker (Sidecar 방식?)
-  - Auth (JWT 발급/인증/관리, 관련 서버 및 UI-사용자관리용)
-
-
 ## [설치]
 
 설치는 Ubuntu 18.04 기준으로 한다.
@@ -63,17 +19,18 @@ CB-RESTAPIGW는 PoC (Proof of Concepts) 수준의 RESTful API Gateway 기능을 
   ```
 
 - **Go 설치 (v1.12 이상)**
-  - https://golang.org/dl 에서 최신 버전 확인 (현재 1.13.4)
+  - https://golang.org/dl 에서 최신 버전 확인 (현재 1.14.1)
   - 다운로드 및 설치
     ```shell
-    # wget https://dl.google.com/go/go1.13.4.linux-amd64.tar.gz
-    # tar -C /usr/local -xzf go1.13.4.linux-amd64.tar.gz
-    # export PATH=$PATH:/usr/local/go/bin
-    # which go
+    $ wget https://dl.google.com/go/go1.14.1.linux-amd64.tar.gz
+    $ tar -C /usr/local -xzf go1.13.4.linux-amd64.tar.gz
+    $ export PATH=$PATH:/usr/local/go/bin
+    $ which go
     /usr/local/go/bin/go
-    # go version
-    go version go1.13.4 linux/amd64
-    # go env
+    $ go version
+    go version go1.14.1 linux/amd64
+    $ go env
+    GO111MODULE="on"
     GOARCH="amd64"
     GOBIN=""
     GOCACHE="/root/.cache/go-build"
@@ -109,8 +66,8 @@ CB-RESTAPIGW는 PoC (Proof of Concepts) 수준의 RESTful API Gateway 기능을 
       ```
     - 적용을 위한 bash 재 실행
       ```shell
-      # source ~/.bashrc
-      # . ~/.bashrc
+      $ source ~/.bashrc
+      $ . ~/.bashrc
       ```
 
 - **소스 다운로드**
@@ -121,13 +78,13 @@ CB-RESTAPIGW는 PoC (Proof of Concepts) 수준의 RESTful API Gateway 기능을 
 - **빌드**
   - Mac 환경
     ```shell
-    # cd cb-apigw/restapigw
-    # make build
+    $ cd cb-apigw/restapigw
+    $ make build
     ```
   - Linux 환경
     ```shell
-    # cd cb-apigw/restapigw
-    # go build -tags cb-restapigw -o cb-restapigw -v
+    $ cd cb-apigw/restapigw
+    $ go build -tags cb-restapigw -o cb-restapigw -v
     ```
 
 ## [설정]
@@ -158,7 +115,7 @@ Configuration 설정은 `YAML` 포맷을 사용한다.
 
           | 설정 | 내용 | 필수 | 기본값 |
           |---|---|:-:|---|
-          | endpoint | 클라이언트에 노출할 URL | 필수 |  |
+          | endpoint | 클라이언트에 노출할 URL (".../*bypass" 로 지정하면 API G/W의 기능을 사용하지 않는 Bypass 처리로 동작) | 필수 |  |
           | method | REST 요청 메서드 (GET/PUT/POST/DELETE/...) |  | GET |
           | timeout | 엔드포인트 처리 제한 시간 </br>지정하지 않으면 서비스에 지정한 timeout 사용 |  | 2s |
           | except_querystrings | 클라이언트 요청에서 백엔드 요청으로 전달할 때 제외할 쿼리스트링 리스트 (기본은 전체 전달)|  |  |
@@ -171,14 +128,34 @@ Configuration 설정은 `YAML` 포맷을 사용한다.
             |---|---|:-:|---|
             | host | 백엔드 호스트 및 포트 </br>지정하지 않으면 서비스에 지정한 host 사용|  |  |
             | method | 백엔드 요청 메서드 </br>지정하지 않으면 endpoint에 지정된 메서드 사용  |  | GET |
-            | url_pattern | 백엔드 요청 URL 패턴 | 필수 |  |
+            | url_pattern | 백엔드 요청 URL 패턴 ("bypass" 로 지정하면 API G/W의 기능을 사용하지 않는 Bypass 처리로 동작)| 필수 |  |
             | timeout | 백엔드 처리 제한 시간 |  | 2s |
             | group | 응답 데이터를 지정한 이름으로 묶어서 반환 |  |  |
             | blacklist | 응답 데이터 중에서 제외할 필드들 </br>나머지 필드들은 그대로 반환 됨 |  |  |
             | whitelist | 응답 데이터 중에서 추출할 필드들 </br>나머지 필드들은 모두 제외 됨 |  |  |
             | mapping | 응답 데이터 중에서 지정한 필드를 지정한 이름으로 변경 |  |  |
             | target | 응답 데이터 중에서 지정한 필드만을 반환함 </br>나머지 필드들은 모두 제외 됨 |  |  |
-            | is_collection | 응답 결과가 JSON객체가 아닌 컬랙션인 경우 |  | false |
+            | wrap_collection_to_json | 응답 결과가 컬랙션인 경우에 JSON 객체로 반환 여부 (true이면 collection 을 "collection" 필드로 JSON 반환, false이면 collection 상태로 반환) |  | false |
+            | is_collection | 응답 결과가 JSON객체가 아닌 컬랙션인 경우 ("collection" 필드로 컬랙션을 Wrapping한 JSON 반환하며, mapping 정책에 따라서 필드명 변경 가능) |  | false |
+
+### Bypass 설정하는 방법
+  - 위에서 설명한 설정 중에서 Endpoint 와 Backend 설정을 조정해서 사용한다.
+  - 적용 예
+    ```yaml
+    ...
+      - endpoint: "/<prefix_url>/*bypass"
+        - backend:
+            - host: "http//<apiserver_host>:<apiserver_port>"
+              url_pattern: "*bypass"
+    ...
+
+> Notes
+> ---
+> - **<font color="red">endpoint 와 url_pattern 에는 `*bypass` 라는 접미사를 사용한다.</font>**
+> - 단일 Endpoint 기준으로 동작한다.
+> - 각 Endpoint에 대해 단일 Backend 설정만 가능하다.
+> - API G/W의 기능인 Filtering 기능 등을 사용할 수 없다. (그대로 전달하는 기능만 가능)
+> - 특정 Method로 제한할 수 없기 때문에 전체 Method를 대상으로 운영된다. (실제 API Server에서 해당 Method를 검증해야 한다)
 
 ### 현재 지원되는 Middleware 들은 다음과 같다.
 - Service 레벨
@@ -246,6 +223,7 @@ Configuration 설정은 `YAML` 포맷을 사용한다.
       mw-proxy:
         sequential: true        # 지정한 여러 백엔드를 순차적으로 처리할지 여부
     ```
+
 - Backend 레벨
   - **HTTPCACHE (Backend Reponse cache)**
     ```yaml
@@ -285,6 +263,7 @@ Configuration 설정은 `YAML` 포맷을 사용한다.
     ```
 
 ### 현재 지원되는 응답 데이터 처리용 필터들은 다음과 같다.
+  **`Bypass 처리를 한 경우는 특정 Endpoint와 Backend 정보를 대상으로 하는 것이 아니므로 사용할 수 없다`**
   - **whitelist** : 응답 결과중에서 추출할 필드들 지정, nested field들은 '.' 을 사용해서 설정 가능
     ```yaml
     backend:
@@ -438,7 +417,7 @@ Configuration 설정은 `YAML` 포맷을 사용한다.
       "destination_id": 1
     }
     ```
-  - is_collection: 응답의 결과가 객체가 아닌 컬랙션인 경우 `wrap_collection_to_json` 설정이 true인 경우는 "collection" 이라는 필드의 객체 형식으로 응답을 반환하고, 그 외의 경우는 Array인 상태로 반환한다.
+  - is_collection: 응답의 결과가 객체가 아닌 컬랙션인 경우 `wrap_collection_to_json` 설정이 true인 경우는 "collection" 이라는 필드의 객체 형식으로 응답을 반환하고, 그 외의 경우는 Array인 상태로 반환한다. `단 "collection" 필드명은 Mapping 처리를 통해서 다른 이름으로 변경 가능하다`
     ```yaml
     backend:
       - url_pattern: "/destinations/2.json"
@@ -778,6 +757,14 @@ Configuration 설정은 `YAML` 포맷을 사용한다.
             - https://api.github.com
           url_pattern: "/users/{user}"
           disable_host_sanitize: true
+    - endpoint: "/collection"
+      method: GET
+      backend:
+        - url_pattern: "/destinations/2.json"
+          wrap_collection_to_json: true
+          is_collection: true
+          mapping:
+            "collection": "data"
     - endpoint: "/private/custom"
       backend:
         - url_pattern: "/user/1.json"

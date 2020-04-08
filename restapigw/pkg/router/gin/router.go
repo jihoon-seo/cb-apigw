@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/proxy"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/router"
@@ -79,7 +80,6 @@ func (pc PipeConfig) registerEndpoints(eConfs []*config.EndpointConfig) {
 			continue
 		}
 
-		// TODO: Bypass인 경우는 Path Prefix만 처리하는 것으로 조정
 		if eConf.IsBypass {
 			// Bypass case
 			pc.registerGroup(eConf.Endpoint, pc.HandlerFactory(eConf, proxyStack), len(eConf.Backend))
@@ -90,16 +90,19 @@ func (pc PipeConfig) registerEndpoints(eConfs []*config.EndpointConfig) {
 	}
 }
 
-// registerGroup - IsBypass인 경우는 Group 단위로 Gin Engine에 Endpoint Handler 등록
+// registerGroup - Bypass인 경우는 Group 단위로 Gin Engine에 Endpoint Handler 등록
 func (pc PipeConfig) registerGroup(path string, handler gin.HandlerFunc, totBackends int) {
 	if totBackends > 1 {
 		pc.Logger.Error("Bypass endpoint must have a single backend! Ignoring", path)
 		return
 	}
 
-	// FIXME: Bypass는 Backend에서 실제 원하는 Method를 제어하지 못한다. 즉, 허용되지 않는 Method 호출이 발생할 수 있다.
-	groupRoute := pc.Engine.Group(path)
-	groupRoute.Any("/*urlpath", handler)
+	// Bypass에 적합한 Group 정보 조정 및 Route 등록
+	suffix := "/" + core.Bypass
+	group := strings.TrimSuffix(path, suffix)
+
+	groupRoute := pc.Engine.Group(group)
+	groupRoute.Any(suffix, handler)
 }
 
 // registerEndpoint - 지정한 정보를 기준으로 Gin Engine에 Endpoint Handler 등록

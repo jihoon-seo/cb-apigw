@@ -162,17 +162,15 @@ endpoints:
   ##############
   # For Spider
   ##############
-  - endpoint: "/spider"
-    bypass: true
+  - endpoint: "/spider/*bypass"
     backend:
       - host: "http://cb-spider:1024"
-        url_pattern: "bypass"
+        url_pattern: "*bypass"
 
   #################
   # For Tumblebug
   #################
   - endpoint: "/tumblebug"
-    bypass: true
     backend:
       - host: "http://cb-tumblebug:1323"
-        url_pattern: "bypass"
+        url_pattern: "*bypass"

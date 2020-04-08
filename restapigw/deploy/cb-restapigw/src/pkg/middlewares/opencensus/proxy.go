@@ -2,6 +2,7 @@ package opencensus
 
 import (
 	"context"
+	"strings"
 
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
@@ -89,6 +90,8 @@ func ProxyFactory(pf proxy.Factory) proxy.FactoryFunc {
 		if err != nil {
 			return next, err
 		}
+		// Endpoint Bypass 검증 및 Flag 설정
+		eConf.IsBypass = strings.HasSuffix(eConf.Endpoint, core.Bypass)
 		return CallChain("[proxy]", eConf.IsBypass, eConf.Endpoint)(next), nil
 	}
 }
@@ -99,6 +102,7 @@ func BackendFactory(bf proxy.BackendFactory) proxy.BackendFactory {
 		return bf
 	}
 	return func(bConf *config.BackendConfig) proxy.Proxy {
-		return CallChain("[backend]", bConf.URLPattern == "/*", bConf.URLPattern)(bf(bConf))
+		// Backend Bypass 검증
+		return CallChain("[backend]", strings.HasSuffix(bConf.URLPattern, core.Bypass), bConf.URLPattern)(bf(bConf))
 	}
 }
