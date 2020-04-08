@@ -14,6 +14,7 @@ services:
   grafana:
     image: grafana/grafana
     container_name: etri_grafana
+    user: "1000"
     ports:
       - "3100:3000"
     depends_on:
@@ -40,11 +41,6 @@ services:
       - ./data/lwan:/lwan/wwwroot
     ports:
       - "8100:8080"
-    
-  hmac_site:
-    build:
-      context: ./web
-    container_name: hmac_server
     
   hmac_site:
     build:
