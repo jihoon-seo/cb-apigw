@@ -23,8 +23,20 @@ $ docker-compose up --build
 
 실행된 어플리케이션은 다음과 같습니다.
 
-- **<font color="red">RESTAPIGW : localhost:8000</font>**
-  - REST API G/W 서비스입니다. cb-spider 및 cb-tumblebug를 호출합니다.
+> Notes
+> ---
+> Background 서비스들을 실행하는 배포입니다.  
+> Background 서비스들을 docker-compose로 실행한 후에 아래의 명령으로 API G/W를 별도 컨테이너로 구동해서 테스트를 진행합니다.  
+> 
+> ```shell
+> $ cd ..
+> # Docker Image Build
+> $ docker build -t cb-restapigw .
+> # Docker Container 실행
+> $ docker run -itd --network deploy_default -p 8000:8000 cb-restapigw
+> ```
+>
+
 - **<font color="red">InfluxDB : localhost:8086</font>**
   -  RESTAPIGW에서 Metrics 데이터를 저장하는 DB 서버입니다.
 - **<font color="red">Grafana : localhost:3100</font>**
@@ -142,25 +154,6 @@ $ docker-compose down
             | target | 응답 데이터 중에서 지정한 필드만을 반환함 </br>나머지 필드들은 모두 제외 됨 |  |  |
             | wrap_collection_to_json | 응답 결과가 컬랙션인 경우에 JSON 객체로 반환 여부 (true이면 collection 을 "collection" 필드로 JSON 반환, false이면 collection 상태로 반환) |  | false |
             | is_collection | 응답 결과가 JSON객체가 아닌 컬랙션인 경우 ("collection" 필드로 컬랙션을 Wrapping한 JSON 반환하며, mapping 정책에 따라서 필드명 변경 가능) |  | false |
-
-### Bypass 설정하는 방법
-  - 위에서 설명한 설정 중에서 Endpoint 와 Backend 설정을 조정해서 사용한다.
-  - 적용 예
-    ```yaml
-    ...
-      - endpoint: "/<prefix_url>/*bypass"
-        - backend:
-            - host: "http//<apiserver_host>:<apiserver_port>"
-              url_pattern: "*bypass"
-    ...
-
-> Notes
-> ---
-> - **<font color="red">endpoint 와 url_pattern 에는 `*bypass` 라는 접미사를 사용한다.</font>**
-> - 단일 Endpoint 기준으로 동작한다.
-> - 각 Endpoint에 대해 단일 Backend 설정만 가능하다.
-> - API G/W의 기능인 Filtering 기능 등을 사용할 수 없다. (그대로 전달하는 기능만 가능)
-> - 특정 Method로 제한할 수 없기 때문에 전체 Method를 대상으로 운영된다. (실제 API Server에서 해당 Method를 검증해야 한다)
 
 ### Bypass 설정하는 방법
   - 위에서 설명한 설정 중에서 Endpoint 와 Backend 설정을 조정해서 사용한다.

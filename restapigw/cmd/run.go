@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"os"
 
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
@@ -22,16 +23,13 @@ import (
 func runFunc(ctx context.Context, cmd *cobra.Command, args []string) {
 	var (
 		sConf config.ServiceConfig
-		err  error
+		err   error
 	)
 
 	if sConf, err = checkAndLoad(cmd, args); err != nil {
+		fmt.Printf("[RUN - ERROR] %s \n", err)
 		os.Exit(1)
 		return
-	}
-
-	if debug {
-		printConfigurations(cmd, sConf)
 	}
 
 	// launching the setup process

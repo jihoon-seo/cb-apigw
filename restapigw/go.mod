@@ -7,11 +7,9 @@ require (
 	github.com/cloud-barista/cb-log v0.0.0-20190829061936-c402c97c951a
 	github.com/gin-contrib/sse v0.0.0-20170109093832-22d885f9ecc7 // indirect
 	github.com/gin-gonic/gin v1.1.5-0.20170702092826-d459835d2b07
-	github.com/google/go-cmp v0.3.1 // indirect
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79
 	github.com/influxdata/influxdb v1.7.8
-	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
-	github.com/mattn/go-isatty v0.0.12 // indirect
+	github.com/mattn/go-isatty v0.0.9 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a
 	github.com/rs/cors v1.7.0
 	github.com/sirupsen/logrus v1.4.2
@@ -20,7 +18,7 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.4.0
 	github.com/stretchr/testify v1.4.0 // indirect
-	github.com/ugorji/go/codec v0.0.0-20181204163529-d75b2dcb6bc8 // indirect
+	github.com/ugorji/go v1.1.7 // indirect
 	github.com/unrolled/secure v1.0.4
 	go.opencensus.io v0.22.1
 	golang.org/x/net v0.0.0-20190921015927-1a5e07d1ff72 // indirect

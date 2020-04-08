@@ -2,26 +2,26 @@ version: 1
 name: cb-restapigw
 port: 8000
 cache_ttl: 3600s
-timeout: 5m
+timeout: 1m
 debug: true
-host:
+host: 
   - "http://localhost:8100"
 middleware:
   mw-metrics:
     router_enabled: true
     proxy_enabled: true
     backend_enabled: true
-    collection_period: 60s
+    collection_period: 10s
     expose_metrics: false
     listen_address: 0.0.0.0:9000
     influxdb:
       address: "http://localhost:8086"
       database: cbrestapigw
-      reporting_period: 60s
-      buffer_size: 0 
+      reporting_period: 11s
+      buffer_size: 0
   mw-opencensus:
     sample_rate: 100
-    reporting_period: 3s
+    reporting_period: 10s
     enabled_layers:
       router: true
       proxy: true
@@ -36,8 +36,6 @@ middleware:
     allow_methods:
       - POST
       - GET
-      - PUT
-      - DELETE
     allow_headers:
       - Origin
       - Authorization
@@ -47,12 +45,15 @@ middleware:
     max_age: 12h
     allow_credentials: true
 endpoints:
+  ##############
+  # For Fake API Test (collection. header/querystring passing and blacklist)
+  ##############
   - endpoint: "/splash"
     except_querystrings:
-      - "name"
-      - "querystring"
+    #  - "name"
+    #  - "querystring"
     except_headers:
-      - "Testing"
+    #  - "Testing"
     backend:
       - url_pattern: "/shop/campaigns.json"
         whitelist:
@@ -148,30 +149,10 @@ endpoints:
     method: GET
     backend:
       - url_pattern: "/destinations/2.json"
-        wrap_collection_to_json: true
+        wrap_collection_to_json: false
         is_collection: true
         mapping:
           "collection": "data"
-      - host: 
-          - "https://api.github.com"
-        url_pattern: "/users/ccambo"
-        whitelist:
-          - "avatar_url"
-          - "name"
-          - "company"
-          - "blog"
-          - "location"
-          - "mail"
-          - "hireable"
-          - "followers"
-          - "public_repos"
-          - "public_gists"
-        mapping:
-          "blog": "website"
-        group: "github"
-        middleware:
-          mw-httpcache: 
-            enabled: true
   - endpoint: "/private/custom"
     backend:
       - url_pattern: "/user/1.json"

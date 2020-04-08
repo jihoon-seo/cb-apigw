@@ -10,7 +10,7 @@ CB-RESTAPIGW는 PoC (Proof of Concepts) 수준의 RESTful API Gateway 기능을 
 
 ## [설치]
 
-설치는 Ubuntu 18.04 기준으로 한다.
+설치는 Ubuntu Latest 버전을 기준으로 한다.
 
 - **Git 설치**
   ```shell
@@ -263,7 +263,11 @@ Configuration 설정은 `YAML` 포맷을 사용한다.
     ```
 
 ### 현재 지원되는 응답 데이터 처리용 필터들은 다음과 같다.
-  **`Bypass 처리를 한 경우는 특정 Endpoint와 Backend 정보를 대상으로 하는 것이 아니므로 사용할 수 없다`**
+
+> Notes
+> ---
+> **<font color="red">Bypass 처리를 한 경우는 특정 Endpoint, Backend를 대상으로 하는 것이 아니므로 응답 데이터 처리를 적용할 수 없다.</font>**
+
   - **whitelist** : 응답 결과중에서 추출할 필드들 지정, nested field들은 '.' 을 사용해서 설정 가능
     ```yaml
     backend:
@@ -778,15 +782,20 @@ Configuration 설정은 `YAML` 포맷을 사용한다.
 
 ## [실행]
 
-> Notes
-> ---
-> 실행 및 테스트는 다음과 같은 오픈 소스들을 사용한다.
-> - 내부 API 서버는 **jaxgeller/lwan** Docker image를 사용해서 Fake API로 사용.
-> - 서비스 Metrics는 **InfluxDB + Grafana** 를 사용.
-> - Trace 정보는 **Opencensus + Jaeger** 를 사용.
-> 
-> <b>테스트를 위한 설정은 /deploy/docker-compose.yaml을 기준으로 Fake-API 부분을 용도에 맞도록 변경하고 설정을 맞춰서 사용.</b>
-> <b>HMAC 관련된 Server 기능은 내부 테스트를 위한 것으로 공식적으로는 지원하지 않음.</b>
+### Background 서비스들 실행
+
+- 내부 API 서버 (Fake API) 는 **jaxgeller/lwan** Docker image를 사용해서 Fake API로 사용.
+- API G/W Metrics는 **InfluxDB + Grafana** 를 사용.
+- API G/W Trace 정보는 **Opencensus + Jaeger** 를 사용.
+
+API G/W 실행 테스트를 위한 백그라운드 서비스들은 `Deploy` 폴더에 구성되어 있으므로 이를 활용한다.
+
+- <b>테스트를 위한 설정은 /deploy/docker-compose.yaml을 기준으로 Fake-API 부분을 용도에 맞도록 변경하고 설정을 맞춰서 사용.</b>
+- <b>HMAC 관련된 Server 기능은 내부 테스트를 위한 것으로 공식적으로는 지원하지 않음.</b>
+
+실행 방법은 deploy/READ.md 참조
+
+### 소스 빌드 및 실행
 
 - **실행 명령**
   - 바이너리 빌드
@@ -828,7 +837,6 @@ Configuration 설정은 `YAML` 포맷을 사용한다.
   - [Postman으로 작성된 문서](https://documenter.getpostman.com/view/1735092/SW15wbJf?version=latest#c720d518-1830-4283-b512-5153ef879747)를 참고
   - _**HMAC 적용 부분은 내부 검증용으로 공식적으로는 지원하지 않음**_
   - API 호출의 결과는 CB-RESTAPIGW 수행 기준으로 판단한다.
-    
 
 - **클라이언트의 결과 확인**
 
@@ -845,3 +853,18 @@ Configuration 설정은 `YAML` 포맷을 사용한다.
     - Response Header의 오류 메시지 여부 **`(X-Cb-Restapigw-Messages)`**
       - 각 Backend 별 발생한 오류 메시지를 **"\n"** 구분자로 연결한 문자열 처리
       - 모두 정상이라면 **`(X-Cb-Restapigw-Messages)`** Header 정보가 존재하지 않는다.
+
+### Docker Container 실행
+
+백그라운드 서비스들을 구동한 후에 API G/W를 Docker 기반으로 생성하여 실행한다.
+
+1. Docker Image 생성
+   ```shell
+   docker build -t cb-restapigw -f ./Dockerfile .
+   ```
+
+2. Docker Contaienr 실행
+   ```shell
+   docker run --network deploy_default -p 8000:8000 cb-restapigw
+   ```
+   * 상기 명령어의 `--network deploy_default` 는 Background 서비스가 docker-compose로 동작하면서 구성된 Docker Bridge Network의 이름이다. 별도 옵션을 주지 않았기 때문에 folder 명을 기준으로 생성된 이름을 가진다.
