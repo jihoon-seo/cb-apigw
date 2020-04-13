@@ -109,6 +109,9 @@ func (tb *Bucket) adjustAvailableTokens(tick int64) {
 	if tb.availableTokens > tb.capacity {
 		tb.availableTokens = tb.capacity
 	}
+
+	logger.Debugf("Adjust Available Token on TokenBucket - [Quantum : %d, fillInterval : %d, lastTick: %d, tick: %d, Added Token: %d]\n", tb.quantum, tb.fillInterval, lastTick, tick, (tick-lastTick)*tb.quantum)
+
 	return
 }
 

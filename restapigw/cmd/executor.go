@@ -16,6 +16,7 @@ import (
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/metrics/influxdb"
 	opencensus "github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/opencensus"
 	ginOpencensus "github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/opencensus/router/gin"
+	ratelimit "github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/ratelimit/router/gin"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/proxy"
 	ginRouter "github.com/cloud-barista/cb-apigw/restapigw/pkg/router/gin"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/transport/http/client"
@@ -50,11 +51,12 @@ func contextWithSignal(ctx context.Context) context.Context {
 
 // newHandlerFactory - Middleware들과 Opencensus 처리를 반영한 Gin Endpoint Handler 생성
 func newHandlerFactory(logger logging.Logger, metricsProducer *ginMetrics.Metrics) ginRouter.HandlerFactory {
-	// TODO: Rate-limit
+	// Rate Limit 처리용 RouterHandlerFactory 구성
+	handlerFactory := ratelimit.HandlerFactory(ginRouter.EndpointHandler, logger)
 	// TODO: JWT Auth, JWT Rejector
 
 	// 임시로 HMAC을 활용한 Auth 인증 처리용 RouteHandlerFactory 구성
-	handlerFactory := auth.HandlerFactory(ginRouter.EndpointHandler, logger)
+	handlerFactory = auth.HandlerFactory(handlerFactory, logger)
 
 	// metricsProducer 활용하는 RouteHandlerFactory 구성
 	handlerFactory = metricsProducer.HandlerFactory(handlerFactory, logger)
