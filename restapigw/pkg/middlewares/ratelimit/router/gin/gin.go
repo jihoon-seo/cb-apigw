@@ -1,4 +1,4 @@
-// Package gin - Rate Limit 처리를 위한 Gin 패키지
+// Package gin - Gin Route (Endpoint) 처리 구간에 Rate Limit 기능을 제공하는 Gin Router 패키지
 package gin
 
 import (
@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/ratelimit"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/ratelimit/router"
@@ -15,6 +16,11 @@ import (
 )
 
 // ===== [ Constants and Variables ] =====
+
+var (
+	// logger - Logging
+	logger = logging.NewLogger()
+)
 
 // ===== [ Types ] =====
 
@@ -30,7 +36,16 @@ type RateLimitMiddleware func(gin.HandlerFunc) gin.HandlerFunc
 
 // IPTokenExtractor - Request에서 IP 정보 추출
 func IPTokenExtractor(c *gin.Context) string {
-	return strings.Split(c.ClientIP(), ":")[0]
+	//return strings.Split(c.ClientIP(), ":")[0]
+	ip := strings.Split(c.ClientIP(), ":")[0]
+	if ip == "" {
+		cIP, err := core.GetClientIPHelper(c.Request)
+		if err != nil {
+			logger.Error(err)
+		}
+		return cIP
+	}
+	return ip
 }
 
 // HeaderTokenExtractor - Request에서 Header 정보 추출
@@ -43,6 +58,7 @@ func NewTokenLimiter(te TokenExtractor, ls ratelimit.LimiterStore) RateLimitMidd
 	return func(next gin.HandlerFunc) gin.HandlerFunc {
 		return func(c *gin.Context) {
 			tokenKey := te(c)
+			// TokenBucket 검증
 			if tokenKey == "" || !ls(tokenKey).Allow() {
 				c.AbortWithError(http.StatusTooManyRequests, ratelimit.ErrLimited)
 				return
@@ -52,20 +68,21 @@ func NewTokenLimiter(te TokenExtractor, ls ratelimit.LimiterStore) RateLimitMidd
 	}
 }
 
-// NewIPLimiter - Rate Limit 기능을 IP 기준으로 처리하는 Handler Func 생성
+// NewIPLimiter - Rate Limit 기능을 IP 기준으로 처리하는 Handler Func 생성 (By Client IP 단위 검증)
 func NewIPLimiter(maxRate float64, capacity int64) RateLimitMiddleware {
 	return NewTokenLimiter(IPTokenExtractor, ratelimit.NewMemoryStore(maxRate, capacity))
 }
 
-// NewHeaderLimiter - Rate Limit 기능을 Header 기준으로 처리하는 Handler Func 생성
+// NewHeaderLimiter - Rate Limit 기능을 Header 기준으로 처리하는 Handler Func 생성 (By Client Header 단위 검증)
 func NewHeaderLimiter(header string, maxRate float64, capacity int64) RateLimitMiddleware {
 	return NewTokenLimiter(HeaderTokenExtractor(header), ratelimit.NewMemoryStore(maxRate, capacity))
 }
 
-// NewEndpointRateLimiter - Rate Limit 처리를 포함하는 Handler Func 생성
+// NewEndpointRateLimiter - Rate Limit 처리를 포함하는 Handler Func 생성 (By Call 단위 검증)
 func NewEndpointRateLimiter(tb ratelimit.RateLimiter) RateLimitMiddleware {
 	return func(next gin.HandlerFunc) gin.HandlerFunc {
 		return func(c *gin.Context) {
+			// TokenBucket 검증
 			if !tb.Allow() {
 				c.AbortWithError(503, ratelimit.ErrLimited)
 				return

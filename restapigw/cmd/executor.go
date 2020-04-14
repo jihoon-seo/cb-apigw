@@ -16,6 +16,7 @@ import (
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/metrics/influxdb"
 	opencensus "github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/opencensus"
 	ginOpencensus "github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/opencensus/router/gin"
+	ratelimitProxy "github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/ratelimit/proxy"
 	ratelimit "github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/ratelimit/router/gin"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/proxy"
 	ginRouter "github.com/cloud-barista/cb-apigw/restapigw/pkg/router/gin"
@@ -107,14 +108,14 @@ func newBackendFactoryWithContext(ctx context.Context, logger logging.Logger, me
 		return opencensus.HTTPRequestExecutor(clientFactory)
 	}
 
-	// TODO: Martian for Backend
-	// TODO: Rate-Limit for Backend
-	// TODO: Circuit-Breaker for Backend
-
 	// Opencensus HTTPRequestExecutor를 사용하는 Base BackendFactory 설정
 	backendFactory := func(bConf *config.BackendConfig) proxy.Proxy {
 		return proxy.NewHTTPProxyWithHTTPExecutor(bConf, requestExecutorFactory(bConf), bConf.Decoder)
 	}
+
+	// TODO: Martian for Backend
+	backendFactory = ratelimitProxy.BackendFactory(backendFactory)
+	// TODO: Circuit-Breaker for Backend
 
 	// Metrics 연동 기반의 BackendFactory 설정
 	backendFactory = metricsProducer.BackendFactory("backend", backendFactory)

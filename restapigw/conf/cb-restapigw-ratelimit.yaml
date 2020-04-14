@@ -58,8 +58,8 @@ endpoints:
       mw-ratelimit:
         maxRate: 5
         clientMaxRate: 10
-        strategy: "header"  #header #ip
-        key: 'X-Private-Token'
+        strategy: "ip"  #header #ip
+        key: "" #"X-Private-Token"
     backend:
       - url_pattern: "/shop/campaigns.json"
         whitelist:
@@ -85,6 +85,9 @@ endpoints:
                   - "products.*.template_suffix"
                   - "products.*.updated_at"
                   - "products.*.vendor"
+          mw-ratelimit:
+            maxRate: 1
+            capacity: 1
   - endpoint: "/sequential"
     backend:
       - url_pattern: "/hotels/1.json"

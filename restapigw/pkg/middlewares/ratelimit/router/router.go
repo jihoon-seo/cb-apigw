@@ -1,4 +1,4 @@
-// Package router - Rate Limit 기능을 제공하는 Router 패키지
+// Package router - Endpoint 처리 구간에 Rate Limit 기능을 제공하는 Router 패키지
 package router
 
 import (

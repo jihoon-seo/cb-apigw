@@ -272,7 +272,7 @@ func NewBucketWithRateAndClock(rate float64, capacity int64, clock IClock) *Buck
 
 		// 계산된 Quantum과 FillInterval을 기준으로 허용되는 비율과 지정한 비율의 편차를 검증한다. (허용 편차를 벗어나는 경우는 재 계산)
 		if diff := math.Abs(tb.Rate() - rate); diff/rate <= rateMargin {
-			logger.Debugf("[Quantum : %d, fillInterval : %d, Specified Rate: %f, Bucket Rate: %f]\n", quantum, fillInterval, rate, tb.Rate())
+			logger.Debugf("[Quantum : %d, fillInterval : %d, Specified Rate: %f, Bucket Rate: %f, Capacity: %d]\n", quantum, fillInterval, rate, tb.Rate(), capacity)
 			return tb
 		}
 	}
