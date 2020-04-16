@@ -114,7 +114,10 @@ func newBackendFactoryWithContext(ctx context.Context, logger logging.Logger, me
 	}
 
 	// TODO: Martian for Backend
+
+	// Backend 호출에 대한 Rate Limit Middleware 설정
 	backendFactory = ratelimitProxy.BackendFactory(backendFactory)
+
 	// TODO: Circuit-Breaker for Backend
 
 	// Metrics 연동 기반의 BackendFactory 설정
@@ -133,25 +136,21 @@ func SetupAndRun(ctx context.Context, sConf config.ServiceConfig) error {
 	logger := logging.NewLogger()
 
 	// Sets up the Metrics
-	logger.Debug("Sets up the Metrics")
 	metricsProducer := ginMetrics.SetupAndRun(ctx, sConf, *logger)
 
 	if metricsProducer.Config != nil {
 		// Sets up the InfluxDB Client for Metrics
-		logger.Debug("Sets up the InfluxDB client for metrics")
 		influxdb.SetupAndRun(ctx, metricsProducer.Config.InfluxDB, func() interface{} { return metricsProducer.Snapshot() }, logger)
 	} else {
 		logger.Warn("Skip the influxdb setup and running because the no metrics configuration or incorrect")
 	}
 
 	// Sets up the Opencensus
-	logger.Debug("Sets up the Opencensus")
 	if err := opencensus.Setup(ctx, sConf); err != nil {
 		logger.Fatal(err)
 	}
 
 	// Sets up the Pipeline (Router (Endpoint Handler) - Proxy - Backend)
-	logger.Debug("Sets up the Router and pipelines")
 	pipeConfig := ginRouter.PipeConfig{
 		Engine:         newEngine(sConf, *logger),
 		ProxyFactory:   newProxyFactory(*logger, newBackendFactoryWithContext(ctx, *logger, metricsProducer), metricsProducer),

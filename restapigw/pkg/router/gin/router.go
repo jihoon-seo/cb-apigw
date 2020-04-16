@@ -58,8 +58,6 @@ func (pc PipeConfig) Run(sConf config.ServiceConfig) {
 	if err := httpServer.RunServer(pc.Context, sConf, pc.Engine); err != nil {
 		pc.Logger.Error(err.Error())
 	}
-
-	pc.Logger.Debug("Router execution ended")
 }
 
 // registerDebugEndpoints - debug 옵션이 활성화된 경우에 `__debug` 로 호출되는 Enpoint Handler 구성

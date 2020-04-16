@@ -6,6 +6,7 @@ import (
 	"context"
 
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/ratelimit"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/proxy"
 	"gopkg.in/yaml.v3"
@@ -16,6 +17,10 @@ import (
 const (
 	// MWNamespace - Middleware configuration 식별자
 	MWNamespace = "mw-ratelimit"
+)
+
+var (
+	logger = logging.NewLogger()
 )
 
 // ===== [ Types ] =====
@@ -58,12 +63,15 @@ func NewBackendLimiter(bConf *config.BackendConfig) proxy.CallChain {
 		if len(next) > 1 {
 			panic(proxy.ErrTooManyProxies)
 		}
-		return func(ctx context.Context, request *proxy.Request) (*proxy.Response, error) {
+		return func(ctx context.Context, req *proxy.Request) (*proxy.Response, error) {
+			logger.Debugf("[Backend Process Flow] RateLimit > CallChain (%s)", req.Path)
 			// TokenBucket 검증
 			if !backendLimiter.Allow() {
+				logger.Debugf("[Backend Process Flow] RateLimit > CallChain (%s) ::: STOPPED!!", req.Path)
 				return nil, ratelimit.ErrLimited
 			}
-			return next[0](ctx, request)
+			logger.Debugf("[Backend Process Flow] RateLimit > CallChain (%s) ::: CONTINUE TO NEXT STEP!!", req.Path)
+			return next[0](ctx, req)
 		}
 	}
 }

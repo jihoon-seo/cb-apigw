@@ -17,6 +17,10 @@ import (
 
 // ===== [ Constants and Variables ] =====
 
+var (
+	logger = logging.NewLogger()
+)
+
 // ===== [ Types ] =====
 
 // responseError - Defines interface for response error
@@ -53,8 +57,6 @@ func NewHTTPProxyWithHTTPExecutor(bconf *config.BackendConfig, hre client.HTTPRe
 // NewHTTPProxyDetailed - 지정된 BackendConfig와 HTTP Reqeust Executor와 응답 처리에 사용할 StatusHandler, Response Parser를 설정한 Proxy 반환
 func NewHTTPProxyDetailed(bconf *config.BackendConfig, hre client.HTTPRequestExecutor, hsh client.HTTPStatusHandler, hrp HTTPResponseParser) Proxy {
 	return func(ctx context.Context, req *Request) (*Response, error) {
-		logger := logging.NewLogger()
-
 		reqToBackend, err := http.NewRequest(strings.ToTitle(req.Method), req.URL.String(), req.Body)
 		if err != nil {
 			return nil, err
@@ -86,7 +88,7 @@ func NewHTTPProxyDetailed(bconf *config.BackendConfig, hre client.HTTPRequestExe
 			reqToBackend.URL.RawQuery = q.Encode()
 		}
 
-		logger.Debugf(">> Backend call url : %s", reqToBackend.URL.String())
+		logger.Debugf("[Backend Process Flow] Proxy(HTTP) > CallChain (%s)", reqToBackend.URL.String())
 
 		// Backed 호출
 		resp, err := hre(ctx, reqToBackend)

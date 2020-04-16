@@ -20,16 +20,9 @@ import (
 // DebugHandler - debug 테스트를 위한 log 출력용 Handler 구성
 func DebugHandler(logger logging.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		logger.Debug("Method:", c.Request.Method)
-		logger.Debug("URL:", c.Request.RequestURI)
-		logger.Debug("Query:", c.Request.URL.Query())
-		logger.Debug("Params:", c.Params)
-		logger.Debug("Headers:", c.Request.Header)
 		body, _ := ioutil.ReadAll(c.Request.Body)
 		c.Request.Body.Close()
-		logger.Debug("Body:", string(body))
-		c.JSON(200, gin.H{
-			"message": "pong",
-		})
+		logger.Debugf("Method: %v, URL: %v, Query: %v, Params: %v, Headers: %v, Body: %v", c.Request.Method, c.Request.RequestURI, c.Request.URL.Query(), c.Params, c.Request.Header, string(body))
+		c.JSON(200, gin.H{"message": "pong"})
 	}
 }

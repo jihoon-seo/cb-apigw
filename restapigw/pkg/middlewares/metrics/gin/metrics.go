@@ -66,7 +66,7 @@ func (m *Metrics) RunEndpoint(ctx context.Context, engine *gin.Engine, logger lo
 	go func() {
 		// http.Server 종료 처리
 		<-ctx.Done()
-		logger.Debug("shutting down the stats handler")
+		// shutting down the stats handler
 		ctx, cancel := context.WithTimeout(ctx, time.Second)
 		server.Shutdown(ctx)
 		cancel()
@@ -75,7 +75,7 @@ func (m *Metrics) RunEndpoint(ctx context.Context, engine *gin.Engine, logger lo
 
 // NewEngine - Stats 처리를 위한 Endpoint 역할을 담당하는 Gin Engine 생성
 func (m *Metrics) NewEngine(debugMode bool, logger logging.Logger) *gin.Engine {
-	logger.Debug("Sets up the Gin engine for exports the metrics")
+	// Sets up the Gin engine for exports the metrics
 	if debugMode {
 		gin.SetMode(gin.DebugMode)
 	} else {
