@@ -175,14 +175,32 @@ endpoints:
   # For Spider
   ##############
   - endpoint: "/spider/*bypass"
+    middleware:
+      mw-ratelimit:
+        maxRate: 10
+        clientMaxRate: 5
+        strategy: "ip"
     backend:
       - host: "http://localhost:1024"
         url_pattern: "*bypass"
+        middleware:
+          mw-ratelimit:
+            maxRate: 2
+            capacity: 5
 
   #################
   # For Tumblebug
   #################
   - endpoint: "/tumblebug/*bypass"
+    middleware:
+      mw-ratelimit:
+        maxRate: 100
+        clientMaxRate: 100
+        strategy: "ip"
     backend:
       - host: "http://localhost:1323"
         url_pattern: "*bypass"
+        middleware:
+          mw-ratelimit:
+            maxRate: 1
+            capacity: 1

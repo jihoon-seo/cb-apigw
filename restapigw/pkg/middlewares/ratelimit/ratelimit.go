@@ -13,8 +13,12 @@ import (
 // ===== [ Constants and Variables ] =====
 
 var (
-	// ErrLimited - Rate Limit 제한이 되었을 때의 오류
-	ErrLimited = errors.New("ERROR: rate limit exceeded")
+	// ErrRouteLimited - Endpoint 기준 Rate Limit 제한인 경우의 오류
+	ErrRouteLimited = errors.New("ERROR: Endpoint rate limit exceeded")
+	// ErrClientLimited - Client 식별 기준 Rate Limit 제한인 경우의 오류
+	ErrClientLimited = errors.New("ERROR: Endpoint(By Client) rate limit exceeded")
+	// ErrProxyLimited - Rate Limit 제한인 경우의 오류
+	ErrProxyLimited = errors.New("ERROR: Proxy(Backend) rate limit exceeded")
 )
 
 // ===== [ Types ] =====

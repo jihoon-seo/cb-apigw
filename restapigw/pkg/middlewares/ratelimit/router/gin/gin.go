@@ -60,7 +60,7 @@ func NewTokenLimiter(te TokenExtractor, ls ratelimit.LimiterStore) RateLimitMidd
 			tokenKey := te(c)
 			// TokenBucket 검증
 			if tokenKey == "" || !ls(tokenKey).Allow() {
-				c.AbortWithError(http.StatusTooManyRequests, ratelimit.ErrLimited)
+				c.AbortWithError(http.StatusTooManyRequests, ratelimit.ErrClientLimited)
 				return
 			}
 			next(c)
@@ -84,7 +84,7 @@ func NewEndpointRateLimiter(tb ratelimit.RateLimiter) RateLimitMiddleware {
 		return func(c *gin.Context) {
 			// TokenBucket 검증
 			if !tb.Allow() {
-				c.AbortWithError(503, ratelimit.ErrLimited)
+				c.AbortWithError(503, ratelimit.ErrRouteLimited)
 				return
 			}
 			next(c)
