@@ -2,11 +2,34 @@
 
 CB-RESTAPIGW는 PoC (Proof of Concepts) 수준의 RESTful API Gateway 기능을 제공한다.
 
-## [ 목차 ]
+# [ 목차 ]
 
-- [설치](#설치)
-- [설정](#설정)
-- [실행](#실행)
+- [컨테이너 기반 실행](#컨테이너-기반-실행)
+- Cloud-Barista 시스템 통합 실행 참고 (Docker-Compose 기반)
+- [소스 기반 설치 및 실행](#소스-기반-설치-및-실행)
+  - [설치](#설치)
+  - [설정](#설정)
+  - [실행](#실행)
+
+# [컨테이너 기반 실행]
+- CB-RESTAPIGW 이미지 확인(https://hub.docker.com/r/cloudbaristaorg/cb-restapigw/tags)
+- CB-RESTAPIGW 컨테이너 실행
+
+```
+docker run -p 8000:8000 --name cb-restapigw \
+-v /root/go/src/github.com/cloud-barista/cb-apigw/restapigw/conf:/app/conf \
+cloudbaristaorg/cb-restapigw:v0.1-yyyymmdd
+```
+
+# [Cloud-Barista 시스템 통합 실행 참고 (Docker-Compose 기반)]
+
+```
+# git clone https://github.com/jihoon-seo/cb-deployer.git
+# cd cb-deployer
+# docker-compose up
+```
+
+# [소스 기반 설치 및 실행]
 
 ## [설치]
 
