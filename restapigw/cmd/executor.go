@@ -16,6 +16,8 @@ import (
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/metrics/influxdb"
 	opencensus "github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/opencensus"
 	ginOpencensus "github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/opencensus/router/gin"
+	ratelimitProxy "github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/ratelimit/proxy"
+	ratelimit "github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/ratelimit/router/gin"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/proxy"
 	ginRouter "github.com/cloud-barista/cb-apigw/restapigw/pkg/router/gin"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/transport/http/client"
@@ -50,11 +52,12 @@ func contextWithSignal(ctx context.Context) context.Context {
 
 // newHandlerFactory - Middleware들과 Opencensus 처리를 반영한 Gin Endpoint Handler 생성
 func newHandlerFactory(logger logging.Logger, metricsProducer *ginMetrics.Metrics) ginRouter.HandlerFactory {
-	// TODO: Rate-limit
+	// Rate Limit 처리용 RouterHandlerFactory 구성
+	handlerFactory := ratelimit.HandlerFactory(ginRouter.EndpointHandler, logger)
 	// TODO: JWT Auth, JWT Rejector
 
 	// 임시로 HMAC을 활용한 Auth 인증 처리용 RouteHandlerFactory 구성
-	handlerFactory := auth.HandlerFactory(ginRouter.EndpointHandler, logger)
+	handlerFactory = auth.HandlerFactory(handlerFactory, logger)
 
 	// metricsProducer 활용하는 RouteHandlerFactory 구성
 	handlerFactory = metricsProducer.HandlerFactory(handlerFactory, logger)
@@ -105,14 +108,17 @@ func newBackendFactoryWithContext(ctx context.Context, logger logging.Logger, me
 		return opencensus.HTTPRequestExecutor(clientFactory)
 	}
 
-	// TODO: Martian for Backend
-	// TODO: Rate-Limit for Backend
-	// TODO: Circuit-Breaker for Backend
-
 	// Opencensus HTTPRequestExecutor를 사용하는 Base BackendFactory 설정
 	backendFactory := func(bConf *config.BackendConfig) proxy.Proxy {
 		return proxy.NewHTTPProxyWithHTTPExecutor(bConf, requestExecutorFactory(bConf), bConf.Decoder)
 	}
+
+	// TODO: Martian for Backend
+
+	// Backend 호출에 대한 Rate Limit Middleware 설정
+	backendFactory = ratelimitProxy.BackendFactory(backendFactory)
+
+	// TODO: Circuit-Breaker for Backend
 
 	// Metrics 연동 기반의 BackendFactory 설정
 	backendFactory = metricsProducer.BackendFactory("backend", backendFactory)
@@ -130,25 +136,21 @@ func SetupAndRun(ctx context.Context, sConf config.ServiceConfig) error {
 	logger := logging.NewLogger()
 
 	// Sets up the Metrics
-	logger.Debug("Sets up the Metrics")
 	metricsProducer := ginMetrics.SetupAndRun(ctx, sConf, *logger)
 
 	if metricsProducer.Config != nil {
 		// Sets up the InfluxDB Client for Metrics
-		logger.Debug("Sets up the InfluxDB client for metrics")
 		influxdb.SetupAndRun(ctx, metricsProducer.Config.InfluxDB, func() interface{} { return metricsProducer.Snapshot() }, logger)
 	} else {
 		logger.Warn("Skip the influxdb setup and running because the no metrics configuration or incorrect")
 	}
 
 	// Sets up the Opencensus
-	logger.Debug("Sets up the Opencensus")
 	if err := opencensus.Setup(ctx, sConf); err != nil {
 		logger.Fatal(err)
 	}
 
 	// Sets up the Pipeline (Router (Endpoint Handler) - Proxy - Backend)
-	logger.Debug("Sets up the Router and pipelines")
 	pipeConfig := ginRouter.PipeConfig{
 		Engine:         newEngine(sConf, *logger),
 		ProxyFactory:   newProxyFactory(*logger, newBackendFactoryWithContext(ctx, *logger, metricsProducer), metricsProducer),

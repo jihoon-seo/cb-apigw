@@ -7,12 +7,17 @@ import (
 	"time"
 
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/proxy"
 	"github.com/rcrowley/go-metrics"
 	gometrics "github.com/rcrowley/go-metrics"
 )
 
 // ===== [ Constants and Variables ] =====
+
+var (
+	logger = logging.NewLogger()
+)
 
 // ===== [ Types ] =====
 
@@ -99,11 +104,15 @@ func NewProxyCallChain(layer, name string, pm *ProxyMetrics) proxy.CallChain {
 				urlPath = request.Path
 			}
 
+			// Metric 처리를 위한 Proxy 호출 정보 등록
 			registerProxyCallChainMetrics(layer, urlPath, pm)
+
+			logger.Debugf("[Backend Process Flow] Metrics > Proxy CallChain > %s layer > %s name", layer, name)
 
 			begin := time.Now()
 			resp, err := next[0](ctx, request)
 
+			// Metric 처리를 위한 호출 결과 정보 등록
 			go func(duration int64, resp *proxy.Response, err error) {
 				errored := strconv.FormatBool(err != nil)
 				completed := strconv.FormatBool(resp != nil && resp.IsComplete)

@@ -3,9 +3,13 @@ package core
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
+	"net"
 	"net/http"
+	"net/url"
 )
 
 // ===== [ Constants and Variables ] =====
@@ -54,6 +58,90 @@ func (we WrappedError) GetError() error {
 }
 
 // ===== [ Private Functions ] =====
+
+// getClientIPByRequestRemoteAddr - Request의 Remote Addr를 통한 IP 검증
+func getClientIPByRequestRemoteAddr(req *http.Request) (string, error) {
+	ip, port, err := net.SplitHostPort(req.RemoteAddr)
+	if err != nil {
+		log.Printf("debug: Getting req.RemoteAddr: %v\n", err)
+		return "", err
+	}
+	log.Printf("debug: With req.RemoteAddr found IP: %v, Port: %v\n", ip, port)
+
+	userIP := net.ParseIP(ip)
+	if userIP == nil {
+		message := fmt.Sprintf("debug: Parsing IP from Request.RemoteAddr got nothing.")
+		log.Println(message)
+		return "", fmt.Errorf(message)
+	}
+
+	log.Printf("debug: Found IP: %v\n", userIP)
+	return userIP.String(), nil
+}
+
+// getClientIPByHeaders - Request Header를 통한 IP 검증
+func getClientIPByHeaders(req *http.Request) (string, error) {
+	ipSlice := []string{}
+	ipSlice = append(ipSlice, req.Header.Get("X-Forwarded-For"))
+	ipSlice = append(ipSlice, req.Header.Get("x-forwarded-for"))
+	ipSlice = append(ipSlice, req.Header.Get("X-FORWARDED-FOR"))
+
+	for _, v := range ipSlice {
+		log.Printf("debug: client request header check gives ip: %v\n", v)
+		if v != "" {
+			return v, nil
+		}
+	}
+
+	err := errors.New("error: Could not find clients IP address from the Request Headers")
+	return "", err
+}
+
+// getMyInterfaceAddr - Private network IP를 통한 IP 검증
+func getMyInterfaceAddr() (net.IP, error) {
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		return nil, err
+	}
+	addresses := []net.IP{}
+	for _, iface := range ifaces {
+		if iface.Flags&net.FlagUp == 0 {
+			continue // interface down
+		}
+		if iface.Flags&net.FlagLoopback != 0 {
+			continue // loopback interface
+		}
+		addrs, err := iface.Addrs()
+		if err != nil {
+			continue
+		}
+
+		for _, addr := range addrs {
+			var ip net.IP
+			switch v := addr.(type) {
+			case *net.IPNet:
+				ip = v.IP
+			case *net.IPAddr:
+				ip = v.IP
+			}
+			if ip == nil || ip.IsLoopback() {
+				continue
+			}
+			ip = ip.To4()
+			if ip == nil {
+				continue // not an ipv4 address
+			}
+			addresses = append(addresses, ip)
+		}
+	}
+
+	if len(addresses) == 0 {
+		return nil, fmt.Errorf("no address found, net.InterfaceAddrs: %v", addresses)
+	}
+
+	// only need first
+	return addresses[0], nil
+}
 
 // ===== [ Public Functions ] =====
 
@@ -139,4 +227,35 @@ func GetResponseString(resp *http.Response) (string, error) {
 	}()
 
 	return string(body), nil
+}
+
+// GetClientIPHelper - Request 기반의 Client IP를 검증
+func GetClientIPHelper(req *http.Request) (string, error) {
+	// Try parse "Origin" from header
+	url, err := url.Parse(req.Header.Get("Origin"))
+	if err == nil {
+		host := url.Host
+		ip, _, err := net.SplitHostPort(host)
+		if err == nil {
+			log.Printf("debug: Found IP using Header (Origin) sniffing, ip: %v\n", ip)
+			return ip, nil
+		}
+	}
+
+	// Try parse request
+	ip, err := getClientIPByRequestRemoteAddr(req)
+	if err == nil {
+		log.Printf("debug: Found IP using Request, ip: %v\n", ip)
+		return ip, nil
+	}
+
+	// Try parse "X-Forwarder" from header
+	ip, err = getClientIPByHeaders(req)
+	if err == nil {
+		log.Printf("debug: Found IP using Request Headers (X-Forwarder) sniffing, ip: %v\n", ip)
+		return ip, nil
+	}
+
+	err = errors.New("error: Could not find clients IP address")
+	return "", err
 }

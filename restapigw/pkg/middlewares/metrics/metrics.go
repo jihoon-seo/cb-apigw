@@ -191,7 +191,7 @@ func SetupAndCreate(ctx context.Context, sConfig config.ServiceConfig, logger lo
 
 	conf := parseConfig(sConfig)
 	if conf == nil {
-		logger.Debug("no middleware configuration defined or error for the metrics module, use DummyRegistry")
+		// no middleware configuration defined or error for the metrics module, use DummyRegistry
 		registry = NewDummyRegistry()
 		return &Metrics{
 			logger:   &logger,
