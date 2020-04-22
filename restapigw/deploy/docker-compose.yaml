@@ -2,7 +2,7 @@ version: "3.3"
 services:
   influxdb:
     image: influxdb:latest
-    container_name: etri_influxdb
+    container_name: cb-restapigw-influxdb
     ports:
       - "8083:8083"
       - "8086:8086"
@@ -13,7 +13,7 @@ services:
 
   grafana:
     image: grafana/grafana
-    container_name: etri_grafana
+    container_name: cb-restapigw-grafana
     user: "1000"
     ports:
       - "3100:3000"
@@ -29,7 +29,7 @@ services:
 
   jaeger:
     image: jaegertracing/all-in-one:latest
-    container_name: etri_jaeger
+    container_name: cb-restapigw-jaeger
     ports:
       - "14268:14268"
       - "16686:16686"

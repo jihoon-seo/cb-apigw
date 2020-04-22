@@ -36,3 +36,5 @@ deploy/data/influxdb/data/
 deploy/cb-spider/
 deploy/cb-tumblebug/
 deploy-etri/
+deploy/data/cb-spider/0.dat
+deploy/data/cb-tumblebug/0.dat
