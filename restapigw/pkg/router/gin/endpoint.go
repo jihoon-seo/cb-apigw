@@ -20,6 +20,10 @@ const (
 	requestParamsAsterisk = "*"
 )
 
+var (
+	logger = logging.NewLogger()
+)
+
 // ===== [ Types ] =====
 
 // responseError - Response에서 발생한 오류와 상태코드를 관리하는 오류
@@ -45,8 +49,6 @@ func EndpointHandler(eConf *config.EndpointConfig, proxy proxy.Proxy) gin.Handle
 // NewRequest - 제외할 Header 정보와 Query string 정보를 반영하는 Gin Context 기반의 Request 생성
 func NewRequest(eConf *config.EndpointConfig) func(*gin.Context, []string) *proxy.Request {
 	return func(c *gin.Context, exceptQueryStrings []string) *proxy.Request {
-		logger := logging.NewLogger()
-
 		params := make(map[string]string, len(c.Params))
 		for _, param := range c.Params {
 			params[strings.Title(param.Key)] = param.Value
@@ -162,13 +164,15 @@ func CustomErrorEndpointHandler(eConf *config.EndpointConfig, proxy proxy.Proxy,
 		if err != nil {
 			// Proxy 처리 중에 발생한 오류들을 Header로 설정
 			c.Header(router.MessageResponseHeaderName, err.Error())
-
+			logger.Errorf("Endpoint Error Processing: %s", err.Error())
 			c.Error(err)
 
 			// Response가 없는 경우의 상태 코드 설정
 			if response == nil {
 				if t, ok := err.(responseError); ok {
 					c.Status(t.StatusCode())
+				} else if e, ok := err.(core.WrappedError); ok {
+					c.Status(e.Code())
 				} else {
 					c.Status(errF(err))
 				}
