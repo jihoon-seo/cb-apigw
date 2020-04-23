@@ -6,6 +6,7 @@ import (
 
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/proxy"
 	"go.opencensus.io/trace"
 )
@@ -15,6 +16,10 @@ import (
 const (
 	// errCtxCanceled - Context가 취소된 경우 오류
 	errCtxCanceledMsg = "context canceled"
+)
+
+var (
+	logger = logging.NewLogger()
 )
 
 // ===== [ Types ] =====
@@ -47,18 +52,20 @@ func CallChain(tag string, isBypass bool, url string) proxy.CallChain {
 				name += url
 			}
 
+			logger.Debugf("[Backend Process Flow] Opencensus > CallChain (%s) > %s", req.Path, tag)
+
 			ctx, span = trace.StartSpan(trace.NewContext(ctx, fromContext(ctx)), name)
 			resp, err := next[0](ctx, req)
+			// 응답과 오류 여부에 따른 Trace 정보 설정
 			if err != nil {
 				if err.Error() != errCtxCanceledMsg {
 					if resp != nil {
 						span.SetStatus(trace.Status{Code: int32(resp.Metadata.StatusCode), Message: err.Error()})
 					} else {
 						if we, ok := err.(core.WrappedError); ok {
-
 							if tag != "[backend]" {
-								err = we.GetError()
-								span.SetStatus(trace.Status{Code: 500, Message: err.Error()})
+								//span.SetStatus(trace.Status{Code: 500, Message: err.Error()})
+								span.SetStatus(trace.Status{Code: int32(we.Code()), Message: we.GetError().Error()})
 							} else {
 								// Backend 호출의 경우는 원본 오류 메시지를 그대로 출력
 								span.SetStatus(trace.Status{Code: int32(we.Code()), Message: we.Error()})

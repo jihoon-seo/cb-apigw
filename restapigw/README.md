@@ -246,6 +246,44 @@ Configuration 설정은 `YAML` 포맷을 사용한다.
       mw-proxy:
         sequential: true        # 지정한 여러 백엔드를 순차적으로 처리할지 여부
     ```
+  - **Rate Limit (Endpoint Rate Limit)**
+    - 설정이 없거나 0으로 지정된 경우는 무제한 허용
+    - Rate Limit는 초당 허용 하는 호출 수를 기준으로 한다. (TokenBucket 알고리즘 적용)
+    - 시간은 연속적인 흐름이므로 지정한 호출 수를 기반으로 사용 비율을 계산하여 1개씩의 호출이 가능하도록 추가한다.
+    - Rate Limit는 Endpoint 단위 또는 Client 단위로 설정 가능하다.
+      - Endpoint 단위 설정
+        ```yaml
+        middleware:
+          mw-ratelimit:
+            maxRate: 10   # Endpoint URL 단위로 초당 10개 호출 허용
+        ```
+      - Client 단위 설정
+        - Client IP 단위
+          ```yaml
+          middleware:
+            mw-ratelimit:
+              clientMaxRate: 5  # 클라이언트 IP 단위로 초당 5개 허용
+              strategy: "ip"
+          ```
+        - Request에 특정 Header 값을 지정하는 단위
+          ```yaml
+          middleware:
+            mw-ratelimit:
+              clientMaxRate: 5  # 클라이언트의 Request Header에 설정된 값을 기준으로 초당 5개 허용
+              strategy: "header"
+              key: "<header로 전달할 Key 명, ex. 'X-Private-Token'>"
+          ```
+      - Endpoint 및 Client 모두 설정
+        ```yaml
+        middleware:
+          mw-ratelimit:
+            maxRate: 10         # Endpoint URL 단위로 초당 10개 허용
+            clientMaxRate: 5    # 클라이언트 Rqeuest Header에 설정된 값을 기준으로 초당 5개 허용
+            strategy: "header"
+            key: "X-Private-Token"
+        ```
+    - Endpoint 단위 호출 허용 수를 초과하는 경우는 API G/W 자체가 실패한 것이므로 <font color="red">`503 - Service Unavailable 오류`</font> 상태를 반환한다.
+    - Client 단위 호출 허용 수를 초과하는 경우는 특정 사용자의 호출이 실패한 것이므로 <font color="red">`429 - Too many requests 오류`</font> 상태를 반환한다.
 
 - Backend 레벨
   - **HTTPCACHE (Backend Reponse cache)**
@@ -284,6 +322,21 @@ Configuration 설정은 `YAML` 포맷을 사용한다.
             return_error_details: "test"  # 오류 식별을 위한 문자열
       ...
     ```
+  - **Rate Limit (Endpoint Rate Limit)**
+    - 설정이 없거나 0으로 지정된 경우는 무제한 허용
+    - Rate Limit는 초당 허용 하는 호출 수를 기준으로 한다. (TokenBucket 알고리즘 적용)
+    - 시간은 연속적인 흐름이므로 지정한 호출 수를 기반으로 사용 비율을 계산하여 1개씩의 호출이 가능하도록 추가한다.
+    - Rate Limit는 Backend 단위로 설정 가능하다.
+      - Backend 단위 설정
+        ```yaml
+        middleware:
+          mw-ratelimit:
+            maxRate: 10   # Backend URL 단위로 초당 10개 호출 허용
+            capacity: 10  # 초당 maxRate 소비 비율로 계산된 구간마다 1개의 토큰을 추가할 수 있는 최대 값 (일반적으로 maxRate == capacity 로 설정)
+        ```
+    - Rate Limit 가 지정되어 호출이 제한 되는 경우에도 여러 개의 Backend가 존재할 수 있으므로 API G/W가 아닌 Backend 호출에 대한 제한이므로 성공한 Backend가 존재하는 경우라면 `200 정상` 으로 상태 코드를 처리한다.
+    - 단, 단일 Backend이며 Rate Limit에 걸리는 경우는 `503, Service unavailable` 로 상태 코드를 처리한다.
+    - <font color="red">`단, 제한된 Backend의 경우는 Response Header 정보 ("X-Cb-Restapigw-Completed", "X-Cb-Restapigw-Messages") 를 확인해서 오류 여부를 검증`</font>해야 한다.
 
 ### 현재 지원되는 응답 데이터 처리용 필터들은 다음과 같다.
 
@@ -644,7 +697,7 @@ Configuration 설정은 `YAML` 포맷을 사용한다.
     }
     ```
 
-### 구성 샘플
+### 구성 샘플 (소스 상의 ./conf/*.yaml 경로의 샘플들 참조)
   ```yaml
   version: 1
   name: cb-restapigw

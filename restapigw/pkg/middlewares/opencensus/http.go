@@ -33,6 +33,9 @@ func HTTPRequestExecutor(cf transport.HTTPClientFactory) transport.HTTPRequestEx
 			// Opencensus를 사용하는 Transport 사용
 			client.Transport = &ochttp.Transport{Base: client.Transport}
 		}
+
+		logger.Debugf("[Backend Process Flow] Opencensus(HTTP Client) > %s", req.URL.String())
+
 		return client.Do(req.WithContext(trace.NewContext(ctx, fromContext(ctx))))
 	}
 }

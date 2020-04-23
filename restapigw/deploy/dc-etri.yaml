@@ -2,7 +2,7 @@ version: "3.3"
 services:
   influxdb:
     image: influxdb:latest
-    container_name: etri_influxdb
+    container_name: cb-restapigw-influxdb
     ports:
       - "8083:8083"
       - "8086:8086"
@@ -13,7 +13,7 @@ services:
 
   grafana:
     image: grafana/grafana
-    container_name: etri_grafana
+    container_name: cb-restapigw-grafana
     user: "1000"
     ports:
       - "3100:3000"
@@ -29,7 +29,7 @@ services:
 
   jaeger:
     image: jaegertracing/all-in-one:latest
-    container_name: etri_jaeger
+    container_name: cb-restapigw-jaeger
     ports:
       - "14268:14268"
       - "16686:16686"
@@ -37,7 +37,7 @@ services:
   # Fake API
   fake_api:
     image: jaxgeller/lwan
-    container_name: fake_api
+    container_name: cb-restapigw-fake_api
     volumes:
       - ./data/lwan:/lwan/wwwroot
     ports:
@@ -45,7 +45,7 @@ services:
 
   # CB-SPIDER
   cb-spider:
-    image: cloudbaristahub/cb-spider:v0.1.2-20200403
+    image: cloudbaristaorg/cb-spider:v0.1.2-20200403
     container_name: cb-spider
     ports:
       - "1024:1024"
@@ -54,13 +54,13 @@ services:
 
   # CB-TUMBLEBUG
   cb-tumblebug:
-    image: cloudbaristahub/cb-tumblebug:v0.1-20200327    
+    image: cloudbaristaorg/cb-tumblebug:latest    
     container_name: cb-tumblebug
     ports:
       - "1323:1323"
     volumes:
       - ./data/cb-tumblebug:/app/meta_db/dat
     environment:
-      - SPIDER_URL=http://192.168.1.32:8000/spider
+      - SPIDER_URL=http://192.168.1.32:8000/spider  # API G/W가 Container가 아닌 경우 localhost를 IP로 지정
     depends_on:
       - cb-spider

@@ -58,13 +58,10 @@ func (cw clientWrapper) keepUpdated(ctx context.Context, ticker <-chan time.Time
 			return
 		}
 
-		cw.logger.Debug("Preparing influxdb points")
-
 		// Collection Function을 호출해서 Metric에 수집되어 있는 Stats에 대한 Snapshot 추출
 		snapshot := cw.stats().(metrics.Stats)
 
 		if shouldSendPoints := len(snapshot.Counters) > 0 || len(snapshot.Gauges) > 0; !shouldSendPoints {
-			cw.logger.Debug("no metrics to send to influxdb")
 			continue
 		}
 
@@ -92,8 +89,6 @@ func (cw clientWrapper) keepUpdated(ctx context.Context, ticker <-chan time.Time
 			continue
 		}
 
-		cw.logger.Debug(len(bp.Points()), " datapoints sent to Influx")
-
 		pts := []*client.Point{}
 		bpPending := cw.buff.Elements()
 		for _, failedBP := range bpPending {
@@ -120,10 +115,9 @@ func (cw clientWrapper) keepUpdated(ctx context.Context, ticker <-chan time.Time
 
 // SetupAndRun - InfluxDB로 Metric 처리를 반영하기 위한 Client 생성하고 주기적으로 Metrics 의 수집된 Stats 처리
 func SetupAndRun(ctx context.Context, idbConf Config, collectFunc func() interface{}, logger *logging.Logger) error {
-	logger.Debug("creating a new influxdb client")
+	// creating a new influxdb client
 
 	if &idbConf == nil || idbConf.Address == "" {
-		logger.Debug("no or not enough configuration for the influxdb client, Aboring.")
 		return errNoConfig
 	}
 
@@ -135,18 +129,16 @@ func SetupAndRun(ctx context.Context, idbConf Config, collectFunc func() interfa
 		Timeout:  10 * time.Second,
 	})
 	if err != nil {
-		logger.Debug("influxdb client crashed")
 		return err
 	}
 
 	// InfluxDB Ping 테스트
 	go func() {
-		pingDuration, pingMessage, err := influxClient.Ping(time.Second)
+		_, _, err := influxClient.Ping(time.Second)
 		if err != nil {
 			logger.Error("unable to ping the influxdb server:", err.Error())
 			return
 		}
-		logger.Debug("influxdb server ping result: duration = ", pingDuration, ", msg = "+pingMessage)
 	}()
 
 	// 설정된 ReportingPeriod 기준으로 InfluxDB tick 생성
@@ -162,8 +154,6 @@ func SetupAndRun(ctx context.Context, idbConf Config, collectFunc func() interfa
 
 	// 지정된 주기단위로 InfluxDB에 Metrics 정보 처리
 	go cw.keepUpdated(ctx, tick.C)
-
-	logger.Debug("influxdb client up and running")
 
 	return nil
 }
