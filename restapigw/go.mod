@@ -31,7 +31,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.0-20191120175047-4206685974f2
 )
 
-replace (
-	github.com/cloud-barista/cb-apigw/restapigw => /Users/morris/Workspaces/ETRI/sources/cb-apigw/restapigw
-	github.com/ugorji/go v1.1.4 => github.com/ugorji/go/codec v0.0.0-20190204201341-e444a5086c43
-)
+replace github.com/ugorji/go v1.1.4 => github.com/ugorji/go/codec v0.0.0-20190204201341-e444a5086c43

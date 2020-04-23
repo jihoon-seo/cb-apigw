@@ -63,10 +63,9 @@ func CallChain(tag string, isBypass bool, url string) proxy.CallChain {
 						span.SetStatus(trace.Status{Code: int32(resp.Metadata.StatusCode), Message: err.Error()})
 					} else {
 						if we, ok := err.(core.WrappedError); ok {
-
 							if tag != "[backend]" {
-								err = we.GetError()
-								span.SetStatus(trace.Status{Code: 500, Message: err.Error()})
+								//span.SetStatus(trace.Status{Code: 500, Message: err.Error()})
+								span.SetStatus(trace.Status{Code: int32(we.Code()), Message: we.GetError().Error()})
 							} else {
 								// Backend 호출의 경우는 원본 오류 메시지를 그대로 출력
 								span.SetStatus(trace.Status{Code: int32(we.Code()), Message: we.Error()})

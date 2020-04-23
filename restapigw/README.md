@@ -2,11 +2,34 @@
 
 CB-RESTAPIGW는 PoC (Proof of Concepts) 수준의 RESTful API Gateway 기능을 제공한다.
 
-## [ 목차 ]
+# [ 목차 ]
 
-- [설치](#설치)
-- [설정](#설정)
-- [실행](#실행)
+- [컨테이너 기반 실행](#컨테이너-기반-실행)
+- Cloud-Barista 시스템 통합 실행 참고 (Docker-Compose 기반)
+- [소스 기반 설치 및 실행](#소스-기반-설치-및-실행)
+  - [설치](#설치)
+  - [설정](#설정)
+  - [실행](#실행)
+
+# [컨테이너 기반 실행]
+- CB-RESTAPIGW 이미지 확인(https://hub.docker.com/r/cloudbaristaorg/cb-restapigw/tags)
+- CB-RESTAPIGW 컨테이너 실행
+
+```
+docker run -p 8000:8000 --name cb-restapigw \
+-v /root/go/src/github.com/cloud-barista/cb-apigw/restapigw/conf:/app/conf \
+cloudbaristaorg/cb-restapigw:v0.1-yyyymmdd
+```
+
+# [Cloud-Barista 시스템 통합 실행 참고 (Docker-Compose 기반)]
+
+```
+# git clone https://github.com/jihoon-seo/cb-deployer.git
+# cd cb-deployer
+# docker-compose up
+```
+
+# [소스 기반 설치 및 실행]
 
 ## [설치]
 
@@ -312,6 +335,7 @@ Configuration 설정은 `YAML` 포맷을 사용한다.
             capacity: 10  # 초당 maxRate 소비 비율로 계산된 구간마다 1개의 토큰을 추가할 수 있는 최대 값 (일반적으로 maxRate == capacity 로 설정)
         ```
     - Rate Limit 가 지정되어 호출이 제한 되는 경우에도 여러 개의 Backend가 존재할 수 있으므로 API G/W가 아닌 Backend 호출에 대한 제한이므로 성공한 Backend가 존재하는 경우라면 `200 정상` 으로 상태 코드를 처리한다.
+    - 단, 단일 Backend이며 Rate Limit에 걸리는 경우는 `503, Service unavailable` 로 상태 코드를 처리한다.
     - <font color="red">`단, 제한된 Backend의 경우는 Response Header 정보 ("X-Cb-Restapigw-Completed", "X-Cb-Restapigw-Messages") 를 확인해서 오류 여부를 검증`</font>해야 한다.
 
 ### 현재 지원되는 응답 데이터 처리용 필터들은 다음과 같다.
