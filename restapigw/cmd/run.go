@@ -33,7 +33,9 @@ func runFunc(ctx context.Context, cmd *cobra.Command, args []string) {
 	}
 
 	// launching the setup process
-	SetupAndRun(ctx, sConf)
+	if err := SetupAndRun(ctx, sConf); nil != err {
+		cmd.PrintErr(err)
+	}
 }
 
 // ===== [ Public Functions ] =====
@@ -49,7 +51,6 @@ func NewRunCmd(ctx context.Context) *cobra.Command {
 		},
 		Example: core.AppName + " run --debug --config config.yaml",
 	}
-	runCmd.PersistentFlags().IntVarP(&port, "port", "p", 0, "Listening port for the http service")
 
 	return &runCmd
 }

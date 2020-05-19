@@ -4,9 +4,11 @@ go 1.13
 
 require (
 	contrib.go.opencensus.io/exporter/jaeger v0.1.0
+	github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535
 	github.com/cloud-barista/cb-log v0.0.0-20190829061936-c402c97c951a
 	github.com/gin-contrib/sse v0.0.0-20170109093832-22d885f9ecc7 // indirect
 	github.com/gin-gonic/gin v1.1.5-0.20170702092826-d459835d2b07
+	github.com/go-chi/chi v4.1.1+incompatible
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79
 	github.com/influxdata/influxdb v1.7.8
 	github.com/mattn/go-isatty v0.0.9 // indirect
@@ -24,6 +26,7 @@ require (
 	golang.org/x/net v0.0.0-20190921015927-1a5e07d1ff72 // indirect
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e // indirect
 	golang.org/x/sys v0.0.0-20200317113312-5766fd39f98d // indirect
+	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v8 v8.18.2 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect

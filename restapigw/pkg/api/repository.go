@@ -1,0 +1,67 @@
+// Package api -
+package api
+
+import (
+	"context"
+	"fmt"
+	"io"
+	"net/url"
+	"time"
+
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/errors"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
+)
+
+// ===== [ Constants and Variables ] =====
+
+const (
+	file = "file"
+)
+
+// ===== [ Types ] =====
+type (
+	// Repository - Routing 정보 관리 기능을 제공하는 인터페이스 형식
+	Repository interface {
+		io.Closer
+
+		FindAll() ([]*Definition, error)
+	}
+
+	// Watcher - Routing 정보 변경을 감시하는 기능을 제공하는 인터페이스 형식
+	Watcher interface {
+		Watch(ctx context.Context, configurationChan chan<- ConfigurationChanged)
+	}
+
+	// Listener - Configuration 변경을 처리하기 위한 Listaner 인터페이스 형식
+	Listener interface {
+		Listen(ctx context.Context, configurationChan <-chan ConfigurationMessage)
+	}
+)
+
+// ===== [ Implementations ] =====
+// ===== [ Private Functions ] =====
+// ===== [ Public Functions ] =====
+
+// BuildRepository - 시스템 설정에 정의된 DSN(Data Source Name) 기준으로 저장소 구성
+func BuildRepository(dsn string, refreshTime time.Duration) (Repository, error) {
+	logger := logging.GetLogger()
+	dsnURL, err := url.Parse(dsn)
+	if nil != err {
+		return nil, errors.Wrap(err, "Error parsing the DSN")
+	}
+
+	switch dsnURL.Scheme {
+	case file:
+		logger.Debug("File system based configuration choosen")
+		apiPath := fmt.Sprintf("%s/apis", dsnURL.Path)
+
+		logger.WithField("path", apiPath).Debug("Trying to load API configuration files")
+		repo, err := NewFileSystemRepository(apiPath)
+		if nil != err {
+			return nil, errors.Wrap(err, "could not create a file system repository")
+		}
+		return repo, nil
+	default:
+		return nil, errors.New("The selected scheme is not supported to load API definitions")
+	}
+}

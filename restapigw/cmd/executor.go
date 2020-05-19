@@ -6,20 +6,22 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/api"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/errors"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/auth"
 	ginCors "github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/cors/gin"
 	httpcache "github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/httpcache"
 	httpsecure "github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/httpsecure/gin"
 	ginMetrics "github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/metrics/gin"
-	"github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/metrics/influxdb"
 	opencensus "github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/opencensus"
 	ginOpencensus "github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/opencensus/router/gin"
 	ratelimitProxy "github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/ratelimit/proxy"
 	ratelimit "github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/ratelimit/router/gin"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/proxy"
 	ginRouter "github.com/cloud-barista/cb-apigw/restapigw/pkg/router/gin"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/server"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/transport/http/client"
 	"github.com/gin-gonic/gin"
 
@@ -35,7 +37,7 @@ import (
 
 // ===== [ Private Functions ] =====
 
-// contextWithSignal - System Interrupt Signal을 반영한 Context 생성
+// contextWithSignal - System Interrupt Signal을 반영한 Context 생
 func contextWithSignal(ctx context.Context) context.Context {
 	newCtx, cancel := context.WithCancel(ctx)
 	signals := make(chan os.Signal)
@@ -133,35 +135,56 @@ func newBackendFactoryWithContext(ctx context.Context, logger logging.Logger, me
 // SetupAndRun - API Gateway 서비스를 위한 Router 및 Pipeline 구성과 HTTP Server 구동
 func SetupAndRun(ctx context.Context, sConf config.ServiceConfig) error {
 	// Sets up the Logger (CB-LOG)
-	logger := logging.NewLogger()
+	logging.NewLogger()
 
-	// Sets up the Metrics
-	metricsProducer := ginMetrics.SetupAndRun(ctx, sConf, *logger)
-
-	if metricsProducer.Config != nil {
-		// Sets up the InfluxDB Client for Metrics
-		influxdb.SetupAndRun(ctx, metricsProducer.Config.InfluxDB, func() interface{} { return metricsProducer.Snapshot() }, logger)
-	} else {
-		logger.Warn("Skip the influxdb setup and running because the no metrics configuration or incorrect")
+	// Repository 구성
+	repo, err := api.BuildRepository(sConf.Repository.DSN, sConf.Cluster.UpdateFrequency)
+	if nil != err {
+		return errors.Wrap(err, "could not build a repository for the database or file")
 	}
 
-	// Sets up the Opencensus
-	if err := opencensus.Setup(ctx, sConf); err != nil {
-		logger.Fatal(err)
-	}
+	// Server 구동
+	svr := server.New(
+		server.WithSystemConfig(&sConf),
+		server.WithProvider(repo),
+	)
 
-	// Sets up the Pipeline (Router (Endpoint Handler) - Proxy - Backend)
-	pipeConfig := ginRouter.PipeConfig{
-		Engine:         newEngine(sConf, *logger),
-		ProxyFactory:   newProxyFactory(*logger, newBackendFactoryWithContext(ctx, *logger, metricsProducer), metricsProducer),
-		Middlewares:    []gin.HandlerFunc{},
-		Logger:         logger,
-		HandlerFactory: newHandlerFactory(*logger, metricsProducer),
-		Context:        contextWithSignal(ctx),
-	}
+	ctx = contextWithSignal(ctx)
+	svr.StartWithContext(ctx)
+	defer svr.Close()
 
-	// PipeConfig 정보를 기준으로 HTTP Server 실행 (Gin Router + Endpoint Handler, Pipeline)
-	pipeConfig.Run(sConf)
+	svr.Wait()
+	logging.GetLogger().Info("Shuting down")
+
+	/*
+		// Sets up the Metrics
+		metricsProducer := ginMetrics.SetupAndRun(ctx, sConf, *logger)
+
+		if metricsProducer.Config != nil {
+			// Sets up the InfluxDB Client for Metrics
+			influxdb.SetupAndRun(ctx, metricsProducer.Config.InfluxDB, func() interface{} { return metricsProducer.Snapshot() }, logger)
+		} else {
+			logger.Warn("Skip the influxdb setup and running because the no metrics configuration or incorrect")
+		}
+
+		// Sets up the Opencensus
+		if err := opencensus.Setup(ctx, sConf); err != nil {
+			logger.Fatal(err)
+		}
+
+		// Sets up the Pipeline (Router (Endpoint Handler) - Proxy - Backend)
+		pipeConfig := ginRouter.PipeConfig{
+			Engine:         newEngine(sConf, *logger),
+			ProxyFactory:   newProxyFactory(*logger, newBackendFactoryWithContext(ctx, *logger, metricsProducer), metricsProducer),
+			Middlewares:    []gin.HandlerFunc{},
+			Logger:         logger,
+			HandlerFactory: newHandlerFactory(*logger, metricsProducer),
+			Context:        contextWithSignal(ctx),
+		}
+
+		// PipeConfig 정보를 기준으로 HTTP Server 실행 (Gin Router + Endpoint Handler, Pipeline)
+		pipeConfig.Run(sConf)
+	*/
 
 	return nil
 }

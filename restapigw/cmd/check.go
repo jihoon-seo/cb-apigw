@@ -46,8 +46,8 @@ func checkAndLoad(cmd *cobra.Command, args []string) (config.ServiceConfig, erro
 		sConf.Port = port
 	}
 
-	// Check Items and Prints
-	err = checkAndPrintServiceConf(cmd, sConf)
+	// TODO: Check Items and Prints
+	//err = checkAndPrintServiceConf(cmd, sConf)
 
 	return sConf, err
 }
@@ -78,51 +78,51 @@ func checkAndPrintBackendConf(cmd *cobra.Command, eConf *config.EndpointConfig) 
 	return nil
 }
 
-// checkAndPrintEndpointConf - Endpoint 설정 정보를 검증하고 출력
-func checkAndPrintEndpointConf(cmd *cobra.Command, sConf config.ServiceConfig) error {
-	if len(sConf.Endpoints) == 0 {
-		return errors.New("No endpoint configuration, must be at least one endpoint")
-	}
+// (temp) // checkAndPrintEndpointConf - Endpoint 설정 정보를 검증하고 출력
+// func checkAndPrintEndpointConf(cmd *cobra.Command, sConf config.ServiceConfig) error {
+// 	if len(sConf.Endpoints) == 0 {
+// 		return errors.New("No endpoint configuration, must be at least one endpoint")
+// 	}
 
-	cmd.Printf("Endpoints (%d):\n", len(sConf.Endpoints))
-	for _, endpoint := range sConf.Endpoints {
-		cmd.Printf("\tEndpoint: %s, Method: %s, CacheTTL: %s, Excepted Headers: %+v, Excepted Querystrings: %v\n",
-			endpoint.Endpoint, endpoint.Method, endpoint.CacheTTL.String(), endpoint.ExceptHeaders, endpoint.ExceptQueryStrings)
+// 	cmd.Printf("Endpoints (%d):\n", len(sConf.Endpoints))
+// 	for _, endpoint := range sConf.Endpoints {
+// 		cmd.Printf("\tEndpoint: %s, Method: %s, CacheTTL: %s, Excepted Headers: %+v, Excepted Querystrings: %v\n",
+// 			endpoint.Endpoint, endpoint.Method, endpoint.CacheTTL.String(), endpoint.ExceptHeaders, endpoint.ExceptQueryStrings)
 
-		cmd.Printf("\t\tMiddleware (%d):\n", len(endpoint.Middleware))
-		for k, v := range endpoint.Middleware {
-			cmd.Printf("\t\t\t%s: %v\n", k, v)
-		}
+// 		cmd.Printf("\t\tMiddleware (%d):\n", len(endpoint.Middleware))
+// 		for k, v := range endpoint.Middleware {
+// 			cmd.Printf("\t\t\t%s: %v\n", k, v)
+// 		}
 
-		err := checkAndPrintBackendConf(cmd, endpoint)
-		if err != nil {
-			return err
-		}
-	}
+// 		err := checkAndPrintBackendConf(cmd, endpoint)
+// 		if err != nil {
+// 			return err
+// 		}
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
-// checkAndPrintServiceConf - 서비스 설정 정보를 검증하고 출력
-func checkAndPrintServiceConf(cmd *cobra.Command, sConf config.ServiceConfig) error {
-	cmd.Printf("Parsed configuration: CacheTTL: %s, Port: %d\n", sConf.CacheTTL.String(), sConf.Port)
-	cmd.Printf("Hosts: %v\n", sConf.Host)
+// (temp) // checkAndPrintServiceConf - 서비스 설정 정보를 검증하고 출력
+// func checkAndPrintServiceConf(cmd *cobra.Command, sConf config.ServiceConfig) error {
+// 	cmd.Printf("Parsed configuration: CacheTTL: %s, Port: %d\n", sConf.CacheTTL.String(), sConf.Port)
+// 	cmd.Printf("Hosts: %v\n", sConf.Host)
 
-	// 전역 Host 정보 존재 여부
-	hasGlobalHost = len(sConf.Host) > 0
+// 	// 전역 Host 정보 존재 여부
+// 	hasGlobalHost = len(sConf.Host) > 0
 
-	cmd.Printf("Moddleware (%d):\n", len(sConf.Middleware))
-	for k, v := range sConf.Middleware {
-		cmd.Printf("\t%s: %v\n", k, v)
-	}
+// 	cmd.Printf("Moddleware (%d):\n", len(sConf.Middleware))
+// 	for k, v := range sConf.Middleware {
+// 		cmd.Printf("\t%s: %v\n", k, v)
+// 	}
 
-	err := checkAndPrintEndpointConf(cmd, sConf)
-	if err != nil {
-		return err
-	}
+// 	err := checkAndPrintEndpointConf(cmd, sConf)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
 // checkFunc - 지정된 args 에서 설정과 관련된 정보를 로드/검증/출력 처리
 func checkFunc(cmd *cobra.Command, args []string) {

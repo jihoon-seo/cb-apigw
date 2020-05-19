@@ -6,10 +6,11 @@ import (
 	"fmt"
 	"regexp"
 	"sort"
-	"strings"
 	"time"
 
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/encoding"
+	"github.com/spf13/viper"
 )
 
 // ===== [ Constants and Variables ] =====
@@ -42,63 +43,108 @@ var (
 
 // ===== [ Types ] =====
 
-// ServiceConfig - REST API Gateway 운영에 필요한 서비스 설정 구조
-type ServiceConfig struct {
-	// 서비스 식별 명 (기본값: '')
-	Name string `mapstructure:"name"`
-	// 기본 처리 시간 (기본값: 2s)
-	Timeout time.Duration `mapstructure:"timeout"`
-	// 디버그모드 여부 (기본값: false)
-	Debug bool `mapstructure:"debug"`
-	// GET 처리에 대한 캐시 TTL 기간 (기본값: 1h)
-	CacheTTL time.Duration `mapstructure:"cache_ttl"`
-	// 전역으로 사용할 기본 Host 리스트
-	Host []string `mapstructure:"host"`
-	// 서비스에서 사용할 포트 (기본값: 8000)
-	Port int `mapstructure:"port"`
-	// 설정 파일 버전
-	Version int `mapstructure:"version"`
-	// 전체 요청을 읽기 위한 최대 허용 시간 (기본값: 0, 0이면 제한없음)
-	ReadTimeout time.Duration `mapstructure:"read_timeout"`
-	// 전체 응답을 출력하기 위한 최대 허용 시간 (기본값: 0, , 0이면 제한없음)
-	WriteTimeout time.Duration `mapstructure:"write_timeout"`
-	// Keep-alive 활성 상태에서 다음 요청까지의 최대 대기 시간 (기본값: 0, 0이면 제한없음)
-	IdleTimeout time.Duration `mapstructure:"idle_timeout"`
-	// 요청헤더를 읽기 위한 최대 허용 시간 (기본값: 0, 0이면 제한없음)
-	ReadHeaderTimeout time.Duration `mapstructure:"read_header_timeout"`
-	// 유휴연결(Keep-alive)들의 최대 유지 수 (기본값: 0, 0이면 제한없음)
-	MaxIdleConnections int `mapstructure:"max_idle_connections"`
-	// 호스트당 유휴연결(Keep-alive)들의 최대 유지 수 (기본값: 250, 0이면 250 사용)
-	MaxIdleConnectionsPerHost int `mapstructure:"max_idle_connections_per_host"`
-	// 유휴연결(Keep-alive)의 최대 유효시간 (기본값: , 0이면 ReadTimeout 사용, 이것도 0이면 ReadHeaderTimeout 사용)
-	IdleConnectionTimeout time.Duration `mapstructure:"idle_connection_timeout"`
-	// 라우팅에 사용할 Endpoint 설정 리스트
-	Endpoints []*EndpointConfig `mapstructure:"endpoints"`
-	// 서비스 단위에서 적용할 Middleware 설정
-	Middleware MWConfig `mapstructure:"middleware"`
-	// 서비스에서 사용할 TLS 설정
-	TLS *TLSConfig `mapstructure:"tls"`
-	// TCP 연결에 사용할 대기시간 (기본값:0, 0이면 no timeout)
-	DialerTimeout time.Duration `mapstructure:"dialer_timeout"`
-	// 활성연결의 유지 시간 (기본값:없음, 0 지정시는 Keep-alive 비활성화)
-	DialerKeepAlive time.Duration `mapstructure:"dialer_keep_alive"`
-	// DualStack 활성화 시에 실패한 연결을 재 처리하는데 필요한 대기 시간 (기본값: 0, 0이면 no delay)
-	DialerFallbackDelay time.Duration `mapstructure:"dialer_fallback_delay"`
-	// 압축 비활성 여부 (기본값: false)
-	DisableCompression bool `mapstructure:"disable_compression"`
-	// 다른 요청에 TCP 연결을 재 사용하는 것의 비활성 여부 (기본값: false)
-	DisableKeepAlives bool `mapstructure:"disable_keep_alives"`
-	// Request 처리 후에 서버의 Response Header 정보를 기다리는 시간 (기본값: 0, 0이면 no timeout)
-	ResponseHeaderTimeout time.Duration `mapstructure:"response_header_timeout"`
-	// 서버의 첫번째 Response Header 정보를 기다리는 시간 (기본값: 0, 0이면 no timeout)
-	ExpectContinueTimeout time.Duration `mapstructure:"expect_continue_timeout"`
-	// OutputEncoding - Endpoint의 Response 처리에 사용할 기본 Encoding (기본값: "JSON")
-	OutputEncoding string `mapstructure:"output_encoding"`
-	// DisableStrictREST - REST 강제 규칙 비활성화 여부 (기본값: false)
-	DisableStrictREST bool `mapstructure:"disable_strict_rest"`
-	// URI Parser (internal use)
-	uriParser URIParser
-}
+// TODO: Configuration 분리
+
+type (
+	// ServiceConfig - REST API Gateway 운영에 필요한 서비스 설정 형식
+	ServiceConfig struct {
+		// URI Parser (internal use)
+		uriParser URIParser
+
+		// 서비스 식별 명 (기본값: '')
+		Name string `mapstructure:"name"`
+		// 기본 처리 시간 (기본값: 2s)
+		Timeout      time.Duration `mapstructure:"timeout"`
+		GraceTimeout int64         `mapstructure:"grace_timeout"`
+		// 디버그모드 여부 (기본값: false)
+		Debug bool `mapstructure:"debug"`
+		// GET 처리에 대한 캐시 TTL 기간 (기본값: 1h)
+		CacheTTL time.Duration `mapstructure:"cache_ttl"`
+		// 전역으로 사용할 기본 Host 리스트
+		Host []string `mapstructure:"host"`
+		// 서비스에서 사용할 포트 (기본값: 8000)
+		Port int `mapstructure:"port"`
+		// 설정 파일 버전
+		Version int `mapstructure:"version"`
+		// 전체 요청을 읽기 위한 최대 허용 시간 (기본값: 0, 0이면 제한없음)
+		ReadTimeout time.Duration `mapstructure:"read_timeout"`
+		// 전체 응답을 출력하기 위한 최대 허용 시간 (기본값: 0, , 0이면 제한없음)
+		WriteTimeout time.Duration `mapstructure:"write_timeout"`
+		// Keep-alive 활성 상태에서 다음 요청까지의 최대 대기 시간 (기본값: 0, 0이면 제한없음)
+		IdleTimeout time.Duration `mapstructure:"idle_timeout"`
+		// 요청헤더를 읽기 위한 최대 허용 시간 (기본값: 0, 0이면 제한없음)
+		ReadHeaderTimeout time.Duration `mapstructure:"read_header_timeout"`
+		// 유휴연결(Keep-alive)들의 최대 유지 수 (기본값: 0, 0이면 제한없음)
+		MaxIdleConnections int `mapstructure:"max_idle_connections"`
+		// 호스트당 유휴연결(Keep-alive)들의 최대 유지 수 (기본값: 250, 0이면 250 사용)
+		MaxIdleConnectionsPerHost int `mapstructure:"max_idle_connections_per_host"`
+		// 유휴연결(Keep-alive)의 최대 유효시간 (기본값: , 0이면 ReadTimeout 사용, 이것도 0이면 ReadHeaderTimeout 사용)
+		IdleConnectionTimeout time.Duration `mapstructure:"idle_connection_timeout"`
+		// 서비스 단위에서 적용할 Middleware 설정
+		Middleware MWConfig `mapstructure:"middleware"`
+		// 서비스에서 사용할 TLS 설정
+		TLS *TLSConfig `mapstructure:"tls"`
+		// TCP 연결에 사용할 대기시간 (기본값:0, 0이면 no timeout)
+		DialerTimeout time.Duration `mapstructure:"dialer_timeout"`
+		// 활성연결의 유지 시간 (기본값:없음, 0 지정시는 Keep-alive 비활성화)
+		DialerKeepAlive time.Duration `mapstructure:"dialer_keep_alive"`
+		// DualStack 활성화 시에 실패한 연결을 재 처리하는데 필요한 대기 시간 (기본값: 0, 0이면 no delay)
+		DialerFallbackDelay time.Duration `mapstructure:"dialer_fallback_delay"`
+		// 압축 비활성 여부 (기본값: false)
+		DisableCompression bool `mapstructure:"disable_compression"`
+		// 다른 요청에 TCP 연결을 재 사용하는 것의 비활성 여부 (기본값: false)
+		DisableKeepAlives bool `mapstructure:"disable_keep_alives"`
+		// Request 처리 후에 서버의 Response Header 정보를 기다리는 시간 (기본값: 0, 0이면 no timeout)
+		ResponseHeaderTimeout time.Duration `mapstructure:"response_header_timeout"`
+		// 서버의 첫번째 Response Header 정보를 기다리는 시간 (기본값: 0, 0이면 no timeout)
+		ExpectContinueTimeout time.Duration `mapstructure:"expect_continue_timeout"`
+		// OutputEncoding - Endpoint의 Response 처리에 사용할 기본 Encoding (기본값: "JSON")
+		OutputEncoding string `mapstructure:"output_encoding"`
+		// DisableStrictREST - REST 강제 규칙 비활성화 여부 (기본값: false)
+		DisableStrictREST bool `mapstructure:"disable_strict_rest"`
+
+		// Admin API 설정
+		Admin AdminConfig `mapstructure:"admin"`
+		// Repository 설정
+		Repository RepositoryConfig `mapstructure:"repository"`
+		// Cluster 설정
+		Cluster ClusterConfig `mapstructure:"cluster"`
+	}
+
+	// AdminConfig - Admin API 운영에 필요한 설정 형식
+	AdminConfig struct {
+		// Admin Server 포트
+		Port int `mapstructure:"port"`
+		// Admin Server를 사용할 사용자 설정
+		Credentials CredentialsConfig
+		// Admin Server에서 사용할 TLS 설정
+		TLS TLSConfig
+	}
+
+	// RepositoryConfig - Routing 정보 관리 형식
+	RepositoryConfig struct {
+		DSN string `mapstructure:"dsn"`
+	}
+
+	// ClusterConfig - Cluster 환경 정보 관리 형식
+	ClusterConfig struct {
+		// Backend update frequency
+		UpdateFrequency time.Duration `mapstructure:"update_frequency"`
+	}
+
+	// CredentialsConfig - Admin API 사용자 인증 정보 형식
+	CredentialsConfig struct {
+		Algorithm    string          `mapstructure:"algorithm"`
+		Secret       string          `mapstructure:"secret"`
+		TokenTimeout time.Duration   `mapstructure:"token_timeout"`
+		Basic        BasicAuthConfig `mapstructure:"basic"`
+	}
+
+	// BasicAuthConfig - 기본 인증 정보 형식
+	BasicAuthConfig struct {
+		Users map[string]string `mapstructure:"users"`
+	}
+)
 
 // EndpointConfig - 서비스 라우팅에 사용할 설정 구조
 type EndpointConfig struct {
@@ -163,6 +209,10 @@ type BackendConfig struct {
 
 // TLSConfig - 서비스에서 사용할 TLS 설정 구조
 type TLSConfig struct {
+	// Port
+	Port int `mapstructure:"port"`
+	// Redirect
+	Redirect bool `mapstructure:"redirect"`
 	// TLS 비활성화 여부
 	IsDisabled bool `mapstructure:"disabled"`
 	// 공개 키 경로
@@ -229,6 +279,11 @@ type EndpointPathError struct {
 }
 
 // ===== [ Implementations ] =====
+
+// IsHTTPS - HTTPS 활성화 여부 검증
+func (t *TLSConfig) IsHTTPS() bool {
+	return t != nil && t.PublicKey != "" && t.PrivateKey != ""
+}
 
 // Error - Endpoint 경로 오류 문자열 반환
 func (e *EndpointPathError) Error() string {
@@ -300,7 +355,8 @@ func (sConf *ServiceConfig) Init() error {
 	sConf.initGlobalParams()
 
 	// Endpoint 초기화
-	return sConf.initEndPoints()
+	// (temp) return sConf.initEndPoints()
+	return nil
 }
 
 // initGlobalParams - 전역 설정 초기화
@@ -340,127 +396,127 @@ func (sConf *ServiceConfig) paramExtractionPattern() *regexp.Regexp {
 	return endpointURLKeysPattern
 }
 
-// initEndpointDefaults - Endpoint에 미 설정된 항목들을 기본 값으로 초기화
-func (sConf *ServiceConfig) initEndpointDefaults(epIdx int) {
-	endpoint := sConf.Endpoints[epIdx]
-	if endpoint.Method == "" {
-		endpoint.Method = "GET"
-	}
-	if sConf.CacheTTL != 0 && endpoint.CacheTTL == 0 {
-		endpoint.CacheTTL = sConf.CacheTTL
-	}
-	if sConf.Timeout != 0 && endpoint.Timeout == 0 {
-		endpoint.Timeout = sConf.Timeout
-	}
-	// 기본 출력 포맷 설정 (JSON)
-	if endpoint.OutputEncoding == "" {
-		if sConf.OutputEncoding != "" {
-			endpoint.OutputEncoding = sConf.OutputEncoding
-		} else {
-			endpoint.OutputEncoding = encoding.JSON
-		}
-	}
-}
+// (temp) // initEndpointDefaults - Endpoint에 미 설정된 항목들을 기본 값으로 초기화
+// func (sConf *ServiceConfig) initEndpointDefaults(epIdx int) {
+// 	endpoint := sConf.Endpoints[epIdx]
+// 	if endpoint.Method == "" {
+// 		endpoint.Method = "GET"
+// 	}
+// 	if sConf.CacheTTL != 0 && endpoint.CacheTTL == 0 {
+// 		endpoint.CacheTTL = sConf.CacheTTL
+// 	}
+// 	if sConf.Timeout != 0 && endpoint.Timeout == 0 {
+// 		endpoint.Timeout = sConf.Timeout
+// 	}
+// 	// 기본 출력 포맷 설정 (JSON)
+// 	if endpoint.OutputEncoding == "" {
+// 		if sConf.OutputEncoding != "" {
+// 			endpoint.OutputEncoding = sConf.OutputEncoding
+// 		} else {
+// 			endpoint.OutputEncoding = encoding.JSON
+// 		}
+// 	}
+// }
 
-// initBackendDefaults - Backend에 미 설정된 항목들을 기본 값으로 초기화
-func (sConf *ServiceConfig) initBackendDefaults(epIdx, bIdx int) {
-	endpoint := sConf.Endpoints[epIdx]
-	backend := endpoint.Backend[bIdx]
-	if len(backend.Host) == 0 {
-		// URL 미 지정시 전역 URL 사용
-		backend.Host = sConf.Host
-	} else if !backend.HostSanitizationDisabled {
-		backend.Host = sConf.uriParser.CleanHosts(backend.Host)
-	}
-	// Method 미 지정시 Endpoint Method 사용
-	if backend.Method == "" {
-		backend.Method = endpoint.Method
-	}
-	backend.Timeout = endpoint.Timeout
-	backend.Decoder = encoding.Get(strings.ToLower(backend.Encoding))(backend.IsCollection, backend.WrapCollectionToJSON)
-}
+// (temp) // initBackendDefaults - Backend에 미 설정된 항목들을 기본 값으로 초기화
+// func (sConf *ServiceConfig) initBackendDefaults(epIdx, bIdx int) {
+// 	endpoint := sConf.Endpoints[epIdx]
+// 	backend := endpoint.Backend[bIdx]
+// 	if len(backend.Host) == 0 {
+// 		// URL 미 지정시 전역 URL 사용
+// 		backend.Host = sConf.Host
+// 	} else if !backend.HostSanitizationDisabled {
+// 		backend.Host = sConf.uriParser.CleanHosts(backend.Host)
+// 	}
+// 	// Method 미 지정시 Endpoint Method 사용
+// 	if backend.Method == "" {
+// 		backend.Method = endpoint.Method
+// 	}
+// 	backend.Timeout = endpoint.Timeout
+// 	backend.Decoder = encoding.Get(strings.ToLower(backend.Encoding))(backend.IsCollection, backend.WrapCollectionToJSON)
+// // }
 
-// initBackendURLMappings - Backend에 지정된 파라미터 정보들을 이후에 사용할 수 있도록 초기화
-func (sConf *ServiceConfig) initBackendURLMappings(epIdx, bIdx int, inputParams map[string]interface{}) error {
-	backend := sConf.Endpoints[epIdx].Backend[bIdx]
+// (temp) // initBackendURLMappings - Backend에 지정된 파라미터 정보들을 이후에 사용할 수 있도록 초기화
+// func (sConf *ServiceConfig) initBackendURLMappings(epIdx, bIdx int, inputParams map[string]interface{}) error {
+// 	backend := sConf.Endpoints[epIdx].Backend[bIdx]
 
-	backend.URLPattern = sConf.uriParser.CleanPath(backend.URLPattern)
-	// 파라미터 설정 추출 및 관리
-	outputParams, outputSetSize := uniqueOutput(sConf.extractPlaceHoldersFromURLTemplate(backend.URLPattern, simpleURLKeysPattern))
+// 	backend.URLPattern = sConf.uriParser.CleanPath(backend.URLPattern)
+// 	// 파라미터 설정 추출 및 관리
+// 	outputParams, outputSetSize := uniqueOutput(sConf.extractPlaceHoldersFromURLTemplate(backend.URLPattern, simpleURLKeysPattern))
 
-	ip := fromSetToSortedSlice(inputParams)
+// 	ip := fromSetToSortedSlice(inputParams)
 
-	if outputSetSize > len(ip) {
-		return &WrongNumberOfParamsError{
-			Endpoint:     sConf.Endpoints[epIdx].Endpoint,
-			Method:       sConf.Endpoints[epIdx].Method,
-			Backend:      bIdx,
-			InputParams:  ip,
-			OutputParams: outputParams,
-		}
-	}
+// 	if outputSetSize > len(ip) {
+// 		return &WrongNumberOfParamsError{
+// 			Endpoint:     sConf.Endpoints[epIdx].Endpoint,
+// 			Method:       sConf.Endpoints[epIdx].Method,
+// 			Backend:      bIdx,
+// 			InputParams:  ip,
+// 			OutputParams: outputParams,
+// 		}
+// 	}
 
-	backend.URLKeys = []string{}
-	for _, output := range outputParams {
-		if !sequentialParamsPattern.MatchString(output) {
-			if _, ok := inputParams[output]; !ok {
-				return &UndefinedOutputParamError{
-					Param:        output,
-					Endpoint:     sConf.Endpoints[epIdx].Endpoint,
-					Method:       sConf.Endpoints[epIdx].Method,
-					Backend:      bIdx,
-					InputParams:  ip,
-					OutputParams: outputParams,
-				}
-			}
-		}
-		key := strings.Title(output)
-		backend.URLPattern = strings.Replace(backend.URLPattern, "{"+output+"}", "{{."+key+"}}", -1)
-		backend.URLKeys = append(backend.URLKeys, key)
-	}
-	return nil
-}
+// 	backend.URLKeys = []string{}
+// 	for _, output := range outputParams {
+// 		if !sequentialParamsPattern.MatchString(output) {
+// 			if _, ok := inputParams[output]; !ok {
+// 				return &UndefinedOutputParamError{
+// 					Param:        output,
+// 					Endpoint:     sConf.Endpoints[epIdx].Endpoint,
+// 					Method:       sConf.Endpoints[epIdx].Method,
+// 					Backend:      bIdx,
+// 					InputParams:  ip,
+// 					OutputParams: outputParams,
+// 				}
+// 			}
+// 		}
+// 		key := strings.Title(output)
+// 		backend.URLPattern = strings.Replace(backend.URLPattern, "{"+output+"}", "{{."+key+"}}", -1)
+// 		backend.URLKeys = append(backend.URLKeys, key)
+// 	}
+// 	return nil
+// }
 
-// initEndpoints - Endpoint 초기화 처리
-func (sConf *ServiceConfig) initEndPoints() error {
-	for epIdx, eConf := range sConf.Endpoints {
-		eConf.Endpoint = sConf.uriParser.CleanPath(eConf.Endpoint)
+// (temp) // initEndpoints - Endpoint 초기화 처리
+// func (sConf *ServiceConfig) initEndPoints() error {
+// 	for epIdx, eConf := range sConf.Endpoints {
+// 		eConf.Endpoint = sConf.uriParser.CleanPath(eConf.Endpoint)
 
-		if err := eConf.validate(); err != nil {
-			return err
-		}
+// 		if err := eConf.validate(); err != nil {
+// 			return err
+// 		}
 
-		// Endpoint URL에 지정된 파라미터를 Input parameter로 설정
-		inputParams := sConf.extractPlaceHoldersFromURLTemplate(eConf.Endpoint, sConf.paramExtractionPattern())
-		inputSet := map[string]interface{}{}
-		for ip := range inputParams {
-			inputSet[inputParams[ip]] = nil
-		}
+// 		// Endpoint URL에 지정된 파라미터를 Input parameter로 설정
+// 		inputParams := sConf.extractPlaceHoldersFromURLTemplate(eConf.Endpoint, sConf.paramExtractionPattern())
+// 		inputSet := map[string]interface{}{}
+// 		for ip := range inputParams {
+// 			inputSet[inputParams[ip]] = nil
+// 		}
 
-		eConf.Endpoint = sConf.uriParser.GetEndpointPath(eConf.Endpoint, inputParams)
+// 		eConf.Endpoint = sConf.uriParser.GetEndpointPath(eConf.Endpoint, inputParams)
 
-		sConf.initEndpointDefaults(epIdx)
+// 		sConf.initEndpointDefaults(epIdx)
 
-		if eConf.OutputEncoding == encoding.NOOP && len(eConf.Backend) > 1 {
-			return errInvalidNoOpEncoding
-		}
+// 		if eConf.OutputEncoding == encoding.NOOP && len(eConf.Backend) > 1 {
+// 			return errInvalidNoOpEncoding
+// 		}
 
-		// Endpoint 설정의 Middleware 설정 맵 관리
-		eConf.Middleware.sanitize()
+// 		// Endpoint 설정의 Middleware 설정 맵 관리
+// 		eConf.Middleware.sanitize()
 
-		for bIdx, bConf := range eConf.Backend {
-			sConf.initBackendDefaults(epIdx, bIdx)
+// 		for bIdx, bConf := range eConf.Backend {
+// 			sConf.initBackendDefaults(epIdx, bIdx)
 
-			if err := sConf.initBackendURLMappings(epIdx, bIdx, inputSet); err != nil {
-				return err
-			}
+// 			if err := sConf.initBackendURLMappings(epIdx, bIdx, inputSet); err != nil {
+// 				return err
+// 			}
 
-			// Backend 설정의 Middleware 설정 맵 관리
-			bConf.Middleware.sanitize()
-		}
-	}
-	return nil
-}
+// 			// Backend 설정의 Middleware 설정 맵 관리
+// 			bConf.Middleware.sanitize()
+// 		}
+// 	}
+// 	return nil
+// }
 
 // validate - Endpoint 별 세부 필수 항목 검증
 func (e *EndpointConfig) validate() error {
@@ -488,6 +544,39 @@ func (u *UnsupportedVersionError) Error() string {
 }
 
 // ===== [ Private Functions ] =====
+
+// init - 패키지 초기화
+func init() {
+	// TODO: 각 Configuration 별 초기값 설정
+	// Configuration에 대한 초기값 설정
+	viper.SetDefault("port", "8000")
+	viper.SetDefault("tls.port", "8443")
+	viper.SetDefault("tls.redirect", true)
+	viper.SetDefault("backendFlushInterval", "20ms")
+	viper.SetDefault("requestID", true)
+
+	//viper.SetDefault("respondingTimeouts.IdleTimeout", 180*time.Second)
+	//viper.SetDefault("cluster.updateFrequency", "10s")
+	viper.SetDefault("repository.dsn", "file:///etc/"+core.AppName)
+
+	viper.SetDefault("admin.port", "8001")
+	viper.SetDefault("admin.tls.port", "8444")
+	viper.SetDefault("admin.tls.redirect", true)
+	viper.SetDefault("admin.credentials.algorithm", "HS256")
+	viper.SetDefault("admin.credentials.timeout", time.Hour)
+	viper.SetDefault("admin.credentials.basic.users", map[string]string{"admin": "admin"})
+	//viper.SetDefault("admin.credentials.github.teams", make(map[string]string))
+
+	viper.SetDefault("stats.dsn", "log://")
+	viper.SetDefault("stats.errorsSection", "error-log")
+	viper.SetDefault("stats.namespace", core.AppName)
+
+	viper.SetDefault("tracing.serviceName", core.AppName)
+	viper.SetDefault("tracing.samplingStrategy", "probabilistic")
+	viper.SetDefault("tracing.samplingParam", 0.15)
+	viper.SetDefault("tracing.debugTraceKey", "")
+	viper.SetDefault("tracing.isPublicEndpoint", true)
+}
 
 // uniqueOutput - 지정된 파라미터 지정 정보를 기준으로 파라미터 구성 검증
 func uniqueOutput(output []string) ([]string, int) {

@@ -25,11 +25,11 @@ build-check: build check
 
 check:
 	@echo "==> Check the configuration file"
-	./$(BINARY_NAME) -d --config $(CONF) check
+	./$(BINARY_NAME) --config $(CONF) check
 
 run:
 	@echo "==> Build project"
-	./$(BINARY_NAME) -d --config $(CONF) run --debug
+	./$(BINARY_NAME) --config $(CONF) run
 
 .PHONY: build
 build:

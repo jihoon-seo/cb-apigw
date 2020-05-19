@@ -29,16 +29,24 @@ const (
 	WrappingTag = "!!wrapping!!"
 	// Bypass - Endpoint/Backend Bypass 처리용 식별자
 	Bypass = "*bypass"
+
+	// RequestIDKey - Request ID 추적을 위한 Key
+	RequestIDKey requestIDKeyType = iota
 )
 
 // ===== [ Types ] =====
 
-// WrappedError - 원본 오류를 관리하는 오류 형식
-type WrappedError struct {
-	code          int
-	message       string
-	originalError error
-}
+type (
+	// requestIDType - RequestID 식별 형식
+	requestIDKeyType int
+
+	// WrappedError - 원본 오류를 관리하는 오류 형식
+	WrappedError struct {
+		code          int
+		message       string
+		originalError error
+	}
+)
 
 // ===== [ Implementations ] =====
 
