@@ -184,7 +184,7 @@ func (s *Server) startProvider(ctx context.Context) error {
 	)
 
 	if err := s.adminServer.Start(); err != nil {
-		return errors.Wrap(err, "could not start Janus web API")
+		return errors.Wrap(err, "could not start "+core.AppName+" Admin API")
 	}
 
 	// We're listening to the configuration changes in any case, even if provider does not implement Listener,
@@ -259,8 +259,8 @@ func (s *Server) Start() error {
 
 // StartWithContext - REST API G/W Server 시작 (Cancellable Context 사용)
 func (s *Server) StartWithContext(ctx context.Context) error {
-	logger := logging.GetLogger()
-
+	logger := logging.NewLogger() //logging.GetLogger()
+	logger.Info(core.AppName + " starting...")
 	go func() {
 		defer s.Close()
 		<-ctx.Done()

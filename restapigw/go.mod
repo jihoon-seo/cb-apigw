@@ -34,4 +34,8 @@ require (
 	gopkg.in/yaml.v3 v3.0.0-20191120175047-4206685974f2
 )
 
-replace github.com/ugorji/go v1.1.4 => github.com/ugorji/go/codec v0.0.0-20190204201341-e444a5086c43
+replace (
+	// Logrus caller가 실제 호출 source가 아닌 Logrus source (Logger.go 또는 Entry.go)를 출력하는 문제 해결용
+	github.com/sirupsen/logrus v1.4.2 => github.com/sirupsen/logrus v1.6.0
+	github.com/ugorji/go v1.1.4 => github.com/ugorji/go/codec v0.0.0-20190204201341-e444a5086c43
+)

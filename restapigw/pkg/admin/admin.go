@@ -37,7 +37,8 @@ func (s *Server) isClosedChannel(ch <-chan api.ConfigurationMessage) bool {
 
 // Start - Admin API Server 구동
 func (s *Server) Start() error {
-	logging.GetLogger().Info(core.AppName + " Admin API starting...")
+	logger := logging.GetLogger()
+	logger.Info(core.AppName + " Admin API starting...")
 
 	// TODO: API Routing
 	// router.DefaultOptions.NotFoundHandler = httpErrors.NotFound
@@ -47,6 +48,7 @@ func (s *Server) Start() error {
 	// s.AddRoutes(r)
 	// plugin.EmitEvent(plugin.AdminAPIStartupEvent, plugin.OnAdminAPIStartup{Router: r})
 
+	logging.GetLogger().Info(core.AppName + " Admin API started.")
 	return nil
 }
 
@@ -55,6 +57,7 @@ func (s *Server) Stop() {
 	if !s.isClosedChannel(s.ConfigurationChan) {
 		close(s.ConfigurationChan)
 	}
+	logging.GetLogger().Info(core.AppName + " Admin API stoped.")
 }
 
 // ===== [ Private Functions ] =====
