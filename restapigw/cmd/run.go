@@ -7,6 +7,7 @@ import (
 
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
+	cbstore "github.com/cloud-barista/cb-store"
 
 	"github.com/spf13/cobra"
 )
@@ -36,6 +37,11 @@ func runFunc(ctx context.Context, cmd *cobra.Command, args []string) {
 	if err := SetupAndRun(ctx, sConf); nil != err {
 		cmd.PrintErr(err)
 	}
+
+	// TEST CB-STORE
+	store := cbstore.GetStore()
+	fmt.Printf("[RUN - CHECK] %v", store)
+
 }
 
 // ===== [ Public Functions ] =====

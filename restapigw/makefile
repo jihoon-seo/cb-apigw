@@ -11,6 +11,9 @@ BINARY_LINUX=$(BINARY_NAME)
 TAGS=$(BINARY_NAME)
 CONF=./conf/$(BINARY_NAME).yaml
 
+export CBLOG_ROOT=$(CURDIR)
+export CBSTORE_ROOT=$(CURDIR)
+
 .PHONY: all clean build
 all: clean test build
 
