@@ -11,6 +11,9 @@ BINARY_LINUX=$(BINARY_NAME)
 TAGS=$(BINARY_NAME)
 CONF=./conf/$(BINARY_NAME).yaml
 
+export CBLOG_ROOT=$(CURDIR)
+export CBSTORE_ROOT=$(CURDIR)
+
 .PHONY: all clean build
 all: clean test build
 
@@ -25,11 +28,11 @@ build-check: build check
 
 check:
 	@echo "==> Check the configuration file"
-	./$(BINARY_NAME) -d --config $(CONF) check
+	./$(BINARY_NAME) --config $(CONF) check
 
 run:
 	@echo "==> Build project"
-	./$(BINARY_NAME) -d --config $(CONF) run --debug
+	./$(BINARY_NAME) --config $(CONF) run
 
 .PHONY: build
 build:

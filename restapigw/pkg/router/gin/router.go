@@ -46,7 +46,7 @@ func (pc PipeConfig) Run(sConf config.ServiceConfig) {
 	}
 
 	// Endpoint Handler 구성
-	pc.registerEndpoints(sConf.Endpoints)
+	// (temp) pc.registerEndpoints(sConf.Endpoints)
 
 	pc.Engine.NoRoute(func(c *gin.Context) {
 		c.Header(router.CompleteResponseHeaderName, router.HeaderIncompleteResponseValue)
