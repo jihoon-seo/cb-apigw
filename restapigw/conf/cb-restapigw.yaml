@@ -47,6 +47,7 @@ middleware:
 
 repository:
   dsn: file:///Users/morris/Workspaces/etri/sources/2020/10/cb-apigw/restapigw/conf
+  #dsn: cbstore://api
 
 cluster:
   update_frequency: 4s

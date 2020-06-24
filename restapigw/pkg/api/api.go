@@ -4,7 +4,7 @@ package api
 import (
 	"reflect"
 
-	"github.com/asaskevich/govalidator"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
 )
 
 // ===== [ Constants and Variables ] =====
@@ -14,16 +14,9 @@ type (
 	// ConfigurationOperation - Configuration 변경에 연계되는 Operation 형식
 	ConfigurationOperation int
 
-	// TODO: Endpoint/Backend Configuration here!!!
-
-	// Definition - API 처리를 위한 Endpoint 설정정보 형식
-	Definition struct {
-		Name string `mapstructure:"name" yaml:"name" bson:"name" json:"name" valid:"required~name is required,matches(^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$)~name cannot contain non-URL friendly characters"`
-	}
-
-	// Configuration - API Definition
+	// Configuration - API Endpoints
 	Configuration struct {
-		Definitions []*Definition
+		Definitions []*config.EndpointConfig
 	}
 
 	// ConfigurationChanged - Configuration 변경이 발생했을 떄 전송되는 메시지 처리 형식
@@ -45,15 +38,10 @@ func (c *Configuration) EqualsTo(tc *Configuration) bool {
 	return reflect.DeepEqual(c, tc)
 }
 
-// Validate - Routing Definition 검증
-func (d *Definition) Validate() (bool, error) {
-	return govalidator.ValidateStruct(d)
-}
-
 // ===== [ Private Functions ] =====
 // ===== [ Public Functions ] =====
 
-// NewDefinition - 기본 값으로 설정된 API Routing Definition 인스턴스 생성
-func NewDefinition() *Definition {
-	return &Definition{}
+// NewEndpoint - 기본 값으로 설정된 API Routing Endpoint 인스턴스 생성
+func NewEndpoint() *config.EndpointConfig {
+	return &config.EndpointConfig{}
 }

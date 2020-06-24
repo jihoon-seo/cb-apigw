@@ -300,17 +300,18 @@ func (s *Server) StartWithContext(ctx context.Context) error {
 	go s.listenProviders(s.stopChan)
 
 	// TODO: CHecking Definitions
-	definitions, err := s.provider.FindAll()
+	endpoints, err := s.provider.FindAll()
 	if nil != err {
 		return errors.Wrap(err, "could not find all configurations from the provider")
 	}
 
 	// Definition 기준으로 Admin API 구동
-	s.currConfigurations = &api.Configuration{Definitions: definitions}
+	s.currConfigurations = &api.Configuration{Definitions: endpoints}
 	if err := s.startProvider(ctx); nil != err {
 		logger.WithError(err).Fatal("Could not start Admin API Providers")
 	}
 
+	// TODO: Plugin 처리
 	// event := plugin.OnStartup{
 	// 	StatsClient:   s.statsClient,
 	// 	Register:      s.register,

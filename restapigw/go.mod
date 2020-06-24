@@ -4,7 +4,6 @@ go 1.13
 
 require (
 	contrib.go.opencensus.io/exporter/jaeger v0.1.0
-	github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535
 	github.com/cloud-barista/cb-log v0.1.1
 	github.com/cloud-barista/cb-store v0.1.1
 	github.com/coreos/etcd v3.3.18+incompatible // indirect

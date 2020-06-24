@@ -4,6 +4,7 @@ package api
 import (
 	"sync"
 
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
 )
 
@@ -13,24 +14,24 @@ type (
 	// InMemoryRepository - Memory 기반의 Repository 관리 형식
 	InMemoryRepository struct {
 		sync.RWMutex
-		definitions map[string]*Definition
+		endpoints map[string]*config.EndpointConfig
 	}
 )
 
 // ===== [ Implementations ] =====
 
 // Add adds an api definition to the repository
-func (imr *InMemoryRepository) add(d *Definition) error {
+func (imr *InMemoryRepository) add(ec *config.EndpointConfig) error {
 	imr.Lock()
 	defer imr.Unlock()
 
-	isValid, err := d.Validate()
-	if false == isValid && err != nil {
+	err := ec.Validate()
+	if err != nil {
 		logging.GetLogger().WithError(err).Error("Validation errors")
 		return err
 	}
 
-	imr.definitions[d.Name] = d
+	imr.endpoints[ec.Endpoint] = ec
 
 	return nil
 }
@@ -41,16 +42,16 @@ func (imr *InMemoryRepository) Close() error {
 }
 
 // FindAll - 사용 가능한 모든 API Routing 설정 검증 및 반환
-func (imr *InMemoryRepository) FindAll() ([]*Definition, error) {
+func (imr *InMemoryRepository) FindAll() ([]*config.EndpointConfig, error) {
 	imr.RLock()
 	defer imr.RUnlock()
 
-	var definitions []*Definition
-	for _, definition := range imr.definitions {
-		definitions = append(definitions, definition)
+	var endpoints []*config.EndpointConfig
+	for _, endpoint := range imr.endpoints {
+		endpoints = append(endpoints, endpoint)
 	}
 
-	return definitions, nil
+	return endpoints, nil
 }
 
 // ===== [ Private Functions ] =====
@@ -58,5 +59,5 @@ func (imr *InMemoryRepository) FindAll() ([]*Definition, error) {
 
 // NewInMemoryRepository creates a in memory repository
 func NewInMemoryRepository() *InMemoryRepository {
-	return &InMemoryRepository{definitions: make(map[string]*Definition)}
+	return &InMemoryRepository{endpoints: make(map[string]*config.EndpointConfig)}
 }

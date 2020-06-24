@@ -2,23 +2,24 @@
 package api
 
 import (
-	"encoding/json"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
 
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/errors"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
 	"gopkg.in/fsnotify.v1"
+	"gopkg.in/yaml.v3"
 )
 
 // ===== [ Constants and Variables ] =====
 // ===== [ Types ] =====
 
 type (
-	// Type used for JSON.Unmarshaller
-	definitionList struct {
-		defs []*Definition
+	// Endpoint List 구조
+	endpointDefinitions struct {
+		definitions []*config.EndpointConfig `mapstructure:"definitions" yaml:"definitions"`
 	}
 
 	// FileSystemRepository - 파일 시스템 기반 Repository 관리 정보 형식
@@ -30,19 +31,21 @@ type (
 
 // ===== [ Implementations ] =====
 
-func (r *FileSystemRepository) parseDefinition(apiDef []byte) definitionList {
-	appConfigs := definitionList{}
+func (r *FileSystemRepository) parseEndpoint(apiDef []byte) endpointDefinitions {
+	apiConfigs := endpointDefinitions{}
 
-	// Try unmarshalling as if json is an unnamed Array of multiple definitions
-	if err := json.Unmarshal(apiDef, &appConfigs); err != nil {
-		// Try unmarshalling as if json is a single Definition
-		appConfigs.defs = append(appConfigs.defs, NewDefinition())
-		if err := json.Unmarshal(apiDef, &appConfigs.defs[0]); err != nil {
-			logging.GetLogger().WithError(err).Error("[RPC] --> Couldn't unmarshal api configuration")
+	//logging.GetLogger().Printf("YAML: %s", string(apiDef))
+
+	// Try unmarshalling as Array of multiple definitions
+	if err := yaml.Unmarshal(apiDef, &apiConfigs); err != nil {
+		// Try unmarshalling as Single Definition
+		apiConfigs.definitions = append(apiConfigs.definitions, NewEndpoint())
+		if err := yaml.Unmarshal(apiDef, &apiConfigs.definitions[0]); err != nil {
+			logging.GetLogger().WithError(err).Error("Couldn't parsing api configuration")
 		}
 	}
 
-	return appConfigs
+	return apiConfigs
 }
 
 // Close - 사용 중인 Repository 세션 종료
@@ -72,7 +75,7 @@ func NewFileSystemRepository(dir string) (*FileSystemRepository, error) {
 	repo.watcher = watcher
 
 	for _, f := range files {
-		if strings.Contains(f.Name(), ".json") {
+		if strings.Contains(f.Name(), ".yaml") {
 			filePath := filepath.Join(dir, f.Name())
 			logger.WithField("path", filePath)
 
@@ -88,10 +91,10 @@ func NewFileSystemRepository(dir string) (*FileSystemRepository, error) {
 				return nil, err
 			}
 
-			definition := repo.parseDefinition(appConfigBody)
-			for _, v := range definition.defs {
+			definition := repo.parseEndpoint(appConfigBody)
+			for _, v := range definition.definitions {
 				if err = repo.add(v); err != nil {
-					logger.WithField("name", v.Name).WithError(err).Error("Failed during add definition to the repository")
+					logger.WithField("endpoint", v.Endpoint).WithError(err).Error("Failed during add endpoint to the repository")
 					return nil, err
 				}
 			}

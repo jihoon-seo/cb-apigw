@@ -518,8 +518,8 @@ func (sConf *ServiceConfig) paramExtractionPattern() *regexp.Regexp {
 // 	return nil
 // }
 
-// validate - Endpoint 별 세부 필수 항목 검증
-func (e *EndpointConfig) validate() error {
+// Validate - Endpoint 별 세부 필수 항목 검증
+func (e *EndpointConfig) Validate() error {
 	matched, err := regexp.MatchString(debugPattern, e.Endpoint)
 	if err != nil {
 		return &EndpointMatchError{

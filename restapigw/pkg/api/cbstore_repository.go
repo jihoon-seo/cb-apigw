@@ -2,6 +2,9 @@
 package api
 
 import (
+	"io/ioutil"
+	"os"
+
 	cbstore "github.com/cloud-barista/cb-store"
 	icbs "github.com/cloud-barista/cb-store/interfaces"
 )
@@ -26,9 +29,27 @@ func NewCbStoreRepository(key string) (*CbStoreRepository, error) {
 	// logger := logging.GetLogger()
 	repo := CbStoreRepository{InMemoryRepository: NewInMemoryRepository(), store: cbstore.GetStore()}
 
+	// Test Data Input
+	keyValue, _ := repo.store.Get(key)
+	if keyValue.Key == "" || keyValue.Value == "" {
+		dir, err := os.Getwd()
+		if nil != err {
+			return nil, err
+		}
+		content, err := ioutil.ReadFile(dir + "/conf/apis/cb-restapigw-apis.yaml")
+		if nil != err {
+			return nil, err
+		}
+		repo.store.Put(key, string(content))
+	}
+
 	// Grab configuration from CB-STORE
+	keyValue, _ = repo.store.Get(key)
 
 	// Parse Definitions
+	if keyValue.Value != "" {
+		// TODO: Parsing Definitions
+	}
 
 	return &repo, nil
 }

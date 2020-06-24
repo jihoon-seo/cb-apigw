@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/errors"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
 )
@@ -15,7 +16,9 @@ import (
 // ===== [ Constants and Variables ] =====
 
 const (
-	file = "file"
+	file    = "file"
+	cbStore = "cbstore"
+	db      = "database"
 )
 
 // ===== [ Types ] =====
@@ -24,7 +27,7 @@ type (
 	Repository interface {
 		io.Closer
 
-		FindAll() ([]*Definition, error)
+		FindAll() ([]*config.EndpointConfig, error)
 	}
 
 	// Watcher - Routing 정보 변경을 감시하는 기능을 제공하는 인터페이스 형식
@@ -51,6 +54,18 @@ func BuildRepository(dsn string, refreshTime time.Duration) (Repository, error) 
 	}
 
 	switch dsnURL.Scheme {
+	// CB-STORE (NutsDB or ETCD) 사용
+	case cbStore:
+		logger.Debug("CB-Store (NutsDB or ETCD) based configuration choosen")
+		apiKey := dsnURL.Path
+
+		logger.WithField("key", apiKey).Debug("Trying to load API configuration files")
+		repo, err := NewCbStoreRepository(apiKey)
+		if nil != err {
+			return nil, errors.Wrap(err, "could not create a CB-Store repository")
+		}
+		return repo, nil
+	// File(Memoery) 사용
 	case file:
 		logger.Debug("File system based configuration choosen")
 		apiPath := fmt.Sprintf("%s/apis", dsnURL.Path)
@@ -61,6 +76,10 @@ func BuildRepository(dsn string, refreshTime time.Duration) (Repository, error) 
 			return nil, errors.Wrap(err, "could not create a file system repository")
 		}
 		return repo, nil
+	// Database 사용
+	case db:
+		logger.Debug("File system based configuration choosen")
+		return nil, errors.New("The database scheme is not supported to load API definitions")
 	default:
 		return nil, errors.New("The selected scheme is not supported to load API definitions")
 	}
