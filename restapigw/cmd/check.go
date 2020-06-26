@@ -30,13 +30,13 @@ func checkAndLoad(cmd *cobra.Command, args []string) (config.ServiceConfig, erro
 	)
 
 	if configFile == "" {
-		cmd.Println("Please, provide the path to your configuration file")
+		cmd.Println("[LAUNCHER] Please, provide the path to your configuration file")
 		return sConf, errors.New("configuration file are not specified")
 	}
 
-	cmd.Printf("Parsing configuration file: %s\n", configFile)
+	cmd.Printf("[LAUNCHER] Parsing configuration file: %s\n", configFile)
 	if sConf, err = parser.Parse(configFile); err != nil {
-		cmd.Println("ERROR - Parsing the configuration file.\n", err.Error())
+		cmd.Println("[LAUNCHER] ERROR - Parsing the configuration file.\n", err.Error())
 		return sConf, err
 	}
 
@@ -55,7 +55,7 @@ func checkAndLoad(cmd *cobra.Command, args []string) (config.ServiceConfig, erro
 // checkAndPrintBackendConf - Backend 설정 정보를 검증하고 출력
 func checkAndPrintBackendConf(cmd *cobra.Command, eConf *config.EndpointConfig) error {
 	if len(eConf.Backend) == 0 {
-		return errors.New("No backend configuration, must be at least one backend")
+		return errors.New("[LAUNCHER] No backend configuration, must be at least one backend")
 	}
 
 	cmd.Printf("\t\tBackends (%d):\n", len(eConf.Backend))
@@ -131,12 +131,12 @@ func checkFunc(cmd *cobra.Command, args []string) {
 	)
 
 	if _, err = checkAndLoad(cmd, args); err != nil {
-		fmt.Printf("[CHECK - ERROR] %s \n", err)
+		fmt.Printf("[LAUNCHER] CHECK - ERROR %s \n", err)
 		os.Exit(1)
 		return
 	}
 
-	cmd.Println("[CHECK] Syntax OK!")
+	cmd.Println("[LAUNCHER] CHECK - Syntax OK!")
 }
 
 // ===== [ Public Functions ] =====

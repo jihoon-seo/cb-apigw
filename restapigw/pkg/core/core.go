@@ -10,6 +10,11 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"reflect"
+	"strconv"
+	"time"
+
+	"github.com/globalsign/mgo/bson"
 )
 
 // ===== [ Constants and Variables ] =====
@@ -37,6 +42,9 @@ const (
 // ===== [ Types ] =====
 
 type (
+	// Duration - time.Duration Alias
+	Duration time.Duration
+
 	// requestIDType - RequestID 식별 형식
 	requestIDKeyType int
 
@@ -49,6 +57,58 @@ type (
 )
 
 // ===== [ Implementations ] =====
+
+// MarshalJSON - 대상 time.Duration을 JSON 형식으로 Marshalling
+func (d *Duration) MarshalJSON() ([]byte, error) {
+	s := (*time.Duration)(d).String()
+	s = strconv.Quote(s)
+
+	return []byte(s), nil
+}
+
+// UnmarshalJSON - JSON 형식을 time.Duration 형식으로 Unmashalling
+func (d *Duration) UnmarshalJSON(data []byte) (err error) {
+	s := string(data)
+	if s == "null" {
+		return
+	}
+
+	// if Unquote returns error - assume that string is not quoted at all
+	if sUnquoted, err := strconv.Unquote(s); err == nil {
+		s = sUnquoted
+	}
+
+	t, err := time.ParseDuration(s)
+	if err != nil {
+		return
+	}
+
+	*d = Duration(t)
+	return
+}
+
+// GetBSON - 대상 time.Duration을 BSON 형식으로 Marshalling
+func (d Duration) GetBSON() (interface{}, error) {
+	return time.Duration(d).String(), nil
+}
+
+// SetBSON - BSON 형식을 time.Duration 형식으로 Unmarshalling
+func (d *Duration) SetBSON(raw bson.Raw) error {
+	// took BSON string parsing logic from BSON decoder
+	if raw.Kind != bson.ElementString {
+		return &bson.TypeError{Type: reflect.TypeOf(Duration(0)), Kind: raw.Kind}
+	}
+
+	b := raw.Data[0:4]
+	l := int32((uint32(b[0]) << 0) |
+		(uint32(b[1]) << 8) |
+		(uint32(b[2]) << 16) |
+		(uint32(b[3]) << 24))
+
+	b = raw.Data[4 : 4+l-1]
+
+	return d.UnmarshalJSON(b)
+}
 
 // Code - Wrapping된 오류 코드 반환
 func (we WrappedError) Code() int {
