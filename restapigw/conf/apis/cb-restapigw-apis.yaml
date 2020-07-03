@@ -1,173 +1,134 @@
---- 
-  - 
-    active: true
-    health_check: 
-      timeout: 3
-      url: "http://service1:8080/status"
-    name: example
-    proxy: 
-      append_path: false
-      listen_path: /example/*
-      methods: 
-        - GET
-      preserve_host: false
-      strip_path: false
-      upstreams: 
-        balancing: roundrobin
-        targets: 
-          - 
-            target: "http://service1:8080/"
-  - 
-    active: true
-    health_check: 
-      timeout: 3
-      url: "http://service1:8080/status"
-    name: example2
-    proxy: 
-      append_path: false
-      listen_path: /example/*
-      methods: 
-        - GET
-      preserve_host: false
-      strip_path: false
-      upstreams: 
-        balancing: roundrobin
-        targets: 
-          - 
-            target: "http://service1:8080/"
+definitions:
+    ##############
+    # For Fake API Test (collection. header/querystring passing and blacklist)
+    ##############
+    - endpoint: "/splash"
+      except_querystrings:
+      #  - "name"
+      #  - "querystring"
+      except_headers:
+      #  - "Testing"
+      backend:
+        - url_pattern: "/shop/campaigns.json"
+          whitelist:
+            - "campaigns"
+        - url_pattern: "/shop/products.json"
+          middleware:
+            mw-proxy:
+              flatmap_filter:
+                - type: "move"
+                  args:
+                    - "products.*.id"
+                    - "products.*.id-"
+                - type: "del"
+                  args:
+                    - "products.*.image"
+                    - "products.*.body_html"
+                    - "products.*.created_at"
+                    - "products.*.handle"
+                    - "products.*.product_type"
+                    - "products.*.published_at"
+                    - "products.*.published_scope"
+                    - "products.*.tags"
+                    - "products.*.template_suffix"
+                    - "products.*.updated_at"
+                    - "products.*.vendor"
+    - endpoint: "/sequential"
+      backend:
+        - url_pattern: "/hotels/1.json"
+          whitelist:
+            - "destination_id"
+        - url_pattern: "/destinations/{resp0_destination_id}.json"
+          target: "destinations"
+          middleware:
+            mw-http:
+              return_error_details: "sequential"
+      middleware:
+        mw-proxy:
+          sequential: true
+    - endpoint: "/fail"
+      backend:
+        - url_pattern: "/user/1.json"
+          group: "user"
+          target: "address"
+          middleware:
+            mw-http:
+              return_error_details: "fail_1"
+        - host:
+            - "http://fake_url_that_should_not_resolve.tld"
+          url_pattern: "/"
+          group: "none"
+    - endpoint: "/public"
+      method: GET
+      backend:
+        - host: 
+            - "https://api.github.com"
+          url_pattern: "/users/ccambo"
+          whitelist:
+            - "avatar_url"
+            - "name"
+            - "company"
+            - "blog"
+            - "location"
+            - "mail"
+            - "hireable"
+            - "followers"
+            - "public_repos"
+            - "public_gists"
+          mapping:
+            "blog": "website"
+          group: "github"
+          middleware:
+            mw-httpcache: 
+              enabled: true
+        - host: 
+            - "https://api.bitbucket.org"
+          url_pattern: "/2.0/users/kpacha"
+          whitelist:
+            - "links.avatar"
+            - "display_name"
+            - "website"
+            - "location"
+          mapping: 
+            "display_name": "name"
+          group: "bitbucket"
+    - endpoint: "/github/{user}"
+      method: GET
+      backend:
+        - host:
+            - https://api.github.com
+          url_pattern: "/users/{user}"
+          disable_host_sanitize: true
+    - endpoint: "/collection"
+      method: GET
+      backend:
+        - url_pattern: "/destinations/2.json"
+          wrap_collection_to_json: false
+          is_collection: true
+          mapping:
+            "collection": "data"
+    # - endpoint: "/private/custom"
+    #   backend:
+    #     - url_pattern: "/user/1.json"
+    #   middleware:
+    #     mw-auth:
+    #       secure_key: "###TEST_SECURE_KEY###"
+    #       access_ids:
+    #         - etri
   
-
-# definitions:
-#     ##############
-#     # For Fake API Test (collection. header/querystring passing and blacklist)
-#     ##############
-#     - endpoint: "/splash"
-#       except_querystrings:
-#       #  - "name"
-#       #  - "querystring"
-#       except_headers:
-#       #  - "Testing"
-#       backend:
-#         - url_pattern: "/shop/campaigns.json"
-#           whitelist:
-#             - "campaigns"
-#         - url_pattern: "/shop/products.json"
-#           middleware:
-#             mw-proxy:
-#               flatmap_filter:
-#                 - type: "move"
-#                   args:
-#                     - "products.*.id"
-#                     - "products.*.id-"
-#                 - type: "del"
-#                   args:
-#                     - "products.*.image"
-#                     - "products.*.body_html"
-#                     - "products.*.created_at"
-#                     - "products.*.handle"
-#                     - "products.*.product_type"
-#                     - "products.*.published_at"
-#                     - "products.*.published_scope"
-#                     - "products.*.tags"
-#                     - "products.*.template_suffix"
-#                     - "products.*.updated_at"
-#                     - "products.*.vendor"
-#     - endpoint: "/sequential"
-#       backend:
-#         - url_pattern: "/hotels/1.json"
-#           whitelist:
-#             - "destination_id"
-#         - url_pattern: "/destinations/{resp0_destination_id}.json"
-#           target: "destinations"
-#           middleware:
-#             mw-http:
-#               return_error_details: "sequential"
-#       middleware:
-#         mw-proxy:
-#           sequential: true
-#     - endpoint: "/fail"
-#       backend:
-#         - url_pattern: "/user/1.json"
-#           group: "user"
-#           target: "address"
-#           middleware:
-#             mw-http:
-#               return_error_details: "fail_1"
-#         - host:
-#             - "http://fake_url_that_should_not_resolve.tld"
-#           url_pattern: "/"
-#           group: "none"
-#     - endpoint: "/public"
-#       method: GET
-#       backend:
-#         - host: 
-#             - "https://api.github.com"
-#           url_pattern: "/users/ccambo"
-#           whitelist:
-#             - "avatar_url"
-#             - "name"
-#             - "company"
-#             - "blog"
-#             - "location"
-#             - "mail"
-#             - "hireable"
-#             - "followers"
-#             - "public_repos"
-#             - "public_gists"
-#           mapping:
-#             "blog": "website"
-#           group: "github"
-#           middleware:
-#             mw-httpcache: 
-#               enabled: true
-#         - host: 
-#             - "https://api.bitbucket.org"
-#           url_pattern: "/2.0/users/kpacha"
-#           whitelist:
-#             - "links.avatar"
-#             - "display_name"
-#             - "website"
-#             - "location"
-#           mapping: 
-#             "display_name": "name"
-#           group: "bitbucket"
-#     - endpoint: "/github/{user}"
-#       method: GET
-#       backend:
-#         - host:
-#             - https://api.github.com
-#           url_pattern: "/users/{user}"
-#           disable_host_sanitize: true
-#     - endpoint: "/collection"
-#       method: GET
-#       backend:
-#         - url_pattern: "/destinations/2.json"
-#           wrap_collection_to_json: false
-#           is_collection: true
-#           mapping:
-#             "collection": "data"
-#     - endpoint: "/private/custom"
-#       backend:
-#         - url_pattern: "/user/1.json"
-#       middleware:
-#         mw-auth:
-#           secure_key: "###TEST_SECURE_KEY###"
-#           access_ids:
-#             - etri
+    ##############
+    # For Spider
+    ##############
+    # - endpoint: "/spider/*bypass"
+    #   backend:
+    #     - host: "http://cb-spider:1024"
+    #       url_pattern: "*bypass"
   
-#     ##############
-#     # For Spider
-#     ##############
-#     - endpoint: "/spider/*bypass"
-#       backend:
-#         - host: "http://cb-spider:1024"
-#           url_pattern: "*bypass"
-  
-#     #################
-#     # For Tumblebug
-#     #################
-#     - endpoint: "/tumblebug/*bypass"
-#       backend:
-#         - host: "http://cb-tumblebug:1323"
-#           url_pattern: "*bypass"
+    #################
+    # For Tumblebug
+    #################
+    # - endpoint: "/tumblebug/*bypass"
+    #   backend:
+    #     - host: "http://cb-tumblebug:1323"
+    #       url_pattern: "*bypass"
   

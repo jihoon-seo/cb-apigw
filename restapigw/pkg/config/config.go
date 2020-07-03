@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/encoding"
 	"github.com/spf13/viper"
 )
 
@@ -79,10 +80,6 @@ type (
 		MaxIdleConnectionsPerHost int `mapstructure:"max_idle_connections_per_host"`
 		// 유휴연결(Keep-alive)의 최대 유효시간 (기본값: , 0이면 ReadTimeout 사용, 이것도 0이면 ReadHeaderTimeout 사용)
 		IdleConnectionTimeout time.Duration `mapstructure:"idle_connection_timeout"`
-		// 연결 해제(ConnectionPurgeInterval) 기간 (기본값: 0)
-		ConnectionPurgeInterval time.Duration `mapstructure:"connection_purge_interval"`
-		// Backend Flush 기간 (기본값: 0)
-		BackendFlushInterval time.Duration `mapstructure:"backend_flush_interval"`
 		// 서비스 단위에서 적용할 Middleware 설정
 		Middleware MWConfig `mapstructure:"middleware"`
 		// 서비스에서 사용할 TLS 설정
@@ -105,8 +102,6 @@ type (
 		OutputEncoding string `mapstructure:"output_encoding"`
 		// DisableStrictREST - REST 강제 규칙 비활성화 여부 (기본값: false)
 		DisableStrictREST bool `mapstructure:"disable_strict_rest"`
-		// RequestID - RequestID 적용 여부 (기본값: true)
-		RequestIDEnabled bool `mapstructure:"request_id_enabled"`
 
 		// Admin API 설정
 		Admin AdminConfig `mapstructure:"admin"`
@@ -151,66 +146,66 @@ type (
 	}
 )
 
-// // EndpointConfig - 서비스 라우팅에 사용할 설정 구조
-// type EndpointConfig struct {
-// 	// Bypass 처리 여부
-// 	IsBypass bool
+// EndpointConfig - 서비스 라우팅에 사용할 설정 구조
+type EndpointConfig struct {
+	// Bypass 처리 여부
+	IsBypass bool
 
-// 	// 클라이언트에 노출될 URL 패턴
-// 	Endpoint string `mapstructure:"endpoint"`
-// 	// Endpoint에 대한 HTTP 메서드 (GET, POST, PUT, etc) (기본값: GET)
-// 	Method string `mapstructure:"method"`
-// 	// Endpoint 처리 시간 (기본값: 서비스 값 사용)
-// 	Timeout time.Duration `mapstructure:"timeout"`
-// 	// GET 처리에 대한 캐시 TTL 기간 (기본값: 서비스 값 사용)
-// 	CacheTTL time.Duration `mapstructure:"cache_ttl"`
-// 	// 반환결과 처리에 사용할 인코딩
-// 	OutputEncoding string `mapstructure:"output_encoding"`
-// 	// Backend 에 전달되는 Query String에서 제외할 파라미터 Key 리스트
-// 	ExceptQueryStrings []string `mapstructure:"except_querystrings"`
-// 	// Backend 에 전달되는 Header에서 제외할 파라미터 Key 리스트
-// 	ExceptHeaders []string `mapstructure:"except_headers"`
-// 	// Endpoint 단위에서 적용할 Middleware 설정
-// 	Middleware MWConfig `mapstructure:"middleware"`
-// 	// Endpoint에서 호출할 Backend API 서버 호출/응답 처리 설정 리스트
-// 	Backend []*BackendConfig `mapstructure:"backend"`
-// }
+	// 클라이언트에 노출될 URL 패턴
+	Endpoint string `mapstructure:"endpoint"`
+	// Endpoint에 대한 HTTP 메서드 (GET, POST, PUT, etc) (기본값: GET)
+	Method string `mapstructure:"method"`
+	// Endpoint 처리 시간 (기본값: 서비스 값 사용)
+	Timeout time.Duration `mapstructure:"timeout"`
+	// GET 처리에 대한 캐시 TTL 기간 (기본값: 서비스 값 사용)
+	CacheTTL time.Duration `mapstructure:"cache_ttl"`
+	// 반환결과 처리에 사용할 인코딩
+	OutputEncoding string `mapstructure:"output_encoding"`
+	// Backend 에 전달되는 Query String에서 제외할 파라미터 Key 리스트
+	ExceptQueryStrings []string `mapstructure:"except_querystrings"`
+	// Backend 에 전달되는 Header에서 제외할 파라미터 Key 리스트
+	ExceptHeaders []string `mapstructure:"except_headers"`
+	// Endpoint 단위에서 적용할 Middleware 설정
+	Middleware MWConfig `mapstructure:"middleware"`
+	// Endpoint에서 호출할 Backend API 서버 호출/응답 처리 설정 리스트
+	Backend []*BackendConfig `mapstructure:"backend"`
+}
 
-// // BackendConfig - Backend API Server 연결과 응답 처리를 위한 설정 구조
-// type BackendConfig struct {
-// 	// Backend API Server의 Host URI (서비스에서 전역으로 설정한 경우는 생략 가능)
-// 	Host []string `mapstructure:"host"`
-// 	// Backend 처리 시간 (기본값: )
-// 	Timeout time.Duration
-// 	// Backend 호출에 사용할 HTTP Method
-// 	Method string `mapstructure:"method"`
-// 	// Backend 호출에 사용할 URL Patthern
-// 	URLPattern string `mapstructure:"url_pattern"`
-// 	// 인코딩 포맷
-// 	Encoding string `mapstructure:"encoding"`
-// 	// Backend 결과를 묶을 Group 명 (기본값: )
-// 	Group string `mapstructure:"group"`
-// 	// Backend 결과에서 생략할 필드명 리스트 (flatmap 적용 "." operation)
-// 	Blacklist []string `mapstructure:"blacklist"`
-// 	// Backend 결과에서 추출할 필드명 리스트 (flatmap 적용 "." operation)
-// 	Whitelist []string `mapstructure:"whitelist"`
-// 	// Backend 결과에서 필드명을 변경할 리스트 맵
-// 	Mapping map[string]string `mapstructure:"mapping"`
-// 	// Backend 결과가 컬랙션인지 여부
-// 	IsCollection bool `mapstructure:"is_collection"`
-// 	// Backend 결과가 컬랙션인 경우에 core.CollectionTag ("collection") 으로 JSON 포맷을 할 것인지 여부 (True 면 core.CollectionTag ("collection") 으로 JSON 전환, false면 Array 상태로 반환)
-// 	WrapCollectionToJSON bool `mapstructure:"wrap_collection_to_json"`
-// 	// Backend 결과 중에서 특정한 필드만 처리할 경우의 필드명
-// 	Target string `mapstructure:"target"`
-// 	// Backend 에서 동작할 Middleware 설정
-// 	Middleware MWConfig `mapstructure:"middleware"`
-// 	// HostSanitizationDisabled - host 정보의 정제작업 비활성화 여부
-// 	HostSanitizationDisabled bool `mapstructure:"disable_host_sanitize"`
-// 	// API 호출의 응답을 파싱하기 위한 디코더 (내부 사용)
-// 	Decoder encoding.Decoder `json:"-"`
-// 	// URLPattern에서 파라미터 변환에 사용할 키 관리 (내부 사용)
-// 	URLKeys []string
-// }
+// BackendConfig - Backend API Server 연결과 응답 처리를 위한 설정 구조
+type BackendConfig struct {
+	// Backend API Server의 Host URI (서비스에서 전역으로 설정한 경우는 생략 가능)
+	Host []string `mapstructure:"host"`
+	// Backend 처리 시간 (기본값: )
+	Timeout time.Duration
+	// Backend 호출에 사용할 HTTP Method
+	Method string `mapstructure:"method"`
+	// Backend 호출에 사용할 URL Patthern
+	URLPattern string `mapstructure:"url_pattern"`
+	// 인코딩 포맷
+	Encoding string `mapstructure:"encoding"`
+	// Backend 결과를 묶을 Group 명 (기본값: )
+	Group string `mapstructure:"group"`
+	// Backend 결과에서 생략할 필드명 리스트 (flatmap 적용 "." operation)
+	Blacklist []string `mapstructure:"blacklist"`
+	// Backend 결과에서 추출할 필드명 리스트 (flatmap 적용 "." operation)
+	Whitelist []string `mapstructure:"whitelist"`
+	// Backend 결과에서 필드명을 변경할 리스트 맵
+	Mapping map[string]string `mapstructure:"mapping"`
+	// Backend 결과가 컬랙션인지 여부
+	IsCollection bool `mapstructure:"is_collection"`
+	// Backend 결과가 컬랙션인 경우에 core.CollectionTag ("collection") 으로 JSON 포맷을 할 것인지 여부 (True 면 core.CollectionTag ("collection") 으로 JSON 전환, false면 Array 상태로 반환)
+	WrapCollectionToJSON bool `mapstructure:"wrap_collection_to_json"`
+	// Backend 결과 중에서 특정한 필드만 처리할 경우의 필드명
+	Target string `mapstructure:"target"`
+	// Backend 에서 동작할 Middleware 설정
+	Middleware MWConfig `mapstructure:"middleware"`
+	// HostSanitizationDisabled - host 정보의 정제작업 비활성화 여부
+	HostSanitizationDisabled bool `mapstructure:"disable_host_sanitize"`
+	// API 호출의 응답을 파싱하기 위한 디코더 (내부 사용)
+	Decoder encoding.Decoder `json:"-"`
+	// URLPattern에서 파라미터 변환에 사용할 키 관리 (내부 사용)
+	URLKeys []string
+}
 
 // TLSConfig - 서비스에서 사용할 TLS 설정 구조
 type TLSConfig struct {
@@ -523,25 +518,25 @@ func (sConf *ServiceConfig) paramExtractionPattern() *regexp.Regexp {
 // 	return nil
 // }
 
-// // Validate - Endpoint 별 세부 필수 항목 검증
-// func (e *EndpointConfig) Validate() error {
-// 	matched, err := regexp.MatchString(debugPattern, e.Endpoint)
-// 	if err != nil {
-// 		return &EndpointMatchError{
-// 			Err:    err,
-// 			Path:   e.Endpoint,
-// 			Method: e.Method,
-// 		}
-// 	}
-// 	if matched {
-// 		return &EndpointPathError{Path: e.Endpoint, Method: e.Method}
-// 	}
+// Validate - Endpoint 별 세부 필수 항목 검증
+func (e *EndpointConfig) Validate() error {
+	matched, err := regexp.MatchString(debugPattern, e.Endpoint)
+	if err != nil {
+		return &EndpointMatchError{
+			Err:    err,
+			Path:   e.Endpoint,
+			Method: e.Method,
+		}
+	}
+	if matched {
+		return &EndpointPathError{Path: e.Endpoint, Method: e.Method}
+	}
 
-// 	if len(e.Backend) == 0 {
-// 		return &NoBackendsError{Path: e.Endpoint, Method: e.Method}
-// 	}
-// 	return nil
-// }
+	if len(e.Backend) == 0 {
+		return &NoBackendsError{Path: e.Endpoint, Method: e.Method}
+	}
+	return nil
+}
 
 // Error - 비 호환 버전에 대한 오류 문자열 반환
 func (u *UnsupportedVersionError) Error() string {
@@ -558,7 +553,7 @@ func init() {
 	viper.SetDefault("tls.port", "8443")
 	viper.SetDefault("tls.redirect", true)
 	viper.SetDefault("backendFlushInterval", "20ms")
-	viper.SetDefault("requestIDEnabled", true)
+	viper.SetDefault("requestID", true)
 
 	//viper.SetDefault("respondingTimeouts.IdleTimeout", 180*time.Second)
 	//viper.SetDefault("cluster.updateFrequency", "10s")
@@ -572,15 +567,15 @@ func init() {
 	viper.SetDefault("admin.credentials.basic.users", map[string]string{"admin": "admin"})
 	//viper.SetDefault("admin.credentials.github.teams", make(map[string]string))
 
-	// viper.SetDefault("stats.dsn", "log://")
-	// viper.SetDefault("stats.errorsSection", "error-log")
-	// viper.SetDefault("stats.namespace", core.AppName)
+	viper.SetDefault("stats.dsn", "log://")
+	viper.SetDefault("stats.errorsSection", "error-log")
+	viper.SetDefault("stats.namespace", core.AppName)
 
-	// viper.SetDefault("tracing.serviceName", core.AppName)
-	// viper.SetDefault("tracing.samplingStrategy", "probabilistic")
-	// viper.SetDefault("tracing.samplingParam", 0.15)
-	// viper.SetDefault("tracing.debugTraceKey", "")
-	// viper.SetDefault("tracing.isPublicEndpoint", true)
+	viper.SetDefault("tracing.serviceName", core.AppName)
+	viper.SetDefault("tracing.samplingStrategy", "probabilistic")
+	viper.SetDefault("tracing.samplingParam", 0.15)
+	viper.SetDefault("tracing.debugTraceKey", "")
+	viper.SetDefault("tracing.isPublicEndpoint", true)
 }
 
 // uniqueOutput - 지정된 파라미터 지정 정보를 기준으로 파라미터 구성 검증

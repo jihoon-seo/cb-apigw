@@ -4,22 +4,18 @@ go 1.13
 
 require (
 	contrib.go.opencensus.io/exporter/jaeger v0.1.0
-	github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535
 	github.com/cloud-barista/cb-log v0.1.1
 	github.com/cloud-barista/cb-store v0.1.1
 	github.com/coreos/etcd v3.3.18+incompatible // indirect
 	github.com/gin-contrib/sse v0.0.0-20170109093832-22d885f9ecc7 // indirect
 	github.com/gin-gonic/gin v1.1.5-0.20170702092826-d459835d2b07
-	github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8
 	github.com/go-chi/chi v4.1.1+incompatible
-	github.com/gofrs/uuid v3.3.0+incompatible
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79
 	github.com/influxdata/influxdb v1.7.8
 	github.com/mattn/go-isatty v0.0.9 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a
 	github.com/rs/cors v1.7.0
 	github.com/sirupsen/logrus v1.6.0
-	github.com/snowzach/rotatefilehook v0.0.0-20180327172521-2f64f265f58c // indirect
 	github.com/spf13/cobra v0.0.6
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.4.0
@@ -35,13 +31,12 @@ require (
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v8 v8.18.2 // indirect
-	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	gopkg.in/yaml.v2 v2.3.0
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
 )
 
 replace (
-	//github.com/cloud-barista/cb-log v0.1.1 => /Users/morris/Workspaces/etri/sources/cb-log-0.2.0-cappuccino
+	github.com/cloud-barista/cb-log v0.1.1 => /Users/morris/Workspaces/etri/sources/2020/10/cb-log
 	//github.com/cloud-barista/cb-store v0.1.1 => /Users/morris/Workspaces/etri/sources/cb-store-0.2.0-cappuccino
 	//github.com/coreos/bbolt => go.etcd.io/bbolt v1.3.3
 	github.com/coreos/etcd v3.3.18+incompatible => github.com/coreos/etcd v2.3.8+incompatible

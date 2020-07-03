@@ -2,6 +2,7 @@
 package api
 
 import (
+	"context"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
@@ -46,6 +47,34 @@ func (r *FileSystemRepository) parseEndpoint(apiDef []byte) endpointDefinitions 
 	}
 
 	return apiConfigs
+}
+
+// Watch - 파일 리파지토리의 대상 파일 변경 감시 및 처리
+func (r *FileSystemRepository) Watch(ctx context.Context, configChan chan<- ConfigurationChanged) {
+	go func() {
+		log := logging.GetLogger()
+
+		for {
+			select {
+			case event := <-r.watcher.Events:
+				if event.Op&fsnotify.Write == fsnotify.Write {
+					body, err := ioutil.ReadFile(event.Name)
+					if nil != err {
+						log.WithError(err).Error("Couldn't load the api defintion file")
+						continue
+					}
+					configChan <- ConfigurationChanged{
+						Configurations: &Configuration{Definitions: r.parseEndpoint(body).definitions},
+					}
+				}
+			case err := <-r.watcher.Errors:
+				log.WithError(err).Error("error received from file system notify")
+				return
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
 }
 
 // Close - 사용 중인 Repository 세션 종료

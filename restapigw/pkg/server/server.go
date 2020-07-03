@@ -13,11 +13,7 @@ import (
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/errors"
-	"github.com/cloud-barista/cb-apigw/restapigw/pkg/loader"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
-	"github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/requestid"
-	"github.com/cloud-barista/cb-apigw/restapigw/pkg/plugin"
-	"github.com/cloud-barista/cb-apigw/restapigw/pkg/proxy"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/router"
 	"github.com/go-chi/chi"
 )
@@ -31,8 +27,6 @@ type (
 		server      *http.Server
 		adminServer *admin.Server
 		provider    api.Repository
-		register    *proxy.Register
-		apiLoader   *loader.APILoader
 
 		serviceConf        *config.ServiceConfig
 		currConfigurations *api.Configuration
@@ -130,7 +124,7 @@ func (s *Server) listenProviders(stop chan struct{}) {
 
 			// 설정 변경 여부 검증
 			if s.currConfigurations.EqualsTo(configMsg.Configurations) {
-				logging.GetLogger().Debug("Skipping same configuration")
+				logging.GetLogger().Debug("[API Configuration changed] - Skipping same configuration")
 				continue
 			}
 
@@ -145,6 +139,7 @@ func (s *Server) listenProviders(stop chan struct{}) {
 func (s *Server) listenAndServe(handler http.Handler) error {
 	address := fmt.Sprintf(":%v", s.serviceConf.Port)
 	logger := logging.GetLogger().WithField("address", address)
+
 	s.server = &http.Server{
 		Addr:         address,
 		Handler:      handler,
@@ -180,7 +175,7 @@ func (s *Server) startHTTPServers(ctx context.Context, r router.Router) error {
 	return s.listenAndServe(chi.ServerBaseContext(ctx, r))
 }
 
-func (s *Server) startProvider(ctx context.Context) error {
+func (s *Server) startAdminServer(ctx context.Context) error {
 	s.adminServer = admin.New(
 		admin.WithConfigurations(s.currConfigurations),
 		admin.WithPort(s.serviceConf.Admin.Port),
@@ -224,42 +219,11 @@ func (s *Server) startProvider(ctx context.Context) error {
 	}()
 
 	if watcher, ok := s.provider.(api.Watcher); ok {
+		// 리파지토리 파일 변경 감시 및 처리
 		watcher.Watch(ctx, s.configurationChan)
 	}
 
 	return nil
-}
-
-// createRouter - REST API G/W 운영을 위한 Router 생성
-func (s *Server) createRouter() router.Router {
-	// Create custom not found handler
-	router.DefaultOptions.NotFoundHandler = errors.NotFound
-
-	// 기본 옵션을 기준으로 CHI Router 생성
-	r := router.NewChiRouterWithOptions(router.DefaultOptions)
-
-	// RequestID Middleware 구성
-	if s.serviceConf.RequestIDEnabled {
-		r.Use(requestid.RequestID)
-	}
-
-	// // Add DebugTraceKey middleware which returns debug header with the Trace ID
-	// if s.globalConfig.Tracing.DebugTraceKey != "" {
-	// 	r.Use(middleware.DebugTrace(&b3.HTTPFormat{}, s.globalConfig.Tracing.DebugTraceKey))
-	// }
-
-	// r.Use(
-	// 	middleware.NewStats(s.statsClient).Handler,
-	// 	middleware.NewLogger().Handler,
-	// 	middleware.NewRecovery(errors.RecoveryHandler),
-	// )
-
-	// Routes 가 없는 경우에 발생하는 Panic을 방지하기 위해 루트 경로를 기준으로 404 라우트 경로 지정
-	if r.RoutesCount() < 1 {
-		r.Any("/", errors.NotFound)
-	}
-
-	return r
 }
 
 // Wait - REST API G/W Server 대기 (종료될 떄까지)
@@ -291,17 +255,23 @@ func (s *Server) Close() error {
 }
 
 // Start - REST API G/W Server 시작 (Background Context 사용)
-func (s *Server) Start() error {
-	return s.StartWithContext(context.Background())
-}
+// func (s *Server) Start() error {
+// 	return s.StartWithContext(context.Background())
+// }
 
 // StartWithContext - REST API G/W Server 시작 (Cancellable Context 사용)
 func (s *Server) StartWithContext(ctx context.Context) error {
-	logger := logging.GetLogger() // logging.NewLogger()
+	logger := logging.NewLogger() //logging.GetLogger()
 	logger.Info(core.AppName + " starting...")
+
+	var closed = false
+
 	go func() {
 		defer s.Close()
+
 		<-ctx.Done()
+		closed = true
+
 		logger.Info("I have to go...")
 		reqAcceptGraceTimeout := time.Duration(s.serviceConf.GraceTimeout)
 		if reqAcceptGraceTimeout > 0 {
@@ -312,16 +282,7 @@ func (s *Server) StartWithContext(ctx context.Context) error {
 		logger.Info("Stopping server gracefully")
 	}()
 
-	// Routing 구성
-	r := s.createRouter()
-	s.register = proxy.NewRegister(
-		proxy.WithRouter(r),
-		proxy.WithFlushInterval(s.serviceConf.BackendFlushInterval),
-		proxy.WithIdleConnectionsPerHost(s.serviceConf.MaxIdleConnectionsPerHost),
-		proxy.WithIdleConnectionTimeout(s.serviceConf.IdleConnectionTimeout),
-		proxy.WithIdleConnectionPurgeTicker(s.serviceConf.ConnectionPurgeInterval),
-	)
-
+	// TODO: Router 구성
 	// r := s.createRouter()
 	// s.register = proxy.NewRegister(
 	// 	proxy.WithRouter(r),
@@ -333,20 +294,23 @@ func (s *Server) StartWithContext(ctx context.Context) error {
 	// 	proxy.WithIsPublicEndpoint(s.sysConfig.Tracing.IsPublicEndpoint),
 	// )
 
-	// 경합 현상을 피하기 위해 동기적으로 API Loader를 초기화
-	s.apiLoader = loader.NewAPILoader(s.register)
+	// // 경합 현상을 피하기 위해 API Loader를 초기화
+	// s.apiLoader = loader.NewAPILoader(s.register)
 
 	// HTTP Server 시작
 	go func() {
-		if err := s.startHTTPServers(ctx, nil); err != nil {
-			logger.WithError(err).Fatal("Could not start http servers")
+		logger.Debugf(">>>>> Closed??? =====> %s", closed)
+		if !closed {
+			if err := s.startHTTPServers(ctx, nil); err != nil {
+				logger.WithError(err).Fatal("Could not start http servers")
+			}
 		}
 	}()
 
 	// Provider 구성 (Admin)
 	go s.listenProviders(s.stopChan)
 
-	// TODO: Checking Endpoint definitions
+	// TODO: CHecking Definitions
 	endpoints, err := s.provider.FindAll()
 	if nil != err {
 		return errors.Wrap(err, "could not find all configurations from the provider")
@@ -354,24 +318,24 @@ func (s *Server) StartWithContext(ctx context.Context) error {
 
 	// Definition 기준으로 Admin API 구동
 	s.currConfigurations = &api.Configuration{Definitions: endpoints}
-	if err := s.startProvider(ctx); nil != err {
+	if err := s.startAdminServer(ctx); nil != err {
 		logger.WithError(err).Fatal("Could not start Admin API Providers")
 	}
 
-	// Plugin 처리
-	event := plugin.OnStartup{
-		Register:       s.register,
-		Config:         s.serviceConf,
-		Configurations: endpoints,
-	}
+	// TODO: Plugin 처리
+	// event := plugin.OnStartup{
+	// 	StatsClient:   s.statsClient,
+	// 	Register:      s.register,
+	// 	Config:        s.sysConfig,
+	// 	Configuration: definitions,
+	// }
 
-	// TODO: DB를 사용하는 경우, DB Session 관리 (Plugin Event 연동)
 	// if mgoRepo, ok := s.provider.(*api.MongoRepository); ok {
 	// 	event.MongoSession = mgoRepo.Session
 	// }
 
-	plugin.EmitEvent(plugin.StartupEvent, event)
-	s.apiLoader.RegisterAPIs(endpoints)
+	// plugin.EmitEvent(plugin.StartupEvent, event)
+	// s.apiLoader.RegisterAPIs(definitions)
 
 	logger.Info(core.AppName + " started.")
 
