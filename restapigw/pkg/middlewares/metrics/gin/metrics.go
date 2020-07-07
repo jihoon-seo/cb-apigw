@@ -52,7 +52,7 @@ func (m *Metrics) HandlerFactory(hf ginRouter.HandlerFactory, logger logging.Log
 }
 
 // RunEndpoint - Gin Engine 기반으로 http.Server 구동
-func (m *Metrics) RunEndpoint(ctx context.Context, engine *gin.Engine, logger logging.Logger) {
+func (m *Metrics) RunEndpoint(ctx context.Context, engine *gin.Engine) {
 	server := &http.Server{
 		Addr:    m.Config.ListenAddress,
 		Handler: engine,
@@ -60,7 +60,7 @@ func (m *Metrics) RunEndpoint(ctx context.Context, engine *gin.Engine, logger lo
 
 	go func() {
 		// http.Server 실행 및 오류 logging
-		logger.Error(server.ListenAndServe())
+		m.Logger.Error(server.ListenAndServe())
 	}()
 
 	go func() {
@@ -74,7 +74,7 @@ func (m *Metrics) RunEndpoint(ctx context.Context, engine *gin.Engine, logger lo
 }
 
 // NewEngine - Stats 처리를 위한 Endpoint 역할을 담당하는 Gin Engine 생성
-func (m *Metrics) NewEngine(debugMode bool, logger logging.Logger) *gin.Engine {
+func (m *Metrics) NewEngine(debugMode bool) *gin.Engine {
 	// Sets up the Gin engine for exports the metrics
 	if debugMode {
 		gin.SetMode(gin.DebugMode)
@@ -130,15 +130,25 @@ func NewHTTPHandlerFactory(rm *metrics.RouterMetrics, hf ginRouter.HandlerFactor
 	}
 }
 
-// SetupAndRun - Gin 기반으로 동작하는 Metric Producer를 생성하고 Collector 처리를 위한 Gin 기반의 Endpoint Server 구동
-func SetupAndRun(ctx context.Context, sConf config.ServiceConfig, logger logging.Logger) *Metrics {
-	// Metrics Producer 설정 및 생성
-	metricProducer := Metrics{metrics.SetupAndCreate(ctx, sConf, logger)}
+// // SetupAndRun - Gin 기반으로 동작하는 Metric Producer를 생성하고 Collector 처리를 위한 Gin 기반의 Endpoint Server 구동
+// func SetupAndRun(ctx context.Context, sConf config.ServiceConfig, logger logging.Logger) *Metrics {
+// 	// Metrics Producer 설정 및 생성
+// 	metricProducer := Metrics{metrics.SetupAndCreate(ctx, sConf, logger)}
 
-	if metricProducer.Config != nil && metricProducer.Config.ExposeMetrics {
-		// Gin 기반 Server 구동 및 Endpoint 처리 설정
-		metricProducer.RunEndpoint(ctx, metricProducer.NewEngine(sConf.Debug, logger), logger)
-	}
+// 	if metricProducer.Config != nil && metricProducer.Config.ExposeMetrics {
+// 		// Gin 기반 Server 구동 및 Endpoint 처리 설정
+// 		metricProducer.RunEndpoint(ctx, metricProducer.NewEngine(sConf.Debug, logger), logger)
+// 	}
 
-	return &metricProducer
-}
+// 	return &metricProducer
+// }
+
+// // NewMetrics - GIN 기반으로 동작하는 Metric Producer응 연계하고 Collector 처리를 위한 Endpoint Server 구동
+// func NewMetrics(ctx context.Context, mp metrics.Metrics, debugMode bool) metrics.IMetrics {
+// 	metrics := Metrics{&mp}
+// 	if nil != metrics.Config && metrics.Config.ExposeMetrics {
+// 		metrics.RunEndpoint(ctx, metrics.NewEngine(debugMode))
+// 	}
+
+// 	return metrics
+// }

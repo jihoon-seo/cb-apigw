@@ -11,20 +11,13 @@ import (
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/errors"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
-	"github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/auth"
-	ginCors "github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/cors/gin"
 	httpcache "github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/httpcache"
-	httpsecure "github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/httpsecure/gin"
-	ginMetrics "github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/metrics/gin"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/metrics"
 	opencensus "github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/opencensus"
-	ginOpencensus "github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/opencensus/router/gin"
 	ratelimitProxy "github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/ratelimit/proxy"
-	ratelimit "github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/ratelimit/router/gin"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/proxy"
-	ginRouter "github.com/cloud-barista/cb-apigw/restapigw/pkg/router/gin"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/server"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/transport/http/client"
-	"github.com/gin-gonic/gin"
 
 	// Opencensus 연동을 위한 Exporter 로드 및 초기화
 	_ "github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/opencensus/exporters/jaeger"
@@ -33,6 +26,8 @@ import (
 // ===== [ Constants and Variables ] =====
 
 // ===== [ Types ] =====
+
+type ()
 
 // ===== [ Implementations ] =====
 
@@ -53,21 +48,21 @@ func contextWithSignal(ctx context.Context) context.Context {
 	return newCtx
 }
 
-// newHandlerFactory - Middleware들과 Opencensus 처리를 반영한 Gin Endpoint Handler 생성
-func newHandlerFactory(logger logging.Logger, metricsProducer *ginMetrics.Metrics) ginRouter.HandlerFactory {
-	// Rate Limit 처리용 RouterHandlerFactory 구성
-	handlerFactory := ratelimit.HandlerFactory(ginRouter.EndpointHandler, logger)
-	// TODO: JWT Auth, JWT Rejector
+// // newHandlerFactory - Middleware들과 Opencensus 처리를 반영한 Gin Endpoint Handler 생성
+// func newHandlerFactory(logger logging.Logger, mp metrics.Metrics) ginRouter.HandlerFactory {
+// 	// Rate Limit 처리용 RouterHandlerFactory 구성
+// 	handlerFactory := ratelimit.HandlerFactory(ginRouter.EndpointHandler, logger)
+// 	// TODO: JWT Auth, JWT Rejector
 
-	// 임시로 HMAC을 활용한 Auth 인증 처리용 RouteHandlerFactory 구성
-	handlerFactory = auth.HandlerFactory(handlerFactory, logger)
+// 	// 임시로 HMAC을 활용한 Auth 인증 처리용 RouteHandlerFactory 구성
+// 	handlerFactory = auth.HandlerFactory(handlerFactory, logger)
 
-	// metricsProducer 활용하는 RouteHandlerFactory 구성
-	handlerFactory = metricsProducer.HandlerFactory(handlerFactory, logger)
-	// Opencensus를 활용하는 RouteHandlerFactory 구성
-	handlerFactory = ginOpencensus.HandlerFactory(handlerFactory, logger)
-	return handlerFactory
-}
+// 	// metricsProducer 활용하는 RouteHandlerFactory 구성
+// 	handlerFactory = mp.HandlerFactory(handlerFactory, logger)
+// 	// Opencensus를 활용하는 RouteHandlerFactory 구성
+// 	handlerFactory = ginOpencensus.HandlerFactory(handlerFactory, logger)
+// 	return handlerFactory
+// }
 
 // setupRepository - HTTP Server와 Admin Server 운영에 사용할 API Route 정보 리파지토리 구성
 func setupRepository(sConf config.ServiceConfig, log logging.Logger) (api.Repository, error) {
@@ -80,31 +75,31 @@ func setupRepository(sConf config.ServiceConfig, log logging.Logger) (api.Reposi
 	return repo, nil
 }
 
-// newServer - HTTP Server 및 Admin Server 운영과 연관되는 Middleware 구성을 처리할 서버 생성
-func newServer(sConf config.ServiceConfig, logger logging.Logger) *gin.Engine {
-	// TODO: Create Server
-	engine := gin.Default()
-	engine.RedirectTrailingSlash = true
-	engine.RedirectFixedPath = true
-	engine.HandleMethodNotAllowed = true
+// // newEngine - HTTP Server 및 Admin Server 운영과 연관되는 Middleware 구성을 처리할 서버 생성
+// func newEngine(sConf config.ServiceConfig, logger logging.Logger) router.Router {
+// 	// TODO: Create Server
+// 	engine := gin.Default()
+// 	engine.RedirectTrailingSlash = true
+// 	engine.RedirectFixedPath = true
+// 	engine.HandleMethodNotAllowed = true
 
-	// CORS Middleware 반영
-	ginCors.New(sConf.Middleware, engine)
+// 	// CORS Middleware 반영
+// 	ginCors.New(sConf.Middleware, engine)
 
-	// HTTPSecure Middleware 반영
-	if err := httpsecure.Register(sConf.Middleware, engine); err != nil {
-		logger.Warning(err)
-	}
+// 	// HTTPSecure Middleware 반영
+// 	if err := httpsecure.Register(sConf.Middleware, engine); err != nil {
+// 		logger.Warning(err)
+// 	}
 
-	return engine
-}
+// 	return engine
+// }
 
 // newProxyFactory - 지정된 BackendFactory를 기반으로 동작하는 ProxyFactory 생성
-func newProxyFactory(logger logging.Logger, backendFactory proxy.BackendFactory, metricsProducer *ginMetrics.Metrics) proxy.Factory {
+func newProxyFactory(logger logging.Logger, backendFactory proxy.BackendFactory, mp *metrics.Metrics) proxy.Factory {
 	proxyFactory := proxy.NewDefaultFactory(backendFactory, logger)
 
 	// Metrics 연동 기반의 ProxyFactory 설정
-	proxyFactory = metricsProducer.ProxyFactory("pipe", proxyFactory)
+	proxyFactory = mp.ProxyFactory("pipe", proxyFactory)
 
 	// Opencensus 연동 기반의 ProxyFactory 설정
 	proxyFactory = opencensus.ProxyFactory(proxyFactory)
@@ -112,7 +107,7 @@ func newProxyFactory(logger logging.Logger, backendFactory proxy.BackendFactory,
 }
 
 // newBackendFactoryWithContext - 지정된 Context 기반에서 활용가능한 middleware들이 적용된 BackendFactory 생성
-func newBackendFactoryWithContext(ctx context.Context, logger logging.Logger, metricsProducer *ginMetrics.Metrics) proxy.BackendFactory {
+func newBackendFactoryWithContext(ctx context.Context, logger logging.Logger, mp *metrics.Metrics) proxy.BackendFactory {
 	requestExecutorFactory := func(bConf *config.BackendConfig) client.HTTPRequestExecutor {
 		var clientFactory client.HTTPClientFactory
 		// TODO: Backend Auth
@@ -136,45 +131,45 @@ func newBackendFactoryWithContext(ctx context.Context, logger logging.Logger, me
 	// TODO: Circuit-Breaker for Backend
 
 	// Metrics 연동 기반의 BackendFactory 설정
-	backendFactory = metricsProducer.BackendFactory("backend", backendFactory)
+	backendFactory = mp.BackendFactory("backend", backendFactory)
 
 	// Opencensus 연동 기반의 BackendFactory 설정
 	backendFactory = opencensus.BackendFactory(backendFactory)
 	return backendFactory
 }
 
-// setupPipe - Router Pipeline 설정 구성
-func setupPipe(ctx context.Context, sConf config.ServiceConfig, log *logging.Logger) error {
-	// Sets up the Metrics
-	// metricsProducer := ginMetrics.SetupAndRun(ctx, sConf, *log)
+// // setupPipe - Router Pipeline 설정 구성
+// func setupPipe(ctx context.Context, sConf config.ServiceConfig, log *logging.Logger) (router.PipeConfig, error) {
+// 	// Sets up the Metrics
+// 	metricsProducer := ginMetrics.SetupAndRun(ctx, sConf, *log)
 
-	// if metricsProducer.Config != nil {
-	// 	// Sets up the InfluxDB Client for Metrics
-	// 	influxdb.SetupAndRun(ctx, metricsProducer.Config.InfluxDB, func() interface{} { return metricsProducer.Snapshot() }, log)
-	// } else {
-	// 	log.Warn("Skip the influxdb setup and running because the no metrics configuration or incorrect")
-	// }
+// 	if metricsProducer.Config != nil {
+// 		// Sets up the InfluxDB Client for Metrics
+// 		influxdb.SetupAndRun(ctx, metricsProducer.Config.InfluxDB, func() interface{} { return metricsProducer.Snapshot() }, log)
+// 	} else {
+// 		log.Warn("Skip the influxdb setup and running because the no metrics configuration or incorrect")
+// 	}
 
-	// // Sets up the Opencensus
-	// if err := opencensus.Setup(ctx, sConf); err != nil {
-	// 	log.Fatal(err)
-	// }
+// 	// Sets up the Opencensus
+// 	if err := opencensus.Setup(ctx, sConf); err != nil {
+// 		log.Fatal(err)
+// 	}
 
-	// Sets up the Pipeline (Router (Endpoint Handler) - Proxy - Backend)
-	// pipeConfig := ginRouter.PipeConfig{
-	// 	Engine:         newServer(sConf, *log),
-	// 	ProxyFactory:   newProxyFactory(*log, newBackendFactoryWithContext(ctx, *log, metricsProducer), metricsProducer),
-	// 	Middlewares:    []gin.HandlerFunc{},
-	// 	Logger:         log,
-	// 	HandlerFactory: newHandlerFactory(*log, metricsProducer),
-	// 	Context:        contextWithSignal(ctx),
-	// }
+// 	// Sets up the Pipeline (Router (Endpoint Handler) - Proxy - Backend)
+// 	pipeConfig := router.PipeConfig{
+// 		Engine:         newEngine(sConf, *log),
+// 		ProxyFactory:   newProxyFactory(*log, newBackendFactoryWithContext(ctx, *log, metricsProducer), metricsProducer),
+// 		Middlewares:    []gin.HandlerFunc{},
+// 		Logger:         log,
+// 		HandlerFactory: newHandlerFactory(*log, metricsProducer),
+// 		Context:        contextWithSignal(ctx),
+// 	}
 
-	// PipeConfig 정보를 기준으로 HTTP Server 실행 (Gin Router + Endpoint Handler, Pipeline)
-	//pipeConfig.Run(sConf)
+// 	// PipeConfig 정보를 기준으로 HTTP Server 실행 (Gin Router + Endpoint Handler, Pipeline)
+// 	//pipeConfig.Run(sConf)
 
-	return nil
-}
+// 	return pipeConfig, nil
+// }
 
 // ===== [ Public Functions ] =====
 
@@ -190,14 +185,27 @@ func SetupAndRun(ctx context.Context, sConf config.ServiceConfig) error {
 	}
 	defer repo.Close()
 
+	ctx = contextWithSignal(ctx)
+
+	// Sets up the Metrics
+	metricsProducer := metrics.NewMetricsProducer(ctx, sConf, *log)
+
+	// Sets up the Opencensus
+	if err := opencensus.Setup(ctx, sConf); err != nil {
+		log.Fatal(err)
+	}
+
 	// API G/W 및 Admin 운영을 위한 서버 구성 및 실행
 	svr := server.New(
+		server.WithLog(log),
 		server.WithSystemConfig(&sConf),
 		server.WithProvider(repo),
+		server.WithMetricsProducer(metricsProducer),
+		server.WithProxyFactory(newProxyFactory(*log, newBackendFactoryWithContext(ctx, *log, metricsProducer), metricsProducer)),
+		//server.WithHandlerFactory(newHandlerFactory(*log, metricsProducer)),
 	)
 	defer svr.Close()
 
-	ctx = contextWithSignal(ctx)
 	svr.StartWithContext(ctx)
 
 	svr.Wait()

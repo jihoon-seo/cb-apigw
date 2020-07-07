@@ -102,6 +102,8 @@ type (
 		OutputEncoding string `mapstructure:"output_encoding"`
 		// DisableStrictREST - REST 강제 규칙 비활성화 여부 (기본값: false)
 		DisableStrictREST bool `mapstructure:"disable_strict_rest"`
+		// RouterEngine - Route 처리에 사용할 Engine 지정 (기본값: gin)
+		RouterEngine string `mapstructure:"router_engine"`
 
 		// Admin API 설정
 		Admin AdminConfig `mapstructure:"admin"`
@@ -554,6 +556,7 @@ func init() {
 	viper.SetDefault("tls.redirect", true)
 	viper.SetDefault("backendFlushInterval", "20ms")
 	viper.SetDefault("requestID", true)
+	viper.SetDefault("router_engine", "gin")
 
 	//viper.SetDefault("respondingTimeouts.IdleTimeout", 180*time.Second)
 	//viper.SetDefault("cluster.updateFrequency", "10s")

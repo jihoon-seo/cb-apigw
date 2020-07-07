@@ -9,7 +9,6 @@ require (
 	github.com/coreos/etcd v3.3.18+incompatible // indirect
 	github.com/gin-contrib/sse v0.0.0-20170109093832-22d885f9ecc7 // indirect
 	github.com/gin-gonic/gin v1.1.5-0.20170702092826-d459835d2b07
-	github.com/go-chi/chi v4.1.1+incompatible
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79
 	github.com/influxdata/influxdb v1.7.8
 	github.com/mattn/go-isatty v0.0.9 // indirect

@@ -14,8 +14,9 @@ import (
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/errors"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
-	"github.com/cloud-barista/cb-apigw/restapigw/pkg/router"
-	"github.com/go-chi/chi"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/metrics"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/proxy"
+	ginRouter "github.com/cloud-barista/cb-apigw/restapigw/pkg/router/gin"
 )
 
 // ===== [ Constants and Variables ] =====
@@ -24,9 +25,12 @@ import (
 type (
 	// Server - REST API G/W 정보 형식
 	Server struct {
-		server      *http.Server
-		adminServer *admin.Server
-		provider    api.Repository
+		server          *http.Server
+		adminServer     *admin.Server
+		provider        api.Repository
+		metricsProducer *metrics.Metrics
+		proxyFactory    proxy.Factory
+		logger          *logging.Logger
 
 		serviceConf        *config.ServiceConfig
 		currConfigurations *api.Configuration
@@ -60,12 +64,28 @@ func (s *Server) isStopChanClosed(ch <-chan struct{}) bool {
 
 // closeChannel - 설정 변경과 종료에 대한 채널 종료
 func (s *Server) closeChannel() {
+	// 설정 변경용 채널 종료
 	if !s.isConfigurationChanClosed(s.configurationChan) {
+		logging.GetLogger().Info("confiugration change channel closing in server")
 		close(s.configurationChan)
 	}
+	// 서버 운영용 채널 종료
 	if !s.isStopChanClosed(s.stopChan) {
+		logging.GetLogger().Info("application stop channel closing in server")
 		close(s.stopChan)
 	}
+}
+
+// createRouter - 설정 정보를 기준으로 API G/W 운영을 위한 Routes 정보 구성
+func (s *Server) setupRouter() http.Handler {
+	// TODO: Request ID 관련 처리
+
+	// if s.serviceConf.RouterEngine == "gin" {
+	// 	return ginRouter.Setup(s.serviceConf, s.proxyFactory)
+	// }
+
+	return ginRouter.Setup(s.serviceConf, s.proxyFactory)
+
 }
 
 // updateConfiguration - 지정한 Configuration 변경 메시지 정보를 기준으로 Configuration 정보 갱신 처리
@@ -170,9 +190,15 @@ func (s *Server) listenAndServe(handler http.Handler) error {
 }
 
 // startHTTPServers - REST API G/W 처리를 위한 HTTP Server 시작
-func (s *Server) startHTTPServers(ctx context.Context, r router.Router) error {
+// func (s *Server) startHTTPServers(ctx context.Context, r router.Router) error {
+// 	// TODO: Router Engine to plugin
+// 	return s.listenAndServe(chi.ServerBaseContext(ctx, r))
+// }
+
+// startHTTPServers - REST API G/W 처리를 위한 HTTP Server 시작
+func (s *Server) startHTTPServers(h http.Handler) error {
 	// TODO: Router Engine to plugin
-	return s.listenAndServe(chi.ServerBaseContext(ctx, r))
+	return s.listenAndServe(h)
 }
 
 func (s *Server) startAdminServer(ctx context.Context) error {
@@ -261,28 +287,27 @@ func (s *Server) Close() error {
 
 // StartWithContext - REST API G/W Server 시작 (Cancellable Context 사용)
 func (s *Server) StartWithContext(ctx context.Context) error {
-	logger := logging.NewLogger() //logging.GetLogger()
-	logger.Info(core.AppName + " starting...")
+	log := logging.NewLogger() //logging.GetLogger()
+	log.Info(core.AppName + " starting...")
 
-	var closed = false
-
+	// Signal 수신에 따른 종료 처리
 	go func() {
 		defer s.Close()
 
 		<-ctx.Done()
-		closed = true
-
-		logger.Info("I have to go...")
+		log.Info("I have to go...")
 		reqAcceptGraceTimeout := time.Duration(s.serviceConf.GraceTimeout)
 		if reqAcceptGraceTimeout > 0 {
-			logger.Infof("Waiting %s for incoming requests to cease", reqAcceptGraceTimeout)
+			log.Infof("Waiting %s for incoming requests to cease", reqAcceptGraceTimeout)
 			time.Sleep(reqAcceptGraceTimeout)
 		}
 
-		logger.Info("Stopping server gracefully")
+		log.Info("Stopping server gracefully")
 	}()
 
-	// TODO: Router 구성
+	// Router 구성 및 HTTP Server 설정
+	routerHandler := s.setupRouter()
+
 	// r := s.createRouter()
 	// s.register = proxy.NewRegister(
 	// 	proxy.WithRouter(r),
@@ -299,18 +324,18 @@ func (s *Server) StartWithContext(ctx context.Context) error {
 
 	// HTTP Server 시작
 	go func() {
-		logger.Debugf(">>>>> Closed??? =====> %s", closed)
-		if !closed {
-			if err := s.startHTTPServers(ctx, nil); err != nil {
-				logger.WithError(err).Fatal("Could not start http servers")
-			}
+		// if err := s.startHTTPServers(ctx, routerHandler); err != nil && err != http.ErrServerClosed {
+		// 	log.WithError(err).Fatal("Could not start http servers")
+		// }
+		if err := s.startHTTPServers(routerHandler); err != nil && err != http.ErrServerClosed {
+			log.WithError(err).Fatal("Could not start http servers")
 		}
 	}()
 
 	// Provider 구성 (Admin)
 	go s.listenProviders(s.stopChan)
 
-	// TODO: CHecking Definitions
+	// TODO: Checking Definitions
 	endpoints, err := s.provider.FindAll()
 	if nil != err {
 		return errors.Wrap(err, "could not find all configurations from the provider")
@@ -319,7 +344,7 @@ func (s *Server) StartWithContext(ctx context.Context) error {
 	// Definition 기준으로 Admin API 구동
 	s.currConfigurations = &api.Configuration{Definitions: endpoints}
 	if err := s.startAdminServer(ctx); nil != err {
-		logger.WithError(err).Fatal("Could not start Admin API Providers")
+		log.WithError(err).Fatal("Could not start Admin API Providers")
 	}
 
 	// TODO: Plugin 처리
@@ -337,7 +362,7 @@ func (s *Server) StartWithContext(ctx context.Context) error {
 	// plugin.EmitEvent(plugin.StartupEvent, event)
 	// s.apiLoader.RegisterAPIs(definitions)
 
-	logger.Info(core.AppName + " started.")
+	log.Info(core.AppName + " started.")
 
 	return nil
 }
@@ -348,8 +373,8 @@ func (s *Server) StartWithContext(ctx context.Context) error {
 // New - REST API G/W 운영을 위한 Server 인스턴스 생성
 func New(opts ...Option) *Server {
 	s := Server{
-		configurationChan: make(chan api.ConfigurationChanged, 100),
-		stopChan:          make(chan struct{}, 1),
+		configurationChan: make(chan api.ConfigurationChanged, 100), // 설정 변경 처리용 채널
+		stopChan:          make(chan struct{}, 1),                   // 서버 STOP 처리용 채널
 	}
 
 	for _, opt := range opts {

@@ -2,7 +2,10 @@ package router
 
 import (
 	"net/http"
+	"sync"
 
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/proxy"
 	httpServer "github.com/cloud-barista/cb-apigw/restapigw/pkg/transport/http/server"
 )
 
@@ -36,6 +39,12 @@ var (
 // ===== [ Types ] =====
 
 type (
+	// HandlerFactory - 사용할 Router에 Proxy 연계를 위한 함수
+	HandlerFactory func(*config.EndpointConfig, proxy.Proxy) http.HandlerFunc
+
+	// ToHTTPError - HTTP StatusCode에 따라서 처리하는 오류 형식
+	ToHTTPError httpServer.ToHTTPError
+
 	// Constructor - Middleware 형식의 운영을 위한 함수 형식
 	Constructor func(http.Handler) http.Handler
 
@@ -58,13 +67,75 @@ type (
 
 		RoutesCount() int
 	}
+
+	// DynamicHandler - description
+	DynamicHandler struct {
+		h  http.Handler
+		mu sync.Mutex
+	}
 )
 
-// ToHTTPError - HTTP StatusCode에 따라서 처리하는 오류 형식
-type ToHTTPError httpServer.ToHTTPError
-
 // ===== [ Implementations ] =====
+
+// ServeHTTP -
+func (dr *DynamicHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	dr.h.ServeHTTP(rw, req)
+}
+
+// SetHandler -
+func (dr *DynamicHandler) SetHandler(h http.Handler) {
+	dr.mu.Lock()
+	defer dr.mu.Unlock()
+
+	dr.h = h
+}
 
 // ===== [ Private Functions ] =====
 
 // ===== [ Public Functions ] =====
+
+// // WithServer - Router 연계를 위한 HTTP Server 설정
+// func WithServer(server *http.Server) Option {
+// 	return func(c *Config) {
+// 		c.server = server
+// 	}
+// }
+
+// // WithLog - Logging에 사용할 Logger 적용
+// func WithLog(log *logging.Logger) Option {
+// 	return func(c *Config) {
+// 		c.logger = log
+// 	}
+// }
+
+// // WithSystemConfig - System Configuration 적용
+// func WithSystemConfig(sConf *config.ServiceConfig) Option {
+// 	return func(c *Config) {
+// 		c.serviceConf = sConf
+// 	}
+// }
+
+// // WithProvider - 지정한 Configuration Provider 적용
+// func WithProvider(provider api.Repository) Option {
+// 	return func(c *Config) {
+// 		c.provider = provider
+// 	}
+// }
+
+// // WithMetricsProducer - 지정한 Metrics Prodcuer 적용
+// func WithMetricsProducer(mp *metrics.Metrics) Option {
+// 	return func(c *Config) {
+// 		c.metricsProducer = mp
+// 	}
+// }
+
+// // New - Router 구성을 위한 Router Configuration 인스턴스 생성 및 옵션 설정
+// func New(opts ...Option) *Config {
+// 	c := Config{}
+
+// 	for _, opt := range opts {
+// 		opt(&c)
+// 	}
+
+// 	return &c
+// }

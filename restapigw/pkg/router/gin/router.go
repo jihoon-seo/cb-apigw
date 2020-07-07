@@ -129,3 +129,8 @@ func (pc PipeConfig) registerEndpoint(method, path string, handler gin.HandlerFu
 // ===== [ Private Functions ] =====
 
 // ===== [ Public Functions ] =====
+
+// Setup - description
+func Setup(sConf *config.ServiceConfig, pf proxy.Factory) http.Handler {
+	return nil
+}

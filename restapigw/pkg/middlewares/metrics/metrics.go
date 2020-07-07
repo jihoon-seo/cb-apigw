@@ -8,6 +8,8 @@ import (
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/proxy"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/router"
 	gometrics "github.com/rcrowley/go-metrics"
 	"gopkg.in/yaml.v3"
 )
@@ -31,48 +33,57 @@ var (
 
 // ===== [ Types ] =====
 
-// DummyRegistry - 설정이 없는 경우에 활용할 Registry 구조 정의
-type DummyRegistry struct{}
+type (
+	// DummyRegistry - 설정이 없는 경우에 활용할 Registry 구조 정의
+	DummyRegistry struct{}
 
-// Config - Metrics 운영에 필요한 설정 구조 정의
-type Config struct {
-	// Router Metrics 활성화 여부 (기본값: true)
-	RouterEnabled bool `yaml:"router_enabled"`
-	// Metrics Expose를 위한 HTTP/Gin Server 구동 비활성화 여부 (기본값: false)
-	ExposeMetrics bool `yaml:"expose_metrics"`
-	// Proxy Metrics 활성화 여부 (기본값: true)
-	ProxyEnabled bool `yaml:"proxy_enabled"`
-	// Backend Metrics 활성화 여부 (기본값: true)
-	BackendEnabled bool `yaml:"backend_enabled"`
-	// Metrics 수집 시간 (기본값: 0, Metrics 수집하지 않음)
-	CollectionPeriod time.Duration `yaml:"collection_period"`
-	// Metrics Expose 처리를 위한 URL (기본값: )
-	ListenAddress string `yaml:"listen_address"`
-	InfluxDB      struct {
-		// InfluxDB Address
-		Address string `yaml:"address"`
-		// 수집된 Metrics를 InfluxDB로 전송하는 주기 (기본값: 0, 전송하지 않음)
-		ReportingPeriod time.Duration `yaml:"reporting_period"`
-		// 데이터 전송에 사용할 Buffer 크기 (기본값: 0, 크기 제한 없음)
-		BufferSize int `yaml:"buffer_size"`
-		// 접속에 사용할 사용자 명
-		UserName string `yaml:"user_name"`
-		// 접속에 사용할 비밀번호
-		Password string `yaml:"password"`
-		// 접속할 데이터베이스 명
-		Database string `yaml:"database"`
-	} `yaml:"influxdb"`
-}
+	// Config - Metrics 운영에 필요한 설정 구조 정의
+	Config struct {
+		// Router Metrics 활성화 여부 (기본값: true)
+		RouterEnabled bool `yaml:"router_enabled"`
+		// Proxy Metrics 활성화 여부 (기본값: true)
+		ProxyEnabled bool `yaml:"proxy_enabled"`
+		// Backend Metrics 활성화 여부 (기본값: true)
+		BackendEnabled bool `yaml:"backend_enabled"`
+		// Metrics 수집 시간 (기본값: 0, Metrics 수집하지 않음)
+		CollectionPeriod time.Duration `yaml:"collection_period"`
+		// Metrics Expose를 위한 HTTP/Gin Server 구동 비활성화 여부 (기본값: false)
+		ExposeMetrics bool `yaml:"expose_metrics"`
+		// Metrics Expose 처리를 위한 URL (기본값: )
+		ListenAddress string `yaml:"listen_address"`
+		InfluxDB      struct {
+			// InfluxDB Address
+			Address string `yaml:"address"`
+			// 수집된 Metrics를 InfluxDB로 전송하는 주기 (기본값: 0, 전송하지 않음)
+			ReportingPeriod time.Duration `yaml:"reporting_period"`
+			// 데이터 전송에 사용할 Buffer 크기 (기본값: 0, 크기 제한 없음)
+			BufferSize int `yaml:"buffer_size"`
+			// 접속에 사용할 사용자 명
+			UserName string `yaml:"user_name"`
+			// 접속에 사용할 비밀번호
+			Password string `yaml:"password"`
+			// 접속할 데이터베이스 명
+			Database string `yaml:"database"`
+		} `yaml:"influxdb"`
+	}
 
-// Metrics - 전체 Metrics 관리를 위한 구조 정의
-type Metrics struct {
-	logger         *logging.Logger
-	Config         *Config
-	Proxy          *ProxyMetrics
-	Router         *RouterMetrics
-	Registry       *gometrics.Registry
-	latestSnapshot Stats
-}
+	// MetricCollector - MetricProducer 정보를 기준으로 Metrics 정보처리를 제공하는 인터페이스
+	MetricCollector interface {
+		ProxyFactory(segmentName string, next proxy.Factory) proxy.FactoryFunc
+		BackendFactory(segmentName string, next proxy.BackendFactory) proxy.BackendFactory
+		HandlerFactory(hf router.HandlerFactory, logger logging.Logger) router.HandlerFactory
+	}
+
+	// Metrics - 전체 Metrics 관리를 위한 구조 정의
+	Metrics struct {
+		Logger         *logging.Logger
+		Config         *Config
+		Proxy          *ProxyMetrics
+		Router         *RouterMetrics
+		Registry       *gometrics.Registry
+		latestSnapshot Stats
+	}
+)
 
 // ===== [ Implementations ] =====
 
@@ -135,9 +146,10 @@ func (dr DummyRegistry) UnregisterAll() {}
 // processMetrics - 지정된 시간을 기준으로 Metrics snapshot 처리
 func (m *Metrics) processMetrics(ctx context.Context) {
 	// 서비스 기준 Metric 설정 Child (GC, MEM)
-	r := gometrics.NewPrefixedChildRegistry(*(m.Registry), "service.")
-	gometrics.RegisterDebugGCStats(r)
-	gometrics.RegisterRuntimeMemStats(r)
+	cr := gometrics.NewPrefixedChildRegistry(*(m.Registry), "service.")
+
+	gometrics.RegisterDebugGCStats(cr)
+	gometrics.RegisterRuntimeMemStats(cr)
 
 	// 지정된 시간 간격으로 metric 수집 및 snapshot 처리 (Context 종료 시점까지 반복)
 	go func() {
@@ -145,8 +157,8 @@ func (m *Metrics) processMetrics(ctx context.Context) {
 		for {
 			select {
 			case <-ticker.C:
-				gometrics.CaptureDebugGCStatsOnce(r)
-				gometrics.CaptureRuntimeMemStatsOnce(r)
+				gometrics.CaptureDebugGCStatsOnce(cr)
+				gometrics.CaptureRuntimeMemStatsOnce(cr)
 				// Router Metrics 수집
 				m.Router.Aggregate()
 				// Snapshot 처리
@@ -184,26 +196,28 @@ func NewDummyRegistry() gometrics.Registry {
 	return DummyRegistry{}
 }
 
-// SetupAndCreate - Metrics Producer 생성
-func SetupAndCreate(ctx context.Context, sConfig config.ServiceConfig, logger logging.Logger) *Metrics {
+// NewMetricsProducer - Metrics Producer 생성 및 Metrics Expose 구동
+func NewMetricsProducer(ctx context.Context, sConfig config.ServiceConfig, log logging.Logger) *Metrics {
 	// Root Registry 생성 (cb-restapigw)
 	registry := gometrics.NewPrefixedRegistry(core.AppName + ".")
 
 	conf := parseConfig(sConfig)
-	if conf == nil {
-		// no middleware configuration defined or error for the metrics module, use DummyRegistry
+	if nil == conf {
+		// TODO: Collector 처리는??
+		// 미들웨어 설정이나 메트릭 설정이 없거나 메트릭에서 오류가 발생한 경우는 장애 방지를 위해 Dummy Registry 활용
 		registry = NewDummyRegistry()
 		return &Metrics{
-			logger:   &logger,
+			Logger:   &log,
 			Registry: &registry,
 			Router:   &RouterMetrics{},
 			Proxy:    &ProxyMetrics{},
 		}
 	}
 
+	// TODO: Collector 연결 필요.
 	// Metric Producer 생성
 	m := Metrics{
-		logger:         &logger,
+		Logger:         &log,
 		Config:         conf,
 		Router:         NewRouterMetrics(&registry), // Router Metrics
 		Proxy:          NewProxyMetrics(&registry),  // Pipeline Metrics

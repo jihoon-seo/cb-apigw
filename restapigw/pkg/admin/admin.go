@@ -55,6 +55,7 @@ func (s *Server) Start() error {
 // Stop - Admin API Server 종료
 func (s *Server) Stop() {
 	if !s.isClosedChannel(s.ConfigurationChan) {
+		logging.GetLogger().Info("admin configuration channel closing.")
 		close(s.ConfigurationChan)
 	}
 	logging.GetLogger().Info(core.AppName + " Admin API stoped.")
