@@ -4,6 +4,7 @@ package admin
 import (
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/api"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
 )
 
 // ===== [ Constants and Variables ] =====
@@ -17,6 +18,13 @@ type (
 // ===== [ Implementations ] =====
 // ===== [ Private Functions ] =====
 // ===== [ Public Functions ] =====
+
+// WithLog - Logging에 사용할 Logger 적용
+func WithLog(log *logging.Logger) Option {
+	return func(s *Server) {
+		s.logger = log
+	}
+}
 
 // WithConfigurations - Memory상에 동작하고 있는 Configuration 옵션 설정
 func WithConfigurations(configs *api.Configuration) Option {

@@ -1,39 +1,39 @@
 package router
 
 import (
+	"errors"
 	"net/http"
-	"sync"
 
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/proxy"
-	httpServer "github.com/cloud-barista/cb-apigw/restapigw/pkg/transport/http/server"
 )
 
 // ===== [ Constants and Variables ] =====
 
 const (
 	// HeaderCompleteResponseValue - 정상적으로 종료된 Response들에 대한 Complete Header ("X-CB-RESTAPIGW-COMPLETED")로 설정될 값
-	HeaderCompleteResponseValue = httpServer.HeaderCompleteResponseValue
+	HeaderCompleteResponseValue = "true"
 	// HeaderIncompleteResponseValue - 비 정상적으로 종료된 Response들에 대한 Complete Header로 설정될 값
-	HeaderIncompleteResponseValue = httpServer.HeaderIncompleteResponseValue
+	HeaderIncompleteResponseValue = "false"
 )
 
 var (
 	// MessageResponseHeaderName - Response 오류인 경우 클라이언트에 표시할 Header 명
-	MessageResponseHeaderName = httpServer.MessageResponseHeaderName
+	MessageResponseHeaderName = "X-" + core.AppName + "-Messages"
 	// CompleteResponseHeaderName - 정상/비정상 종료에 대한 Header 정보를 클라이언트에 알리기 위한 Header 명
-	CompleteResponseHeaderName = httpServer.CompleteResponseHeaderName
+	CompleteResponseHeaderName = "X-" + core.AppName + "-Completed"
 	// HeadersToSend - Route로 전달된 Request에서 Proxy로 전달할 설정에 지정된 Header들 정보
-	HeadersToSend = httpServer.HeadersToSend
+	HeadersToSend = []string{"Content-Type"}
 	// HeadersToNotSend - Router로 전달된 Request에서 Proxy로 전달죄지 않을 Header들 정보
-	HeadersToNotSend = httpServer.HeadersToNotSend
+	HeadersToNotSend = []string{"Accept-Encoding"}
 	// UserAgentHeaderValue - Proxy Request에 설정할 User-Agent Header 값
-	UserAgentHeaderValue = httpServer.UserAgentHeaderValue
+	UserAgentHeaderValue = []string{core.AppUserAgent}
 
 	// DefaultToHTTPError - 항상 InternalServerError로 처리하는 기본 오류
-	DefaultToHTTPError = httpServer.DefaultToHTTPError
+	DefaultToHTTPError = func(_ error) int { return http.StatusInternalServerError }
 	// ErrInternalError - 문제가 발생했을 때 InternalServerError로 표현되는 오류
-	ErrInternalError = httpServer.ErrInternalError
+	ErrInternalError = errors.New("internal server error")
 )
 
 // ===== [ Types ] =====
@@ -43,7 +43,7 @@ type (
 	HandlerFactory func(*config.EndpointConfig, proxy.Proxy) http.HandlerFunc
 
 	// ToHTTPError - HTTP StatusCode에 따라서 처리하는 오류 형식
-	ToHTTPError httpServer.ToHTTPError
+	ToHTTPError func(error) int
 
 	// Constructor - Middleware 형식의 운영을 위한 함수 형식
 	Constructor func(http.Handler) http.Handler
@@ -67,28 +67,14 @@ type (
 
 		RoutesCount() int
 	}
-
-	// DynamicHandler - description
-	DynamicHandler struct {
-		h  http.Handler
-		mu sync.Mutex
-	}
 )
 
 // ===== [ Implementations ] =====
 
-// ServeHTTP -
-func (dr *DynamicHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	dr.h.ServeHTTP(rw, req)
-}
-
-// SetHandler -
-func (dr *DynamicHandler) SetHandler(h http.Handler) {
-	dr.mu.Lock()
-	defer dr.mu.Unlock()
-
-	dr.h = h
-}
+// // GetHandler -
+// func (de *DynamicEngine) GetHandler() http.Handler {
+// 	return de.engine
+// }
 
 // ===== [ Private Functions ] =====
 

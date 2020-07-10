@@ -4,7 +4,6 @@ package admin
 import (
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/api"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
-	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
 )
 
@@ -15,7 +14,9 @@ type (
 	// Server - Admin API Server 관리 정보 형식
 	Server struct {
 		ConfigurationChan chan api.ConfigurationMessage
-		apiHandler        *APIHandler
+
+		apiHandler *APIHandler
+		logger     *logging.Logger
 
 		Port        int `mapstructure:"port"`
 		Credentials config.CredentialsConfig
@@ -37,8 +38,7 @@ func (s *Server) isClosedChannel(ch <-chan api.ConfigurationMessage) bool {
 
 // Start - Admin API Server 구동
 func (s *Server) Start() error {
-	logger := logging.GetLogger()
-	logger.Info(core.AppName + " Admin API starting...")
+	s.logger.Info("[API SERVER] Admin API starting...")
 
 	// TODO: API Routing
 	// router.DefaultOptions.NotFoundHandler = httpErrors.NotFound
@@ -48,7 +48,7 @@ func (s *Server) Start() error {
 	// s.AddRoutes(r)
 	// plugin.EmitEvent(plugin.AdminAPIStartupEvent, plugin.OnAdminAPIStartup{Router: r})
 
-	logging.GetLogger().Info(core.AppName + " Admin API started.")
+	s.logger.Info("[API SERVER] Admin API started.")
 	return nil
 }
 
@@ -58,7 +58,7 @@ func (s *Server) Stop() {
 		logging.GetLogger().Info("admin configuration channel closing.")
 		close(s.ConfigurationChan)
 	}
-	logging.GetLogger().Info(core.AppName + " Admin API stoped.")
+	s.logger.Info("[API G/W] Admin API stoped.")
 }
 
 // ===== [ Private Functions ] =====

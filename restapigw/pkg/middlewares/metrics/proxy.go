@@ -29,13 +29,13 @@ type ProxyMetrics struct {
 // ===== [ Implementations ] =====
 
 // NewProxyCallChain - 지정한 레이어에 대한 Proxy 호출 체인 구성
-func (m *Metrics) NewProxyCallChain(layer, name string) proxy.CallChain {
-	return NewProxyCallChain(layer, name, m.Proxy)
+func (p *Producer) NewProxyCallChain(layer, name string) proxy.CallChain {
+	return NewProxyCallChain(layer, name, p.Proxy)
 }
 
 // ProxyFactory - Metrics 처리를 수행하는 ProxyFactory 생성
-func (m *Metrics) ProxyFactory(segmentName string, next proxy.Factory) proxy.FactoryFunc {
-	if m.Config == nil || !m.Config.ProxyEnabled {
+func (p *Producer) ProxyFactory(segmentName string, next proxy.Factory) proxy.FactoryFunc {
+	if p.Config == nil || !p.Config.ProxyEnabled {
 		return next.New
 	}
 
@@ -44,18 +44,18 @@ func (m *Metrics) ProxyFactory(segmentName string, next proxy.Factory) proxy.Fac
 		if err != nil {
 			return proxy.DummyProxy, err
 		}
-		return m.NewProxyCallChain(segmentName, eConf.Endpoint)(next), nil
+		return p.NewProxyCallChain(segmentName, eConf.Endpoint)(next), nil
 	})
 }
 
 // BackendFactory - Metrics 처리를 수행하는 BackendFactory 생성
-func (m *Metrics) BackendFactory(segmentName string, next proxy.BackendFactory) proxy.BackendFactory {
-	if m.Config == nil || !m.Config.BackendEnabled {
+func (p *Producer) BackendFactory(segmentName string, next proxy.BackendFactory) proxy.BackendFactory {
+	if p.Config == nil || !p.Config.BackendEnabled {
 		return next
 	}
 
 	return func(bConf *config.BackendConfig) proxy.Proxy {
-		return m.NewProxyCallChain(segmentName, bConf.URLPattern)(next(bConf))
+		return p.NewProxyCallChain(segmentName, bConf.URLPattern)(next(bConf))
 	}
 }
 

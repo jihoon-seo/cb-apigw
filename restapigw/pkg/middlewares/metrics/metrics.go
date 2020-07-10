@@ -8,10 +8,8 @@ import (
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
-	"github.com/cloud-barista/cb-apigw/restapigw/pkg/proxy"
-	"github.com/cloud-barista/cb-apigw/restapigw/pkg/router"
-	gometrics "github.com/rcrowley/go-metrics"
-	"gopkg.in/yaml.v3"
+	"github.com/rcrowley/go-metrics"
+	"gopkg.in/yaml.v2"
 )
 
 // ===== [ Constants and Variables ] =====
@@ -23,12 +21,12 @@ const (
 
 var (
 	// defaultListenAddress - Metrics 수집을 위한 Pulling 용 Port
-	defaultListenAddress = ":9000"
+	//defaultListenAddress = ":9000"
 
 	// Metrics 의 수행 구간 비율 측정용
 	percentiles = []float64{0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99}
 	// 기본 Metrics 샘플
-	defaultSample = func() gometrics.Sample { return gometrics.NewUniformSample(1028) }
+	defaultSample = func() metrics.Sample { return metrics.NewUniformSample(1028) }
 )
 
 // ===== [ Types ] =====
@@ -67,55 +65,19 @@ type (
 		} `yaml:"influxdb"`
 	}
 
-	// MetricCollector - MetricProducer 정보를 기준으로 Metrics 정보처리를 제공하는 인터페이스
-	MetricCollector interface {
-		ProxyFactory(segmentName string, next proxy.Factory) proxy.FactoryFunc
-		BackendFactory(segmentName string, next proxy.BackendFactory) proxy.BackendFactory
-		HandlerFactory(hf router.HandlerFactory, logger logging.Logger) router.HandlerFactory
-	}
+	// Producer - Metrics 정보 관리 구조
+	Producer struct {
+		Logger   *logging.Logger
+		Config   *Config
+		Proxy    *ProxyMetrics
+		Router   *RouterMetrics
+		Registry *metrics.Registry
 
-	// Metrics - 전체 Metrics 관리를 위한 구조 정의
-	Metrics struct {
-		Logger         *logging.Logger
-		Config         *Config
-		Proxy          *ProxyMetrics
-		Router         *RouterMetrics
-		Registry       *gometrics.Registry
 		latestSnapshot Stats
 	}
 )
 
 // ===== [ Implementations ] =====
-
-// Snapshot - 최종 처리된 Snapshot 반환 (InfluxDB 쪽에서 호출)
-func (m *Metrics) Snapshot() Stats {
-	return m.latestSnapshot
-}
-
-// TakeSnapshot - 현재 상태에 대한 Snapshot 처리
-func (m *Metrics) TakeSnapshot() Stats {
-	stats := NewStats()
-
-	(*m.Registry).Each(func(key string, val interface{}) {
-		switch metric := val.(type) {
-		case gometrics.Counter:
-			stats.Counters[key] = metric.Count()
-		case gometrics.Gauge:
-			stats.Gauges[key] = metric.Value()
-		case gometrics.Histogram:
-			stats.Histograms[key] = HistogramData{
-				Max:         metric.Max(),
-				Min:         metric.Min(),
-				Mean:        metric.Mean(),
-				Stddev:      metric.StdDev(),
-				Variance:    metric.Variance(),
-				Percentiles: metric.Percentiles(percentiles),
-			}
-			metric.Clear()
-		}
-	})
-	return stats
-}
 
 // Each - Dummy Each
 func (dr DummyRegistry) Each(_ func(string, interface{})) {}
@@ -144,25 +106,25 @@ func (dr DummyRegistry) Unregister(_ string) {}
 func (dr DummyRegistry) UnregisterAll() {}
 
 // processMetrics - 지정된 시간을 기준으로 Metrics snapshot 처리
-func (m *Metrics) processMetrics(ctx context.Context) {
+func (mp *Producer) processMetrics(ctx context.Context, period time.Duration, log logging.Logger) {
 	// 서비스 기준 Metric 설정 Child (GC, MEM)
-	cr := gometrics.NewPrefixedChildRegistry(*(m.Registry), "service.")
+	cr := metrics.NewPrefixedChildRegistry(*(mp.Registry), "service.")
 
-	gometrics.RegisterDebugGCStats(cr)
-	gometrics.RegisterRuntimeMemStats(cr)
+	metrics.RegisterDebugGCStats(cr)
+	metrics.RegisterRuntimeMemStats(cr)
 
 	// 지정된 시간 간격으로 metric 수집 및 snapshot 처리 (Context 종료 시점까지 반복)
 	go func() {
-		ticker := time.NewTicker(m.Config.CollectionPeriod)
+		ticker := time.NewTicker(period)
 		for {
 			select {
 			case <-ticker.C:
-				gometrics.CaptureDebugGCStatsOnce(cr)
-				gometrics.CaptureRuntimeMemStatsOnce(cr)
+				metrics.CaptureDebugGCStatsOnce(cr)
+				metrics.CaptureRuntimeMemStatsOnce(cr)
 				// Router Metrics 수집
-				m.Router.Aggregate()
+				mp.Router.Aggregate()
 				// Snapshot 처리
-				m.latestSnapshot = m.TakeSnapshot()
+				mp.latestSnapshot = mp.TakeSnapshot()
 			case <-ctx.Done():
 				return
 			}
@@ -170,12 +132,43 @@ func (m *Metrics) processMetrics(ctx context.Context) {
 	}()
 }
 
+// Snapshot - 최종 처리된 Snapshot 반환 (InfluxDB 쪽에서 호출)
+func (mp *Producer) Snapshot() Stats {
+	return mp.latestSnapshot
+}
+
+// TakeSnapshot - 현재 상태에 대한 Snapshot 처리
+func (mp *Producer) TakeSnapshot() Stats {
+	stats := NewStats()
+
+	(*mp.Registry).Each(func(key string, val interface{}) {
+		switch metric := val.(type) {
+		case metrics.Counter:
+			stats.Counters[key] = metric.Count()
+		case metrics.Gauge:
+			stats.Gauges[key] = metric.Value()
+		case metrics.Histogram:
+			stats.Histograms[key] = HistogramData{
+				Max:         metric.Max(),
+				Min:         metric.Min(),
+				Mean:        metric.Mean(),
+				Stddev:      metric.StdDev(),
+				Variance:    metric.Variance(),
+				Percentiles: metric.Percentiles(percentiles),
+			}
+			metric.Clear()
+		}
+	})
+	return stats
+}
+
 // ===== [ Private Functions ] =====
 
-// parseConfig - Metrics 운영을 위한 Configuration parsing 처리
-func parseConfig(sConf config.ServiceConfig) *Config {
+// parseConfig - Metrics 운영을 위한 Configuration 설정
+func parseConfig(mConf config.MWConfig) *Config {
 	conf := new(Config)
-	tmp, ok := sConf.Middleware[MWNamespace]
+
+	tmp, ok := mConf[MWNamespace]
 	if !ok {
 		return nil
 	}
@@ -192,41 +185,37 @@ func parseConfig(sConf config.ServiceConfig) *Config {
 // ===== [ Public Functions ] =====
 
 // NewDummyRegistry - 설정이 없는 경우의 빈 Registry 생성
-func NewDummyRegistry() gometrics.Registry {
+func NewDummyRegistry() metrics.Registry {
 	return DummyRegistry{}
 }
 
-// NewMetricsProducer - Metrics Producer 생성 및 Metrics Expose 구동
-func NewMetricsProducer(ctx context.Context, sConfig config.ServiceConfig, log logging.Logger) *Metrics {
-	// Root Registry 생성 (cb-restapigw)
-	registry := gometrics.NewPrefixedRegistry(core.AppName + ".")
-
-	conf := parseConfig(sConfig)
+// New - Metrics Collector에서 사용할 Metrics 정보 관리 Producer 인스턴스 생성
+func New(ctx context.Context, mConf config.MWConfig, log logging.Logger) *Producer {
+	// 설정 기반으로 Metric Producer 구성
+	conf := parseConfig(mConf)
 	if nil == conf {
-		// TODO: Collector 처리는??
-		// 미들웨어 설정이나 메트릭 설정이 없거나 메트릭에서 오류가 발생한 경우는 장애 방지를 위해 Dummy Registry 활용
-		registry = NewDummyRegistry()
-		return &Metrics{
-			Logger:   &log,
-			Registry: &registry,
+		// 설정이 존재하지 않는 경우는 장애 방지를 위한 Dummy Registry 활용
+		dummyRegistry := NewDummyRegistry()
+		return &Producer{
+			Registry: &dummyRegistry,
 			Router:   &RouterMetrics{},
 			Proxy:    &ProxyMetrics{},
 		}
 	}
 
-	// TODO: Collector 연결 필요.
-	// Metric Producer 생성
-	m := Metrics{
+	// Metrics 처리를 위한 Root Registry 생성
+	registry := metrics.NewPrefixedRegistry(core.AppName + ".")
+
+	metricProducer := Producer{
 		Logger:         &log,
 		Config:         conf,
-		Router:         NewRouterMetrics(&registry), // Router Metrics
-		Proxy:          NewProxyMetrics(&registry),  // Pipeline Metrics
+		Router:         NewRouterMetrics(&registry),
+		Proxy:          NewProxyMetrics(&registry),
 		Registry:       &registry,
-		latestSnapshot: NewStats(), // 최종 Snapshot 관리용
+		latestSnapshot: NewStats(),
 	}
 
-	// Run metrics
-	m.processMetrics(ctx)
+	metricProducer.processMetrics(ctx, metricProducer.Config.CollectionPeriod, log)
 
-	return &m
+	return &metricProducer
 }

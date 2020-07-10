@@ -1,0 +1,16 @@
+// Package router -
+package router
+
+// ===== [ Constants and Variables ] =====
+// ===== [ Types ] =====
+
+type (
+	// Register - 라우팅 운영을 위한 인터페이스
+	Register interface {
+		Engine() *DynamicEngine
+	}
+)
+
+// ===== [ Implementations ] =====
+// ===== [ Private Functions ] =====
+// ===== [ Public Functions ] =====

@@ -13,7 +13,7 @@ import (
 type (
 	// Metrics - Mux 기반의 Routing 처리세 적용할 Metrics 구조
 	Metrics struct {
-		*metrics.Metrics
+		*metrics.Producer
 	}
 )
 

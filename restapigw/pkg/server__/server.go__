@@ -14,9 +14,7 @@ import (
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/errors"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
-	"github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/metrics"
-	"github.com/cloud-barista/cb-apigw/restapigw/pkg/proxy"
-	ginRouter "github.com/cloud-barista/cb-apigw/restapigw/pkg/router/gin"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/router"
 )
 
 // ===== [ Constants and Variables ] =====
@@ -25,12 +23,11 @@ import (
 type (
 	// Server - REST API G/W 정보 형식
 	Server struct {
-		server          *http.Server
-		adminServer     *admin.Server
-		provider        api.Repository
-		metricsProducer *metrics.Metrics
-		proxyFactory    proxy.Factory
-		logger          *logging.Logger
+		server      *http.Server
+		adminServer *admin.Server
+		provider    api.Repository
+		register    router.Register
+		logger      *logging.Logger
 
 		serviceConf        *config.ServiceConfig
 		currConfigurations *api.Configuration
@@ -76,17 +73,17 @@ func (s *Server) closeChannel() {
 	}
 }
 
-// createRouter - 설정 정보를 기준으로 API G/W 운영을 위한 Routes 정보 구성
-func (s *Server) setupRouter() http.Handler {
-	// TODO: Request ID 관련 처리
+// // createRouter - 설정 정보를 기준으로 API G/W 운영을 위한 Routes 정보 구성
+// func (s *Server) setupRouter() http.Handler {
+// 	// TODO: Request ID 관련 처리
 
-	// if s.serviceConf.RouterEngine == "gin" {
-	// 	return ginRouter.Setup(s.serviceConf, s.proxyFactory)
-	// }
+// 	// if s.serviceConf.RouterEngine == "gin" {
+// 	// 	return ginRouter.Setup(s.serviceConf, s.proxyFactory)
+// 	// }
 
-	return ginRouter.Setup(s.serviceConf, s.proxyFactory)
+// 	return ginRouter.Setup(s.serviceConf, s.proxyFactory, s.logger)
 
-}
+// }
 
 // updateConfiguration - 지정한 Configuration 변경 메시지 정보를 기준으로 Configuration 정보 갱신 처리
 func (s *Server) updateConfigurations(cfg api.ConfigurationMessage) {
@@ -196,13 +193,14 @@ func (s *Server) listenAndServe(handler http.Handler) error {
 // }
 
 // startHTTPServers - REST API G/W 처리를 위한 HTTP Server 시작
-func (s *Server) startHTTPServers(h http.Handler) error {
+func (s *Server) startHTTPServers(de *router.DynamicEngine) error {
 	// TODO: Router Engine to plugin
-	return s.listenAndServe(h)
+	return s.listenAndServe(de.GetHandler())
 }
 
 func (s *Server) startAdminServer(ctx context.Context) error {
 	s.adminServer = admin.New(
+		admin.WithLog(s.logger),
 		admin.WithConfigurations(s.currConfigurations),
 		admin.WithPort(s.serviceConf.Admin.Port),
 		admin.WithTLS(s.serviceConf.Admin.TLS),
@@ -288,7 +286,7 @@ func (s *Server) Close() error {
 // StartWithContext - REST API G/W Server 시작 (Cancellable Context 사용)
 func (s *Server) StartWithContext(ctx context.Context) error {
 	log := logging.NewLogger() //logging.GetLogger()
-	log.Info(core.AppName + " starting...")
+	log.Info("[API G/W] " + core.AppName + " starting...")
 
 	// Signal 수신에 따른 종료 처리
 	go func() {
@@ -305,29 +303,12 @@ func (s *Server) StartWithContext(ctx context.Context) error {
 		log.Info("Stopping server gracefully")
 	}()
 
-	// Router 구성 및 HTTP Server 설정
-	routerHandler := s.setupRouter()
-
-	// r := s.createRouter()
-	// s.register = proxy.NewRegister(
-	// 	proxy.WithRouter(r),
-	// 	proxy.WithFlushInterval(s.sysConfig.BackendFlushInterval),
-	// 	proxy.WithIdleConnectionsPerHost(s.sysConfig.MaxIdelConnsPerHost),
-	// 	proxy.WithIdleConnectionTimeout(s.sysConfig.IdleConnTimeout),
-	// 	proxy.WithIdleConnectionPurgeTicker(s.sysConfig.ConnPurgeInterval),
-	// 	proxy.WithStatsClient(s.statsClient),
-	// 	proxy.WithIsPublicEndpoint(s.sysConfig.Tracing.IsPublicEndpoint),
-	// )
-
-	// // 경합 현상을 피하기 위해 API Loader를 초기화
-	// s.apiLoader = loader.NewAPILoader(s.register)
-
 	// HTTP Server 시작
 	go func() {
 		// if err := s.startHTTPServers(ctx, routerHandler); err != nil && err != http.ErrServerClosed {
 		// 	log.WithError(err).Fatal("Could not start http servers")
 		// }
-		if err := s.startHTTPServers(routerHandler); err != nil && err != http.ErrServerClosed {
+		if err := s.startHTTPServers(s.register.Engine()); err != nil && err != http.ErrServerClosed {
 			log.WithError(err).Fatal("Could not start http servers")
 		}
 	}()
@@ -359,13 +340,22 @@ func (s *Server) StartWithContext(ctx context.Context) error {
 	// 	event.MongoSession = mgoRepo.Session
 	// }
 
+	// // Admin API 정보를 기준으로 Routing 정보 구성
+	// s.router.SetupRoutes(endpoints)
+
 	// plugin.EmitEvent(plugin.StartupEvent, event)
 	// s.apiLoader.RegisterAPIs(definitions)
 
-	log.Info(core.AppName + " started.")
+	log.Info("[API G/W] " + core.AppName + " started.")
 
 	return nil
 }
+
+// // SetupRouter - 지정한 정보를 기준으로 Router 구성
+// func (s *Server) SetupRouter(pf proxy.Factory) {
+// 	//if (s.serviceConf.RouterEngine == "gin") {}
+// 	s.router = ginRouter.Setup(s.serviceConf, pf, s.logger)
+// }
 
 // ===== [ Private Functions ] =====
 // ===== [ Public Functions ] =====
