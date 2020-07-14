@@ -6,7 +6,10 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
+	"sync"
+	"time"
 
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
@@ -19,6 +22,8 @@ var (
 	ErrPrivateKey = errors.New("private key not defined")
 	// ErrPublicKey - TLS 설정에서 사용할 Public Key 미 설정 오류
 	ErrPublicKey = errors.New("public key not defined")
+
+	onceTransportConfig sync.Once
 
 	defaultCurves = []tls.CurveID{
 		tls.CurveP521,
@@ -42,7 +47,50 @@ var (
 )
 
 // ===== [ Types ] =====
+
+type (
+	// Server - HTTP Web Server 운영 구조
+	Server struct {
+		*http.Server
+	}
+)
+
 // ===== [ Implementations ] =====
+
+// Start - HTTP Web Server 구동
+func (s *Server) Start(ctx context.Context, sConf config.ServiceConfig, handler http.Handler, log logging.Logger) error {
+	done := make(chan error)
+
+	if nil == s.TLSConfig {
+		go func() {
+			done <- s.ListenAndServe()
+		}()
+	} else {
+		if "" == sConf.TLS.PublicKey {
+			return ErrPublicKey
+		}
+		if "" == sConf.TLS.PrivateKey {
+			return ErrPrivateKey
+		}
+
+		go func() {
+			done <- s.ListenAndServeTLS(sConf.TLS.PublicKey, sConf.TLS.PrivateKey)
+		}()
+	}
+
+	select {
+	case err := <-done:
+		return err
+	default:
+		return nil
+	}
+}
+
+// Stop - HTTP Web Server 종료
+func (s *Server) Stop() error {
+	return s.Close()
+}
+
 // ===== [ Private Functions ] =====
 
 func parseTLSVersion(key string) uint16 {
@@ -98,45 +146,43 @@ func parseTLSConfig(tlsConf *config.TLSConfig) *tls.Config {
 
 // ===== [ Public Functions ] =====
 
-// NewServer - 지정한 설정과 http handler 기준으로 동작하는 http server 반환
-func NewServer(sConf config.ServiceConfig, handler http.Handler) *http.Server {
-	return &http.Server{
-		Addr:              fmt.Sprintf(":%d", sConf.Port),
-		Handler:           handler,
-		ReadTimeout:       sConf.ReadTimeout,
-		WriteTimeout:      sConf.WriteTimeout,
-		ReadHeaderTimeout: sConf.ReadHeaderTimeout,
-		IdleTimeout:       sConf.IdleTimeout,
-		TLSConfig:         parseTLSConfig(sConf.TLS),
-	}
+// InitHTTPDefaultTransport - 설정 기준으로 단 한번 설정되는 HTTP 설정 초기화
+func InitHTTPDefaultTransport(sConf config.ServiceConfig) {
+	onceTransportConfig.Do(func() {
+		http.DefaultTransport = &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+			DialContext: (&net.Dialer{
+				Timeout:       sConf.DialerTimeout,
+				KeepAlive:     sConf.DialerKeepAlive,
+				FallbackDelay: sConf.DialerFallbackDelay,
+				DualStack:     true,
+			}).DialContext,
+			DisableCompression:    sConf.DisableCompression,
+			DisableKeepAlives:     sConf.DisableKeepAlives,
+			MaxIdleConns:          sConf.MaxIdleConnections,
+			MaxIdleConnsPerHost:   sConf.MaxIdleConnectionsPerHost,
+			IdleConnTimeout:       sConf.IdleConnectionTimeout,
+			ResponseHeaderTimeout: sConf.ResponseHeaderTimeout,
+			ExpectContinueTimeout: sConf.ExpectContinueTimeout,
+			TLSHandshakeTimeout:   10 * time.Second,
+		}
+	})
 }
 
-// RunServer - 지정된 Context와 설정 및 Handler 기반으로 동작하는 HTTP Server 구동
-func RunServer(ctx context.Context, sConf config.ServiceConfig, handler http.Handler, log logging.Logger) error {
-	done := make(chan error)
+// NewServer - 지정한 설정과 http handler 기준으로 동작하는 http server 반환
+func NewServer(sConf config.ServiceConfig, handler http.Handler) *Server {
+	InitHTTPDefaultTransport(sConf)
 
-	s := NewServer(sConf, handler)
-
-	if s.TLSConfig == nil {
-		go func() {
-			done <- s.ListenAndServe()
-		}()
-	} else {
-		if sConf.TLS.PublicKey == "" {
-			return ErrPublicKey
-		}
-		if sConf.TLS.PrivateKey == "" {
-			return ErrPrivateKey
-		}
-		go func() {
-			done <- s.ListenAndServeTLS(sConf.TLS.PublicKey, sConf.TLS.PrivateKey)
-		}()
+	return &Server{
+		&http.Server{
+			Addr:              fmt.Sprintf(":%d", sConf.Port),
+			Handler:           handler,
+			ReadTimeout:       sConf.ReadTimeout,
+			WriteTimeout:      sConf.WriteTimeout,
+			ReadHeaderTimeout: sConf.ReadHeaderTimeout,
+			IdleTimeout:       sConf.IdleTimeout,
+			TLSConfig:         parseTLSConfig(sConf.TLS),
+		},
 	}
 
-	select {
-	case err := <-done:
-		return err
-	case <-ctx.Done():
-		return s.Shutdown(context.Background())
-	}
 }

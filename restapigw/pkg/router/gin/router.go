@@ -9,10 +9,10 @@ import (
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/admin"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/api"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
-	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/errors"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/proxy"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/transport/http/server"
 	httpServer "github.com/cloud-barista/cb-apigw/restapigw/pkg/transport/http/server"
 	"github.com/gin-gonic/gin"
 )
@@ -32,9 +32,12 @@ type (
 		ProxyFactory   proxy.Factory
 		Logger         logging.Logger
 
+		server             *server.Server
 		adminServer        *admin.Server
 		currConfigurations *api.Configuration
-		configurationChan  chan api.ConfigurationChanged
+
+		configurationChan chan api.ConfigurationChanged
+		stopChan          chan struct{}
 	}
 
 	// DynamicEngine - 동적 라우팅 구성을 위한 Routing Engine 구조
@@ -57,25 +60,6 @@ func (de *DynamicEngine) SetHandler(h http.Handler) {
 	defer de.mu.Unlock()
 
 	de.engine = h
-}
-
-// close - 동작 중인 Server들을 모두 종료 처리
-func (pc PipeConfig) close() {
-	// defer s.closeChannel()
-	defer pc.adminServer.Stop()
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	go func(ctx context.Context) {
-		<-ctx.Done()
-		if ctx.Err() == context.Canceled {
-			logger.Info("terminiating by interrupt signal")
-			return
-		} else if ctx.Err() == context.DeadlineExceeded {
-			panic("[SERVER] Timeout while stopping " + core.AppName + ", killing instance ✝")
-		}
-	}(ctx)
 }
 
 // listenProviders - 지정한 종료 채널을 기준으로 처리 및 변경에 대한 Loop 설정 (stop or configuration change, ...)
@@ -155,25 +139,47 @@ func (pc PipeConfig) startAdminServer(sConf config.ServiceConfig) error {
 	return nil
 }
 
+// startHTTPServers - HTTP Web Server 구동
+func (pc PipeConfig) startHTTPServers(sConf config.ServiceConfig) error {
+	return pc.listenAndServe(sConf)
+}
+
+// listenAndServe - HTTP Web Server 요청 처리 구동
+func (pc PipeConfig) listenAndServe(sConf config.ServiceConfig) error {
+	pc.server = server.NewServer(sConf, pc.Engine)
+
+	return pc.server.Start(pc.Context, sConf, pc.Engine, pc.Logger)
+}
+
+// Wait - 서버 종료 대기
+func (pc PipeConfig) Wait() {
+	<-pc.stopChan
+}
+
 // Run - 서비스 설정을 기준으로 Gin Engine 구성 / Route - Endpoint Handler 추가 / HTTP Server 구동
 func (pc PipeConfig) Run(sConf config.ServiceConfig) {
 	pc.Logger.Info("[SERVER] Starting.")
+
+	// 종료 및 변경 반영을 위한 Channel 설정
+	pc.configurationChan = make(chan api.ConfigurationChanged, 100)
+	pc.stopChan = make(chan struct{}, 1)
+
 	// 설정된 Middleware 들을 사용하도록 설정
 	pc.Engine.engine.(*gin.Engine).Use(pc.Middlewares...)
 
-	// 종료 처리
-	go func() {
-		defer pc.close()
+	// // 종료 처리
+	// go func() {
+	// 	defer pc.Close()
 
-		<-pc.Context.Done()
-		reqAcceptGraceTimeout := time.Duration(sConf.GraceTimeout)
-		if reqAcceptGraceTimeout > 0 {
-			pc.Logger.Infof("[SERVER] Waiting %s for incoming requests to cease", reqAcceptGraceTimeout)
-			time.Sleep(reqAcceptGraceTimeout)
-		}
+	// 	<-pc.Context.Done()
+	// 	reqAcceptGraceTimeout := time.Duration(sConf.GraceTimeout)
+	// 	if reqAcceptGraceTimeout > 0 {
+	// 		pc.Logger.Infof("[SERVER] Waiting %s for incoming requests to cease", reqAcceptGraceTimeout)
+	// 		time.Sleep(reqAcceptGraceTimeout)
+	// 	}
 
-		pc.Logger.Info("[SERVER] Stopping server gracefully")
-	}()
+	// 	pc.Logger.Info("[SERVER] Stopping server gracefully")
+	// }()
 
 	// TODO: Endpoints Registry
 	// if sConf.Debug {
@@ -189,16 +195,23 @@ func (pc PipeConfig) Run(sConf config.ServiceConfig) {
 	// })
 
 	go func() {
+		// HTTP Server 환경 초기화
+		httpServer.InitHTTPDefaultTransport(sConf)
+
 		// TODO: 서버 생성 및 실행
-		if err := httpServer.RunServer(pc.Context, sConf, pc.Engine, pc.Logger); nil != err {
-			pc.Logger.Error(err)
+		if err := pc.startHTTPServers(sConf); nil != err {
+			pc.Logger.WithError(err).Fatal("[SERVER] Could not start http servers")
 		}
+
+		// if err := httpServer.RunServer(pc.Context, sConf, pc.Engine, pc.Logger); nil != err {
+		// 	pc.Logger.Error(err)
+		// }
 	}()
 
 	// TODO: Routing 구성???
 
 	// Provider 구성 (Admin)
-	//go pc.listenProviders(s.stopChan)
+	go pc.listenProviders(pc.stopChan)
 
 	// TODO: Checking Repository Definitions
 	defs, err := pc.Repository.FindAll()
@@ -212,28 +225,49 @@ func (pc PipeConfig) Run(sConf config.ServiceConfig) {
 		logger.WithError(err).Fatal("[API SERVER] Could not start Admin API Repository proviers")
 	}
 
-	// svr := server.New(
-	// 	server.WithServiceConfig(sConf),
-	// 	server.WithProvider(repo),
-	// )
-
-	// svr.StartWithContext(ctx)
-	// defer svr.Close()
-
-	// svr.Wait()
 	pc.Logger.Info("[SERVER] Started.")
 
-	<-pc.Context.Done()
-	pc.Logger.Info("[SERVER] Terminated")
+	// 종료 처리
+	go func() {
+		defer pc.Close()
 
-	// HTTP Server 환경 초기화
-	//httpServer.InitHTTPDefaultTransport(sConf)
+		<-pc.Context.Done()
+		reqAcceptGraceTimeout := time.Duration(sConf.GraceTimeout)
+		if reqAcceptGraceTimeout > 0 {
+			pc.Logger.Infof("[SERVER] Waiting %s for incoming requests to cease", reqAcceptGraceTimeout)
+			time.Sleep(reqAcceptGraceTimeout)
+		}
 
-	// // Gin Engine을 Handler로 사용하는 HTTP Server 구동
-	// if err := httpServer.RunServer(pc.Context, sConf, pc.Engine); err != nil {
-	// 	pc.Logger.Error(err.Error())
-	// }
+		pc.Logger.Info("[SERVER] Stopping server gracefully")
+	}()
+}
 
+// Close - 동작 중인 Server들을 모두 종료 처리
+func (pc PipeConfig) Close() error {
+	if pc.adminServer == nil {
+		pc.Logger.Debug("adminServer already null")
+	}
+
+	pc.Logger.Debug("Router Server Closing called.")
+	//defer close(pc.stopChan)
+	//defer close(pc.configurationChan)
+
+	defer pc.adminServer.Stop()
+
+	// ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	// defer cancel()
+
+	// go func(ctx context.Context) {
+	// 	<-ctx.Done()
+	// 	if ctx.Err() == context.Canceled {
+	// 		logger.Info("terminiating by interrupt signal")
+	// 		return
+	// 	} else if ctx.Err() == context.DeadlineExceeded {
+	// 		panic("[SERVER] Timeout while stopping " + core.AppName + ", killing instance ✝")
+	// 	}
+	// }(ctx)
+
+	return pc.server.Stop()
 }
 
 //// registerDebugEndpoints - debug 옵션이 활성화된 경우에 `__debug` 로 호출되는 Enpoint Handler 구성

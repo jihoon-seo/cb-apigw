@@ -2,6 +2,8 @@
 package admin
 
 import (
+	"fmt"
+
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/api"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
@@ -54,6 +56,11 @@ func (s *Server) Start() error {
 
 // Stop - Admin API Server 종료
 func (s *Server) Stop() {
+	if s == nil {
+		fmt.Println("server is null")
+		return
+	}
+
 	if !s.isClosedChannel(s.ConfigurationChan) {
 		logging.GetLogger().Info("admin configuration channel closing.")
 		close(s.ConfigurationChan)
@@ -67,14 +74,14 @@ func (s *Server) Stop() {
 // New - Admin Server 구동
 func New(opts ...Option) *Server {
 	configurationChan := make(chan api.ConfigurationMessage)
-	s := Server{
+	s := &Server{
 		ConfigurationChan: configurationChan,
 		apiHandler:        NewAPIHandler(configurationChan),
 	}
 
 	for _, opt := range opts {
-		opt(&s)
+		opt(s)
 	}
 
-	return &s
+	return s
 }

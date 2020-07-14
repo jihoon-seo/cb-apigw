@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -33,8 +34,10 @@ func contextWithSignal(ctx context.Context) context.Context {
 	go func() {
 		select {
 		case <-signals:
+			fmt.Println("Received System Interrupt")
 			cancel()
 			close(signals)
+			fmt.Println("Signals channel closed")
 		}
 	}()
 	return newCtx
@@ -57,8 +60,6 @@ func setupRepository(sConf config.ServiceConfig, log logging.Logger) (api.Reposi
 func SetupAndRun(ctx context.Context, sConf config.ServiceConfig) error {
 	// Sets up the Logger (CB-LOG)
 	log := logging.NewLogger()
-
-	ctx = contextWithSignal(ctx)
 
 	// API 운영을 위한 라우팅 리파지토리 구성
 	repo, err := setupRepository(sConf, *log)

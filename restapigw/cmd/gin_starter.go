@@ -6,6 +6,7 @@ import (
 
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/api"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/auth"
 	cors "github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/cors/gin"
@@ -141,6 +142,8 @@ func SetupAndRunGinRouter(ctx context.Context, sConf config.ServiceConfig, repo 
 		log.Fatal(err)
 	}
 
+	ctx = core.ContextWithSignal(ctx)
+
 	// PipeConfig 구성 (Router (Enpoint Handler) - Proxy - Backend 연계 파이프 설정)
 	pipeConfig := ginRouter.PipeConfig{
 		Context:        ctx,
@@ -154,4 +157,8 @@ func SetupAndRunGinRouter(ctx context.Context, sConf config.ServiceConfig, repo 
 
 	// PipeConfig 기반으로 운영되는 Server 구동
 	pipeConfig.Run(sConf)
+	// defer pipeConfig.Close()
+
+	pipeConfig.Wait()
+	pipeConfig.Logger.Info("[SERVER] Terminated.")
 }

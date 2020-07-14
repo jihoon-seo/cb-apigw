@@ -3,6 +3,7 @@ package core
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -10,6 +11,9 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 // ===== [ Constants and Variables ] =====
@@ -152,6 +156,23 @@ func getMyInterfaceAddr() (net.IP, error) {
 }
 
 // ===== [ Public Functions ] =====
+
+// ContextWithSignal - OS Interrupt signal 연계 처리를 위한 Context 구성
+func ContextWithSignal(ctx context.Context) context.Context {
+	newCtx, cancel := context.WithCancel(ctx)
+	signals := make(chan os.Signal)
+	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		select {
+		case <-signals:
+			cancel()
+			close(signals)
+		}
+	}()
+
+	return newCtx
+}
 
 // NewWrappedError - 원본 오류를 관리하는 오류 생성
 func NewWrappedError(code int, message string, originalError error) error {
