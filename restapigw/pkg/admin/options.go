@@ -20,7 +20,7 @@ type (
 // ===== [ Public Functions ] =====
 
 // WithLog - Logging에 사용할 Logger 적용
-func WithLog(log *logging.Logger) Option {
+func WithLog(log logging.Logger) Option {
 	return func(s *Server) {
 		s.logger = log
 	}

@@ -150,9 +150,14 @@ type (
 
 // EndpointConfig - 서비스 라우팅에 사용할 설정 구조
 type EndpointConfig struct {
+	// TODO: Name, Active 검증
+
+	// 설정 식별 명
+	Name string `mapstructure:"name"`
+	// 설정 활성화 여부
+	Active bool `mapstructure:"active"`
 	// Bypass 처리 여부
 	IsBypass bool
-
 	// 클라이언트에 노출될 URL 패턴
 	Endpoint string `mapstructure:"endpoint"`
 	// Endpoint에 대한 HTTP 메서드 (GET, POST, PUT, etc) (기본값: GET)

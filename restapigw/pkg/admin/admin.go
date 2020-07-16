@@ -18,7 +18,7 @@ type (
 		ConfigurationChan chan api.ConfigurationMessage
 
 		apiHandler *APIHandler
-		logger     *logging.Logger
+		logger     logging.Logger
 
 		Port        int `mapstructure:"port"`
 		Credentials config.CredentialsConfig
@@ -62,7 +62,6 @@ func (s *Server) Stop() {
 	}
 
 	if !s.isClosedChannel(s.ConfigurationChan) {
-		logging.GetLogger().Info("admin configuration channel closing.")
 		close(s.ConfigurationChan)
 	}
 	s.logger.Info("[API G/W] Admin API stoped.")

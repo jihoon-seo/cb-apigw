@@ -2,7 +2,9 @@ definitions:
     ##############
     # For Fake API Test (collection. header/querystring passing and blacklist)
     ##############
-    - endpoint: "/splash"
+    - name: Splash Test
+      active: true
+      endpoint: "/splash"
       except_querystrings:
       #  - "name"
       #  - "querystring"

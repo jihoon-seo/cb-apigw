@@ -8,6 +8,16 @@ import (
 )
 
 // ===== [ Constants and Variables ] =====
+
+const (
+	// RemovedOperation - 설정 제거 작업
+	RemovedOperation ConfigurationOperation = iota
+	// UpdatedOperation - 설정 변경 작업
+	UpdatedOperation
+	// AddedOperation - 설정 등록 작업
+	AddedOperation
+)
+
 // ===== [ Types ] =====
 
 type (
@@ -27,7 +37,7 @@ type (
 	// ConfigurationMessage - Configuration 변경시 사용할 메시지 형식
 	ConfigurationMessage struct {
 		Operation     ConfigurationOperation
-		Configuration *Configuration
+		Configuration *config.EndpointConfig
 	}
 )
 

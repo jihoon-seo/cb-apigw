@@ -2,15 +2,13 @@ package cmd
 
 import (
 	"context"
-	"fmt"
-	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/api"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/errors"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/server"
 
 	// Opencensus 연동을 위한 Exporter 로드 및 초기화
 	_ "github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/opencensus/exporters/jaeger"
@@ -20,28 +18,9 @@ import (
 
 // ===== [ Types ] =====
 
-type ()
-
 // ===== [ Implementations ] =====
 
 // ===== [ Private Functions ] =====
-
-// contextWithSignal - System Interrupt Signal을 반영한 Context 생
-func contextWithSignal(ctx context.Context) context.Context {
-	newCtx, cancel := context.WithCancel(ctx)
-	signals := make(chan os.Signal)
-	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
-	go func() {
-		select {
-		case <-signals:
-			fmt.Println("Received System Interrupt")
-			cancel()
-			close(signals)
-			fmt.Println("Signals channel closed")
-		}
-	}()
-	return newCtx
-}
 
 // setupRepository - HTTP Server와 Admin Server 운영에 사용할 API Route 정보 리파지토리 구성
 func setupRepository(sConf config.ServiceConfig, log logging.Logger) (api.Repository, error) {
@@ -59,21 +38,27 @@ func setupRepository(sConf config.ServiceConfig, log logging.Logger) (api.Reposi
 // SetupAndRun - API Gateway 서비스를 위한 Router 및 Pipeline 구성과 구동
 func SetupAndRun(ctx context.Context, sConf config.ServiceConfig) error {
 	// Sets up the Logger (CB-LOG)
-	log := logging.NewLogger()
+	logger := logging.NewLogger()
 
 	// API 운영을 위한 라우팅 리파지토리 구성
-	repo, err := setupRepository(sConf, *log)
+	repo, err := setupRepository(sConf, *logger)
 	if nil != err {
 		return err
 	}
 	defer repo.Close()
 
-	// API G/W 및 Admin 구동을 위한 Router 설정 및 구동
+	// API G/W Server 구동
+	svr := server.New(
+		server.WithServiceConfig(sConf),
+		server.WithLogger(*logger),
+		server.WithRepository(repo),
+	)
 
-	switch sConf.RouterEngine {
-	default:
-		SetupAndRunGinRouter(ctx, sConf, repo, *log)
-	}
+	ctx = core.ContextWithSignal(ctx)
+	svr.StartWithContext(ctx)
+
+	svr.Wait()
+	logger.Info("[Server] Shutting down")
 
 	return nil
 }

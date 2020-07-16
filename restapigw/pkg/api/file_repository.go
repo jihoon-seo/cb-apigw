@@ -20,7 +20,7 @@ import (
 type (
 	// Endpoint List 구조
 	endpointDefinitions struct {
-		definitions []*config.EndpointConfig `mapstructure:"definitions" yaml:"definitions"`
+		Definitions []*config.EndpointConfig `mapstructure:"definitions" yaml:"definitions"`
 	}
 
 	// FileSystemRepository - 파일 시스템 기반 Repository 관리 정보 형식
@@ -40,9 +40,9 @@ func (r *FileSystemRepository) parseEndpoint(apiDef []byte) endpointDefinitions 
 	// Try unmarshalling as Array of multiple definitions
 	if err := yaml.Unmarshal(apiDef, &apiConfigs); err != nil {
 		// Try unmarshalling as Single Definition
-		apiConfigs.definitions = append(apiConfigs.definitions, NewEndpoint())
-		if err := yaml.Unmarshal(apiDef, &apiConfigs.definitions[0]); err != nil {
-			logging.GetLogger().WithError(err).Error("Couldn't parsing api configuration")
+		apiConfigs.Definitions = append(apiConfigs.Definitions, NewEndpoint())
+		if err := yaml.Unmarshal(apiDef, &apiConfigs.Definitions[0]); err != nil {
+			logging.GetLogger().WithError(err).Error("Couldn't parsing api definitions")
 		}
 	}
 
@@ -64,7 +64,7 @@ func (r *FileSystemRepository) Watch(ctx context.Context, configChan chan<- Conf
 						continue
 					}
 					configChan <- ConfigurationChanged{
-						Configurations: &Configuration{Definitions: r.parseEndpoint(body).definitions},
+						Configurations: &Configuration{Definitions: r.parseEndpoint(body).Definitions},
 					}
 				}
 			case err := <-r.watcher.Errors:
@@ -121,7 +121,7 @@ func NewFileSystemRepository(dir string) (*FileSystemRepository, error) {
 			}
 
 			definition := repo.parseEndpoint(appConfigBody)
-			for _, v := range definition.definitions {
+			for _, v := range definition.Definitions {
 				if err = repo.add(v); err != nil {
 					logger.WithField("endpoint", v.Endpoint).WithError(err).Error("Failed during add endpoint to the repository")
 					return nil, err
