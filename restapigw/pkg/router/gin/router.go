@@ -94,7 +94,7 @@ func (pc PipeConfig) registerAPIGroup(path string, handler gin.HandlerFunc, totB
 func (pc PipeConfig) registerAPI(method, path string, handler gin.HandlerFunc, totBackends int) {
 	method = strings.ToTitle(method)
 	if method != http.MethodGet && totBackends > 1 {
-		pc.logger.Error(method, "endpoints must have a single backend! Ignoring", path)
+		pc.logger.Error(method, "endpoints must have a single backend! Ignoring -> ", path)
 		return
 	}
 
@@ -122,7 +122,9 @@ func (pc *PipeConfig) Engine() http.Handler {
 }
 
 // RegisterAPIs - API Provider (Repository)에서 추출된 API 설정들을 Router로 등록
-func (pc *PipeConfig) RegisterAPIs(defs []*config.EndpointConfig) error {
+func (pc *PipeConfig) RegisterAPIs(sConf *config.ServiceConfig, defs []*config.EndpointConfig) error {
+	// API 설정들에 대한 누락 항목들을 기본 값으로 설정
+	config.InitDefinitions(sConf, defs)
 	for _, def := range defs {
 		// Endpoint에 연결되어 동작할 수 있도록 ProxyFactory의 Call chain에 대한 인스턴스 생성 (ProxyStack)
 		proxyStack, err := pc.proxyFactory.New(def)
@@ -151,6 +153,20 @@ func (pc *PipeConfig) RegisterAPIs(defs []*config.EndpointConfig) error {
 func WithLogger(logger logging.Logger) Option {
 	return func(pc *PipeConfig) {
 		pc.logger = logger
+	}
+}
+
+// WithHandlerFactory - Route Handler Factory 설정
+func WithHandlerFactory(hf HandlerFactory) Option {
+	return func(pc *PipeConfig) {
+		pc.handlerFactory = hf
+	}
+}
+
+// WithProxyFactory - Proxy Factory 설정
+func WithProxyFactory(pf proxy.Factory) Option {
+	return func(pc *PipeConfig) {
+		pc.proxyFactory = pf
 	}
 }
 

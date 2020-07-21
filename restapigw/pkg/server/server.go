@@ -125,8 +125,8 @@ func (s *Server) listenProviders(stop chan struct{}) {
 }
 
 // createRouter - API G/W 운영을 위한 Router를 생성한다.
-func (s *Server) createRouter() router.Router {
-	return SetupRouter(s.serviceConfig, s.logger)
+func (s *Server) createRouter(ctx context.Context) router.Router {
+	return SetupRouter(ctx, s.serviceConfig, s.logger)
 }
 
 // startProvider - 지정한 Context 기반으로 Admin Server 구동 및 변경에 대한 처리
@@ -197,7 +197,7 @@ func (s *Server) StartWithContext(ctx context.Context) error {
 	}()
 
 	// TODO: Router 구성
-	router := s.createRouter()
+	router := s.createRouter(ctx)
 
 	// HTTP Server 구동
 	go func() {
@@ -224,7 +224,7 @@ func (s *Server) StartWithContext(ctx context.Context) error {
 	}
 
 	// API Definition에 대한 Router 연계 처리
-	router.RegisterAPIs(s.currConfigurations.Definitions)
+	router.RegisterAPIs(&s.serviceConfig, s.currConfigurations.Definitions)
 
 	s.logger.Info("[SERVER] Started")
 	return nil

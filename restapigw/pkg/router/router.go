@@ -72,7 +72,7 @@ type (
 	// Router - Router 운영에 필요한 인페이스
 	Router interface {
 		Engine() http.Handler
-		RegisterAPIs(defs []*config.EndpointConfig) error
+		RegisterAPIs(sConf *config.ServiceConfig, defs []*config.EndpointConfig) error
 	}
 
 	// DynamicEngine - 동적 라우팅 구성을 위한 Routing Engine 구조

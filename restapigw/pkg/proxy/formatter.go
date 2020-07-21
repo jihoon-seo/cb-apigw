@@ -26,8 +26,8 @@ type flatmapFormatter struct {
 
 // flatmapOp - Flatmap 운영을 위한 설정 구조 정의
 type flatmapOp struct {
-	Type string
-	Args [][]string
+	Type string     `yaml:"type"`
+	Args [][]string `yarml:"args"`
 }
 
 // propertyFilter - Reponse Filtering에 사용할 함수 정의
@@ -49,31 +49,31 @@ type EntityFormatter interface {
 // ===== [ Implementations ] =====
 
 // Format - PropertyFilter를 활용하는 EntityFormatter 구현
-func (ef entityFormatter) Format(resEntity Response) Response {
+func (ef entityFormatter) Format(entity Response) Response {
 	// Target 처리
 	if ef.Target != "" {
-		extractTarget(ef.Target, &resEntity)
+		extractTarget(ef.Target, &entity)
 	}
-	if len(resEntity.Data) > 0 {
-		ef.PropertyFilter(&resEntity)
+	if len(entity.Data) > 0 {
+		ef.PropertyFilter(&entity)
 		// Mapping 처리
 		for formerKey, newKey := range ef.Mapping {
-			if v, ok := resEntity.Data[formerKey]; ok {
+			if v, ok := entity.Data[formerKey]; ok {
 				// Collection Wrapping에 대한 정보 재 처리
-				if _, ok := resEntity.Data[core.CollectionTag]; ok {
-					if _, ok := resEntity.Data[core.WrappingTag]; ok {
-						resEntity.Data[core.WrappingTag] = newKey
+				if _, ok := entity.Data[core.CollectionTag]; ok {
+					if _, ok := entity.Data[core.WrappingTag]; ok {
+						entity.Data[core.WrappingTag] = newKey
 					}
 				}
-				resEntity.Data[newKey] = v
-				delete(resEntity.Data, formerKey)
+				entity.Data[newKey] = v
+				delete(entity.Data, formerKey)
 			}
 		}
 	}
 	if ef.Prefix != "" {
-		resEntity.Data = map[string]interface{}{ef.Prefix: resEntity.Data}
+		entity.Data = map[string]interface{}{ef.Prefix: entity.Data}
 	}
-	return resEntity
+	return entity
 }
 
 // Format - Flatmap을 활용하는 FlatmapFormatter 구현
@@ -269,15 +269,20 @@ func newFlatmapFormatter(bConf *config.BackendConfig) EntityFormatter {
 	return nil
 }
 
-// extractTarget - 지정한 Response에 대해 지정한 Target이 존재하는지를 검증하고 반환 (만일 없다면 빈 데이터로 처리)
-func extractTarget(target string, resEntity *Response) {
-	if tmp, ok := resEntity.Data[target]; ok {
-		resEntity.Data, ok = tmp.(map[string]interface{})
-		if !ok {
-			resEntity.Data = map[string]interface{}{}
+// extractTarget - 지정한 Response에 대해 지정한 Target이 존재하는지를 검증하고 반환 (단, Map 형식이어야 하며, 만일 없거나, 변환 불가이면 빈 데이터로 처리)
+func extractTarget(target string, entity *Response) {
+	for _, part := range strings.Split(target, ".") {
+		if tmp, ok := entity.Data[part]; ok {
+
+			entity.Data, ok = tmp.(map[string]interface{})
+			if !ok {
+				entity.Data = map[string]interface{}{}
+				return
+			}
+		} else {
+			entity.Data = map[string]interface{}{}
+			return
 		}
-	} else {
-		resEntity.Data = map[string]interface{}{}
 	}
 }
 

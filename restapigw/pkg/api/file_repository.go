@@ -3,6 +3,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
@@ -11,7 +12,7 @@ import (
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/errors"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
 	"gopkg.in/fsnotify.v1"
-	"gopkg.in/yaml.v3"
+	"gopkg.in/yaml.v2"
 )
 
 // ===== [ Constants and Variables ] =====
@@ -33,9 +34,10 @@ type (
 // ===== [ Implementations ] =====
 
 func (r *FileSystemRepository) parseEndpoint(apiDef []byte) endpointDefinitions {
-	apiConfigs := endpointDefinitions{}
+	var apiConfigs endpointDefinitions
+	//apiConfigs := endpointDefinitions{}
 
-	//logging.GetLogger().Printf("YAML: %s", string(apiDef))
+	//	logging.GetLogger().Printf("YAML: %s", string(apiDef))
 
 	// Try unmarshalling as Array of multiple definitions
 	if err := yaml.Unmarshal(apiDef, &apiConfigs); err != nil {
@@ -43,6 +45,13 @@ func (r *FileSystemRepository) parseEndpoint(apiDef []byte) endpointDefinitions 
 		apiConfigs.Definitions = append(apiConfigs.Definitions, NewEndpoint())
 		if err := yaml.Unmarshal(apiDef, &apiConfigs.Definitions[0]); err != nil {
 			logging.GetLogger().WithError(err).Error("Couldn't parsing api definitions")
+		}
+	}
+
+	for idx, ec := range apiConfigs.Definitions {
+		fmt.Printf("Endpoint(%d) : %+v\n", idx, ec)
+		for bIdx, bc := range ec.Backend {
+			fmt.Printf("Backend(%d) : %v\n", bIdx, bc)
 		}
 	}
 

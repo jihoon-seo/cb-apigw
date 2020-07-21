@@ -2,8 +2,11 @@
 package server
 
 import (
+	"context"
+
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
+	ginMetrics "github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/metrics/gin"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/router"
 	ginRouter "github.com/cloud-barista/cb-apigw/restapigw/pkg/router/gin"
 )
@@ -16,10 +19,14 @@ type ()
 // ===== [ Private Functions ] =====
 
 // setupGinRouter - Gin 기반으로 동작하는 Router 설정
-func setupGinRouter(sConf config.ServiceConfig, logger logging.Logger) router.Router {
+func setupGinRouter(ctx context.Context, sConf config.ServiceConfig, logger logging.Logger) router.Router {
+	metricsCollector := ginMetrics.New(ctx, sConf.Middleware, logger, sConf.Debug)
+
 	// API G/W Server 구동
 	return ginRouter.New(sConf,
 		ginRouter.WithLogger(logger),
+		ginRouter.WithHandlerFactory(setupGinHandlerFactory(logger, metricsCollector)),
+		ginRouter.WithProxyFactory(setupGinProxyFactory(logger, setupGinBackendFactoryWithContext(ctx, logger, metricsCollector), metricsCollector)),
 	//ginRouter.WithHandlerFactory(hf),
 	//ginRouter.withProxyFactory(pf),
 	)
@@ -28,9 +35,9 @@ func setupGinRouter(sConf config.ServiceConfig, logger logging.Logger) router.Ro
 // ===== [ Public Functions ] =====
 
 // SetupRouter - API G/W 운영을 위한 Router 설정
-func SetupRouter(sConf config.ServiceConfig, logger logging.Logger) router.Router {
+func SetupRouter(ctx context.Context, sConf config.ServiceConfig, logger logging.Logger) router.Router {
 	switch sConf.RouterEngine {
 	default:
-		return setupGinRouter(sConf, logger)
+		return setupGinRouter(ctx, sConf, logger)
 	}
 }

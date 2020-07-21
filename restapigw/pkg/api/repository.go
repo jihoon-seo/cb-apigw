@@ -21,6 +21,10 @@ const (
 	db      = "database"
 )
 
+var (
+	parser = config.MakeParser()
+)
+
 // ===== [ Types ] =====
 type (
 	// Repository - Routing 정보 관리 기능을 제공하는 인터페이스 형식

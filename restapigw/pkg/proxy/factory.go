@@ -49,7 +49,6 @@ func (df defaultFactory) newStack(bConf *config.BackendConfig) (p Proxy) {
 
 	// TODO: Loadbalancer
 
-
 	// Backend 호출을 위한 Request Call chain 구성
 	p = NewRequestBuilderChain(bConf)(p)
 	return
