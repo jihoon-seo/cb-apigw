@@ -80,6 +80,7 @@ func TokenValidator(hf ginRouter.HandlerFactory, logger logging.Logger) ginRoute
 
 		return func(c *gin.Context) {
 			if err := validateToken(conf, c.Request); err != nil {
+				c.Header(router.CompleteResponseHeaderName, "false")
 				c.Header(router.MessageResponseHeaderName, err.Error())
 				c.AbortWithError(http.StatusUnauthorized, err)
 				return

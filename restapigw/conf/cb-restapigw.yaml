@@ -4,7 +4,7 @@ port: 8000
 cache_ttl: 3600s
 timeout: 1m
 debug: true
-router_engine: gin   # gin, gorilla, mux, chi, ....
+router_engine: gin
 host: 
   - "http://localhost:8100"
 middleware:

@@ -33,7 +33,7 @@ type (
 
 // ===== [ Implementations ] =====
 
-func (r *FileSystemRepository) parseEndpoint(apiDef []byte) endpointDefinitions {
+func (fsr *FileSystemRepository) parseEndpoint(apiDef []byte) endpointDefinitions {
 	var apiConfigs endpointDefinitions
 	//apiConfigs := endpointDefinitions{}
 
@@ -59,13 +59,13 @@ func (r *FileSystemRepository) parseEndpoint(apiDef []byte) endpointDefinitions 
 }
 
 // Watch - 파일 리파지토리의 대상 파일 변경 감시 및 처리
-func (r *FileSystemRepository) Watch(ctx context.Context, configChan chan<- ConfigurationChanged) {
+func (fsr *FileSystemRepository) Watch(ctx context.Context, configChan chan<- ConfigurationChanged) {
 	go func() {
 		log := logging.GetLogger()
 
 		for {
 			select {
-			case event := <-r.watcher.Events:
+			case event := <-fsr.watcher.Events:
 				if event.Op&fsnotify.Write == fsnotify.Write {
 					body, err := ioutil.ReadFile(event.Name)
 					if nil != err {
@@ -73,10 +73,10 @@ func (r *FileSystemRepository) Watch(ctx context.Context, configChan chan<- Conf
 						continue
 					}
 					configChan <- ConfigurationChanged{
-						Configurations: &Configuration{Definitions: r.parseEndpoint(body).Definitions},
+						Configurations: &Configuration{Definitions: fsr.parseEndpoint(body).Definitions},
 					}
 				}
-			case err := <-r.watcher.Errors:
+			case err := <-fsr.watcher.Errors:
 				log.WithError(err).Error("error received from file system notify")
 				return
 			case <-ctx.Done():
@@ -87,8 +87,8 @@ func (r *FileSystemRepository) Watch(ctx context.Context, configChan chan<- Conf
 }
 
 // Close - 사용 중인 Repository 세션 종료
-func (r *FileSystemRepository) Close() error {
-	return r.watcher.Close()
+func (fsr *FileSystemRepository) Close() error {
+	return fsr.watcher.Close()
 }
 
 // ===== [ Private Functions ] =====

@@ -6,7 +6,7 @@ import (
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/auth"
 	ginMetrics "github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/metrics/gin"
 	ginOpencensus "github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/opencensus/router/gin"
-	ratelimitRouter "github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/ratelimit/router/gin"
+	ginRateLimit "github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/ratelimit/router/gin"
 	ginRouter "github.com/cloud-barista/cb-apigw/restapigw/pkg/router/gin"
 )
 
@@ -19,7 +19,7 @@ import (
 // setupGinHandlerFactory - Gin Router 처리를 위한 핸들러 설정
 func setupGinHandlerFactory(logger logging.Logger, mc *ginMetrics.Collector) ginRouter.HandlerFactory {
 	// Rate Limit 처리용 Router Handler 구성
-	handlerFactory := ratelimitRouter.HandlerFactory(ginRouter.EndpointHandler, logger)
+	handlerFactory := ginRateLimit.HandlerFactory(ginRouter.EndpointHandler, logger)
 
 	// TODO: JWT Auth, JWT Rejector 처리용 Router Handler 구성
 

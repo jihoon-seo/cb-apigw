@@ -13,22 +13,18 @@ import (
 
 // ===== [ Constants and Variables ] =====
 // ===== [ Types ] =====
-type ()
-
 // ===== [ Implementations ] =====
 // ===== [ Private Functions ] =====
 
 // setupGinRouter - Gin 기반으로 동작하는 Router 설정
 func setupGinRouter(ctx context.Context, sConf config.ServiceConfig, logger logging.Logger) router.Router {
-	metricsCollector := ginMetrics.New(ctx, sConf.Middleware, logger, sConf.Debug)
+	mc := ginMetrics.New(ctx, sConf.Middleware, logger, sConf.Debug)
 
 	// API G/W Server 구동
 	return ginRouter.New(sConf,
 		ginRouter.WithLogger(logger),
-		ginRouter.WithHandlerFactory(setupGinHandlerFactory(logger, metricsCollector)),
-		ginRouter.WithProxyFactory(setupGinProxyFactory(logger, setupGinBackendFactoryWithContext(ctx, logger, metricsCollector), metricsCollector)),
-	//ginRouter.WithHandlerFactory(hf),
-	//ginRouter.withProxyFactory(pf),
+		ginRouter.WithHandlerFactory(setupGinHandlerFactory(logger, mc)),
+		ginRouter.WithProxyFactory(setupGinProxyFactory(logger, setupGinBackendFactoryWithContext(ctx, logger, mc), mc)),
 	)
 }
 

@@ -37,105 +37,105 @@ definitions:
                   - "products.*.template_suffix"
                   - "products.*.updated_at"
                   - "products.*.vendor"
-  - name: Sequential Test
-    active: true
-    endpoint: "/sequential"
-    backend:
-      - host:
-          - "http://localhost:8100"
-        url_pattern: "/hotels/1.json"
-        whitelist:
-          - "destination_id"
-      - host:
-          - "http://localhost:8100"
-        url_pattern: "/destinations/{resp0_destination_id}.json"
-        middleware:
-          mw-http:
-            return_error_details: "sequential"
-    middleware:
-      mw-proxy:
-        sequential: true
-  - name: Fail Test
-    active: true
-    endpoint: "/fail"
-    backend:
-      - host:
-          - "http://localhost:8100"
-        url_pattern: "/user/1.json"
-        group: "user"
-        target: "address"
-        middleware:
-          mw-http:
-            return_error_details: "fail_1"
-      - host:
-          - "http://fake_url_that_should_not_resolve.tld"
-        url_pattern: "/"
-        group: "none"
-  - name: Public Test
-    active: true
-    endpoint: "/public"
-    method: GET
-    backend:
-      - host: 
-          - "https://api.github.com"
-        url_pattern: "/users/ccambo"
-        whitelist:
-          - "avatar_url"
-          - "name"
-          - "company"
-          - "blog"
-          - "location"
-          - "mail"
-          - "hireable"
-          - "followers"
-          - "public_repos"
-          - "public_gists"
-        mapping:
-          "blog": "website"
-        group: "github"
-        middleware:
-          mw-httpcache: 
-            enabled: true
-      - host: 
-          - "https://api.bitbucket.org"
-        url_pattern: "/2.0/users/kpacha"
-        whitelist:
-          - "links.avatar"
-          - "display_name"
-          - "website"
-          - "location"
-        mapping: 
-          "display_name": "name"
-        group: "bitbucket"
-  - name: External(Github) Test
-    active: true
-    endpoint: "/github/{user}"
-    method: GET
-    backend:
-      - host:
-          - https://api.github.com
-        url_pattern: "/users/{user}"
-        disable_host_sanitize: true
-  - name: Collection Test
-    active: true
-    endpoint: "/collection"
-    method: GET
-    backend:
-      - host:
-          - "http://localhost:8100"
-        url_pattern: "/destinations/2.json"
-        wrap_collection_to_json: false
-        is_collection: true
-        mapping:
-          "collection": "data"
-  - endpoint: "/private/custom"
-    backend:
-      - url_pattern: "/user/1.json"
-    middleware:
-      mw-auth:
-        secure_key: "###TEST_SECURE_KEY###"
-        access_ids:
-          - etri
+  # - name: Sequential Test
+  #   active: true
+  #   endpoint: "/sequential"
+  #   backend:
+  #     - host:
+  #         - "http://localhost:8100"
+  #       url_pattern: "/hotels/1.json"
+  #       whitelist:
+  #         - "destination_id"
+  #     - host:
+  #         - "http://localhost:8100"
+  #       url_pattern: "/destinations/{resp0_destination_id}.json"
+  #       middleware:
+  #         mw-http:
+  #           return_error_details: "sequential"
+  #   middleware:
+  #     mw-proxy:
+  #       sequential: true
+  # - name: Fail Test
+  #   active: true
+  #   endpoint: "/fail"
+  #   backend:
+  #     - host:
+  #         - "http://localhost:8100"
+  #       url_pattern: "/user/1.json"
+  #       group: "user"
+  #       target: "address"
+  #       middleware:
+  #         mw-http:
+  #           return_error_details: "fail_1"
+  #     - host:
+  #         - "http://fake_url_that_should_not_resolve.tld"
+  #       url_pattern: "/"
+  #       group: "none"
+  # - name: Public Test
+  #   active: true
+  #   endpoint: "/public"
+  #   method: GET
+  #   backend:
+  #     - host: 
+  #         - "https://api.github.com"
+  #       url_pattern: "/users/ccambo"
+  #       whitelist:
+  #         - "avatar_url"
+  #         - "name"
+  #         - "company"
+  #         - "blog"
+  #         - "location"
+  #         - "mail"
+  #         - "hireable"
+  #         - "followers"
+  #         - "public_repos"
+  #         - "public_gists"
+  #       mapping:
+  #         "blog": "website"
+  #       group: "github"
+  #       middleware:
+  #         mw-httpcache: 
+  #           enabled: true
+  #     - host: 
+  #         - "https://api.bitbucket.org"
+  #       url_pattern: "/2.0/users/kpacha"
+  #       whitelist:
+  #         - "links.avatar"
+  #         - "display_name"
+  #         - "website"
+  #         - "location"
+  #       mapping: 
+  #         "display_name": "name"
+  #       group: "bitbucket"
+  # - name: External(Github) Test
+  #   active: true
+  #   endpoint: "/github/{user}"
+  #   method: GET
+  #   backend:
+  #     - host:
+  #         - https://api.github.com
+  #       url_pattern: "/users/{user}"
+  #       disable_host_sanitize: true
+  # - name: Collection Test
+  #   active: true
+  #   endpoint: "/collection"
+  #   method: GET
+  #   backend:
+  #     - host:
+  #         - "http://localhost:8100"
+  #       url_pattern: "/destinations/2.json"
+  #       wrap_collection_to_json: false
+  #       is_collection: true
+  #       mapping:
+  #         "collection": "data"
+  # - endpoint: "/private/custom"
+  #   backend:
+  #     - url_pattern: "/user/1.json"
+  #   middleware:
+  #     mw-auth:
+  #       secure_key: "###TEST_SECURE_KEY###"
+  #       access_ids:
+  #         - etri
   
 
 

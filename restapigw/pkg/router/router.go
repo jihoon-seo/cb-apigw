@@ -49,57 +49,38 @@ type (
 	// Constructor - Middleware 형식의 운영을 위한 함수 형식
 	Constructor func(http.Handler) http.Handler
 
-	// Router - Router 운영에 필요한 인터페이스 형식
-	// Router interface {
-	// 	ServeHTTP(rw http.ResponseWriter, req *http.Request)
-	// 	Handle(method string, path string, handler http.HandlerFunc, handlers ...Constructor)
-	// 	Any(path string, handler http.HandlerFunc, handlers ...Constructor)
-	// 	GET(path string, handler http.HandlerFunc, handlers ...Constructor)
-	// 	POST(path string, handler http.HandlerFunc, handlers ...Constructor)
-	// 	PUT(path string, handler http.HandlerFunc, handlers ...Constructor)
-	// 	DELETE(path string, handler http.HandlerFunc, handlers ...Constructor)
-	// 	PATCH(path string, handler http.HandlerFunc, handlers ...Constructor)
-	// 	HEAD(path string, handler http.HandlerFunc, handlers ...Constructor)
-	// 	OPTIONS(path string, handler http.HandlerFunc, handlers ...Constructor)
-	// 	TRACE(path string, handler http.HandlerFunc, handlers ...Constructor)
-	// 	CONNECT(path string, handler http.HandlerFunc, handlers ...Constructor)
-	// 	Group(path string) Router
-	// 	Use(handlers ...Constructor) Router
-
-	// 	RoutesCount() int
-	// }
-
 	// Router - Router 운영에 필요한 인페이스
 	Router interface {
 		Engine() http.Handler
+		UpdateEngine(sConf config.ServiceConfig)
 		RegisterAPIs(sConf *config.ServiceConfig, defs []*config.EndpointConfig) error
 	}
 
-	// DynamicEngine - 동적 라우팅 구성을 위한 Routing Engine 구조
-	DynamicEngine struct {
-		engine http.Handler
-		mu     sync.Mutex
+	// DynamicRouter - 동적 라우팅 구성을 위한 Routing Engine 구조
+	DynamicRouter struct {
+		handler http.Handler
+		mu      sync.Mutex
 	}
 )
 
 // ===== [ Implementations ] =====
 
 // ServeHTTP - HTTP 요청 처리
-func (de *DynamicEngine) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	de.engine.ServeHTTP(rw, req)
+func (de *DynamicRouter) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	de.handler.ServeHTTP(rw, req)
 }
 
 // SetHandler - 지정한 Handler로 핸들러 교체
-func (de *DynamicEngine) SetHandler(h http.Handler) {
+func (de *DynamicRouter) SetHandler(h http.Handler) {
 	de.mu.Lock()
 	defer de.mu.Unlock()
 
-	de.engine = h
+	de.handler = h
 }
 
 // GetHandler - 관리 중인 Handler 반환
-func (de *DynamicEngine) GetHandler() http.Handler {
-	return de.engine
+func (de *DynamicRouter) GetHandler() http.Handler {
+	return de.handler
 }
 
 // ===== [ Private Functions ] =====

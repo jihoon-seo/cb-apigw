@@ -28,6 +28,7 @@ type (
 		provider           api.Repository
 		currConfigurations *api.Configuration
 		adminServer        *admin.Server
+		router             router.Router
 
 		configChan chan api.ConfigurationChanged
 		stopChan   chan struct{}
@@ -70,9 +71,10 @@ func (s *Server) closeChannel() {
 func (s *Server) applyChanges(cfg *api.Configuration) {
 	s.logger.Debug("[SERVER] Refreshing configuration")
 
-	// TODO: Create new router
-	// TODO: Update Configurations
-	// TODO: Setup Handler to Server
+	// 신규 라우팅 엔진 생성
+	s.router.UpdateEngine(s.serviceConfig)
+	// 변경된 Routing 규칙 적용
+	s.router.RegisterAPIs(&s.serviceConfig, cfg.Definitions)
 
 	s.logger.Debug("[SERVER] Configuration refreshing complete")
 }
@@ -118,6 +120,7 @@ func (s *Server) listenProviders(stop chan struct{}) {
 				continue
 			}
 
+			s.logger.Debug("[SERVER] Configuration change detected by repository")
 			s.currConfigurations.Definitions = configMsg.Configurations.Definitions
 			s.applyChanges(configMsg.Configurations)
 		}
@@ -159,6 +162,7 @@ func (s *Server) startProvider(ctx context.Context) error {
 				}
 
 				// 변경된 설정 갱신
+				s.logger.Debug("[SERVER] Configuration change detected by Admin API")
 				s.updateConfiguration(c)
 				s.applyChanges(s.currConfigurations)
 
@@ -197,13 +201,13 @@ func (s *Server) StartWithContext(ctx context.Context) error {
 	}()
 
 	// TODO: Router 구성
-	router := s.createRouter(ctx)
+	s.router = s.createRouter(ctx)
 
 	// HTTP Server 구동
 	go func() {
 		httpServer.InitHTTPDefaultTransport(s.serviceConfig)
 
-		if err := httpServer.RunServer(ctx, s.serviceConfig, router.Engine()); err != nil {
+		if err := httpServer.RunServer(ctx, s.serviceConfig, s.router.Engine()); err != nil {
 			s.logger.Error(err.Error())
 		}
 	}()
@@ -224,7 +228,7 @@ func (s *Server) StartWithContext(ctx context.Context) error {
 	}
 
 	// API Definition에 대한 Router 연계 처리
-	router.RegisterAPIs(&s.serviceConfig, s.currConfigurations.Definitions)
+	s.router.RegisterAPIs(&s.serviceConfig, s.currConfigurations.Definitions)
 
 	s.logger.Info("[SERVER] Started")
 	return nil

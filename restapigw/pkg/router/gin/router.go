@@ -24,7 +24,7 @@ type (
 
 	// PipeConfig - 서비스  운영에 필요한 Pipeline 을 구성하기 위한 구조
 	PipeConfig struct {
-		engine         *router.DynamicEngine
+		engine         *router.DynamicRouter
 		middlewares    []gin.HandlerFunc
 		handlerFactory HandlerFactory
 		proxyFactory   proxy.Factory
@@ -34,8 +34,8 @@ type (
 
 // ===== [ Implementations ] =====
 
-// createEngine - Gin Router Engine 인스턴스 생성
-func (pc *PipeConfig) createEngine(sConf config.ServiceConfig) {
+// createRouter - Gin 기반의 Router 생성
+func (pc *PipeConfig) createRouter(sConf config.ServiceConfig) http.Handler {
 	if !sConf.Debug {
 		gin.SetMode(gin.ReleaseMode)
 	}
@@ -66,11 +66,15 @@ func (pc *PipeConfig) createEngine(sConf config.ServiceConfig) {
 		c.Header(router.CompleteResponseHeaderName, router.HeaderIncompleteResponseValue)
 	})
 
-	de := &router.DynamicEngine{}
-	de.SetHandler(engine)
+	return engine
+}
+
+// createEngine - Gin Router Engine 인스턴스 생성
+func (pc *PipeConfig) createEngine(sConf config.ServiceConfig) {
+	de := &router.DynamicRouter{}
+	de.SetHandler(pc.createRouter(sConf))
 
 	pc.engine = de
-
 }
 
 // registerAPIGroup - Bypass인 경우는 Group 단위로 Gin Engine에 Endpoint Handler 등록
@@ -116,6 +120,12 @@ func (pc PipeConfig) registerAPI(method, path string, handler gin.HandlerFunc, t
 	}
 }
 
+// UpdateEngine - API 변경 적용을 위한 Gin Engine 재 생성
+func (pc *PipeConfig) UpdateEngine(sConf config.ServiceConfig) {
+	gin := pc.createRouter(sConf)
+	pc.engine.SetHandler(gin)
+}
+
 // Engine - Router 기능을 처리하는 Gin Engine 반환 (http.Handler)
 func (pc *PipeConfig) Engine() http.Handler {
 	return pc.engine
@@ -126,19 +136,22 @@ func (pc *PipeConfig) RegisterAPIs(sConf *config.ServiceConfig, defs []*config.E
 	// API 설정들에 대한 누락 항목들을 기본 값으로 설정
 	config.InitDefinitions(sConf, defs)
 	for _, def := range defs {
-		// Endpoint에 연결되어 동작할 수 있도록 ProxyFactory의 Call chain에 대한 인스턴스 생성 (ProxyStack)
-		proxyStack, err := pc.proxyFactory.New(def)
-		if err != nil {
-			pc.logger.Error("calling the ProxyFactory", err.Error())
-			continue
-		}
+		// 활성화된 경우만 적용
+		if def.Active {
+			// Endpoint에 연결되어 동작할 수 있도록 ProxyFactory의 Call chain에 대한 인스턴스 생성 (ProxyStack)
+			proxyStack, err := pc.proxyFactory.New(def)
+			if err != nil {
+				pc.logger.Error("calling the ProxyFactory", err.Error())
+				continue
+			}
 
-		if def.IsBypass {
-			// Bypass case
-			pc.registerAPIGroup(def.Endpoint, pc.handlerFactory(def, proxyStack), len(def.Backend))
-		} else {
-			// Normal case
-			pc.registerAPI(def.Method, def.Endpoint, pc.handlerFactory(def, proxyStack), len(def.Backend))
+			if def.IsBypass {
+				// Bypass case
+				pc.registerAPIGroup(def.Endpoint, pc.handlerFactory(def, proxyStack), len(def.Backend))
+			} else {
+				// Normal case
+				pc.registerAPI(def.Method, def.Endpoint, pc.handlerFactory(def, proxyStack), len(def.Backend))
+			}
 		}
 	}
 
