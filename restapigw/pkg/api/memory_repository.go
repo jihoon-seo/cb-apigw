@@ -25,8 +25,8 @@ func (imr *InMemoryRepository) add(ec *config.EndpointConfig) error {
 	imr.Lock()
 	defer imr.Unlock()
 
-	err := ec.Validate()
-	if err != nil {
+	isValid, err := ec.Validate()
+	if !isValid || nil != err {
 		logging.GetLogger().WithError(err).Error("Validation errors")
 		return err
 	}

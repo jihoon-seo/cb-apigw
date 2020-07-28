@@ -53,3 +53,11 @@ func WithTLS(tls config.TLSConfig) Option {
 		s.TLS = tls
 	}
 }
+
+// WithProfiler - Profiler 적용 옵션 설정
+func WithProfiler(enabled, public bool) Option {
+	return func(s *Server) {
+		s.profilingEnabled = enabled
+		s.profilingPublic = public
+	}
+}

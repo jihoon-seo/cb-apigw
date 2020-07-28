@@ -20,8 +20,8 @@ import (
 
 // Home handler is just a nice home page message
 func Home() http.HandlerFunc {
-	return func(rw http.ResponseWriter, req *http.Request) {
-		render.JSON(rw, http.StatusOK, "Welcome to "+core.AppName)
+	return func(w http.ResponseWriter, r *http.Request) {
+		render.JSON(w, http.StatusOK, "Welcome to "+core.AppName+" - ADMIN Manager")
 	}
 }
 

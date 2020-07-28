@@ -140,6 +140,7 @@ func (s *Server) startProvider(ctx context.Context) error {
 		admin.WithTLS(s.serviceConfig.Admin.TLS),
 		admin.WithCredentials(s.serviceConfig.Admin.Credentials),
 		admin.WithLog(s.logger),
+		admin.WithProfiler(s.serviceConfig.Admin.ProfilingEnabled, s.serviceConfig.Admin.ProfilingPublic),
 	)
 
 	if err := s.adminServer.Start(); nil != err {

@@ -42,7 +42,7 @@ func (fsr *FileSystemRepository) parseEndpoint(apiDef []byte) endpointDefinition
 	// Try unmarshalling as Array of multiple definitions
 	if err := yaml.Unmarshal(apiDef, &apiConfigs); err != nil {
 		// Try unmarshalling as Single Definition
-		apiConfigs.Definitions = append(apiConfigs.Definitions, NewEndpoint())
+		apiConfigs.Definitions = append(apiConfigs.Definitions, NewDefinition())
 		if err := yaml.Unmarshal(apiDef, &apiConfigs.Definitions[0]); err != nil {
 			logging.GetLogger().WithError(err).Error("Couldn't parsing api definitions")
 		}

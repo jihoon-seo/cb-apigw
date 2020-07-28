@@ -56,7 +56,10 @@ cluster:
 admin:
   port: 8001
   credentials:
+    algorithm: HS256
     secret: test
     basic:
       users:
         admin: 'test'
+  profiling_enabled: true
+  profiling_public: true

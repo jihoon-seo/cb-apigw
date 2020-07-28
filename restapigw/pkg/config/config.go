@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/asaskevich/govalidator"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/encoding"
 	"github.com/spf13/viper"
@@ -105,9 +106,13 @@ type (
 		// Admin Server 포트
 		Port int `mapstructure:"port"`
 		// Admin Server를 사용할 사용자 설정
-		Credentials CredentialsConfig
+		Credentials CredentialsConfig `mapstructure:"credentials"`
 		// Admin Server에서 사용할 TLS 설정
-		TLS TLSConfig
+		TLS TLSConfig `mapstructure:"tls"`
+		// Admin Server Profile 처리 여부
+		ProfilingEnabled bool `mapstructure:"profiling_enabled"`
+		// Admin Server Profile 정보 노출 여부
+		ProfilingPublic bool `mapstructrure:"profiling_publis"`
 	}
 
 	// RepositoryConfig - Routing 정보 관리 형식
@@ -133,146 +138,154 @@ type (
 	BasicAuthConfig struct {
 		Users map[string]string `mapstructure:"users"`
 	}
+
+	// EndpointConfig - 서비스 라우팅에 사용할 설정 구조
+	EndpointConfig struct {
+		// TODO: Name, Active 검증
+
+		// 설정 식별 명
+		Name string `yaml:"name"`
+		// 설정 활성화 여부
+		Active bool `yaml:"active"`
+		// Bypass 처리 여부
+		IsBypass bool
+		// 클라이언트에 노출될 URL 패턴
+		Endpoint string `yaml:"endpoint"`
+		// 전역으로 사용할 기본 Host 리스트
+		Host []string `yaml:"host"`
+		// Endpoint에 대한 HTTP 메서드 (GET, POST, PUT, etc) (기본값: GET)
+		Method string `yaml:"method"`
+		// Endpoint 처리 시간 (기본값: 서비스 값 사용)
+		Timeout time.Duration `yaml:"timeout"`
+		// GET 처리에 대한 캐시 TTL 기간 (기본값: 서비스 값 사용)
+		CacheTTL time.Duration `yaml:"cache_ttl"`
+		// 반환결과 처리에 사용할 인코딩
+		OutputEncoding string `yaml:"output_encoding"`
+		// Backend 에 전달되는 Query String에서 제외할 파라미터 Key 리스트
+		ExceptQueryStrings []string `yaml:"except_querystrings"`
+		// Backend 에 전달되는 Header에서 제외할 파라미터 Key 리스트
+		ExceptHeaders []string `yaml:"except_headers"`
+		// Endpoint 단위에서 적용할 Middleware 설정
+		Middleware MWConfig `yaml:"middleware"`
+		// Health Check 설정
+		HealthCheck HealthCheck `yaml:"health_check"`
+		// Endpoint에서 호출할 Backend API 서버 호출/응답 처리 설정 리스트
+		Backend []*BackendConfig `yaml:"backend"`
+	}
+
+	// BackendConfig - Backend API Server 연결과 응답 처리를 위한 설정 구조
+	BackendConfig struct {
+		// Backend API Server의 Host URI (서비스에서 전역으로 설정한 경우는 생략 가능)
+		Host []string `yaml:"host"`
+		// Backend 처리 시간 (기본값: )
+		Timeout time.Duration `yaml:"timeout"`
+		// Backend 호출에 사용할 HTTP Method
+		Method string `yaml:"method"`
+		// Backend 호출에 사용할 URL Patthern
+		URLPattern string `yaml:"url_pattern"`
+		// 인코딩 포맷
+		Encoding string `yaml:"encoding"`
+		// Backend 결과를 묶을 Group 명 (기본값: )
+		Group string `yaml:"group"`
+		// Backend 결과에서 생략할 필드명 리스트 (flatmap 적용 "." operation)
+		Blacklist []string `yaml:"blacklist"`
+		// Backend 결과에서 추출할 필드명 리스트 (flatmap 적용 "." operation)
+		Whitelist []string `yaml:"whitelist"`
+		// Backend 결과에서 필드명을 변경할 리스트 맵
+		Mapping map[string]string `yaml:"mapping"`
+		// Backend 결과가 컬랙션인지 여부
+		IsCollection bool `yaml:"is_collection"`
+		// Backend 결과가 컬랙션인 경우에 core.CollectionTag ("collection") 으로 JSON 포맷을 할 것인지 여부 (True 면 core.CollectionTag ("collection") 으로 JSON 전환, false면 Array 상태로 반환)
+		WrapCollectionToJSON bool `yaml:"wrap_collection_to_json"`
+		// Backend 결과 중에서 특정한 필드만 처리할 경우의 필드명
+		Target string `yaml:"target"`
+		// Backend 에서 동작할 Middleware 설정
+		Middleware MWConfig `yaml:"middleware"`
+		// HostSanitizationDisabled - host 정보의 정제작업 비활성화 여부
+		HostSanitizationDisabled bool `yaml:"disable_host_sanitize"`
+		// API 호출의 응답을 파싱하기 위한 디코더 (내부 사용)
+		Decoder encoding.Decoder `yaml:"-" json:"-"`
+		// URLPattern에서 파라미터 변환에 사용할 키 관리 (내부 사용)
+		URLKeys []string
+	}
+
+	// TLSConfig - 서비스에서 사용할 TLS 설정 구조
+	TLSConfig struct {
+		// Port
+		Port int `mapstructure:"port"`
+		// Redirect
+		Redirect bool `mapstructure:"redirect"`
+		// TLS 비활성화 여부
+		IsDisabled bool `mapstructure:"disabled"`
+		// 공개 키 경로
+		PublicKey string `mapstructure:"public_key"`
+		// 비밀 키 경로
+		PrivateKey string `mapstructure:"private_key"`
+		// TLS 최소 버전
+		MinVersion string `mapstructure:"min_version"`
+		// TLS 최대 버전
+		MaxVersion string `mapstructure:"max_version"`
+		// Curve 설정들의 리스트 (use 23 for CurveP256, 24 for CurveP384 or 25 for CurveP521)
+		CurvePreferences []uint16 `mapstructure:"curve_preferences"`
+		// 서버에서 사용을 강제하는 Cipher Suite 리스트
+		PreferServerCipherSuites bool `mapstructure:"prefer_server_cipher_suites"`
+		// Chiper Suite 리스트
+		CipherSuites []uint16 `mapstructure:"cipher_suites"`
+	}
+
+	// MWConfig - Middleware 설정을 저장하기 위한 맵 구조 (개별 Middlewares에서 설정 Parsing 적용)
+	MWConfig map[string]interface{}
+
+	// HealthCheck - Health Check 구조
+	HealthCheck struct {
+		URL     string `mapstructure:"url" yaml:"url" json:"url" bson:"url"` // `mapstructure:"url" yaml:"url" json:"url" bson:"url" valid:"url"`
+		Timeout int    `mapstructure:"timeout" yaml:"timeout" json:"timeout" bson:"timeout"`
+	}
+
+	// UnsupportedVersionError - 설정 초기화 과정에서 버전 검증을 통해 반환할 오류 구조
+	UnsupportedVersionError struct {
+		Have int
+		Want int
+	}
+
+	// WrongNumberOfParamsError - 파라미터의 IN/OUT 갯수가 다를 경우에 반환할 오류 구조
+	WrongNumberOfParamsError struct {
+		Endpoint     string
+		Method       string
+		Backend      int
+		InputParams  []string
+		OutputParams []string
+	}
+
+	// UndefinedOutputParamError - IN 파라미터에 대한 OUT 파라미터가 지정되지 않았을 경우에 반환할 오류 구조
+	UndefinedOutputParamError struct {
+		Endpoint     string
+		Method       string
+		Backend      int
+		InputParams  []string
+		OutputParams []string
+		Param        string
+	}
+
+	// EndpointMatchError - Endpoint 패턴에 문제가 있을 경우에 반환할 오류 구조
+	EndpointMatchError struct {
+		Path   string
+		Method string
+		Err    error
+	}
+
+	// NoBackendsError - Backend가 지정되지 않았을 경우에 반환할 오류 구조
+	NoBackendsError struct {
+		Path   string
+		Method string
+	}
+
+	// EndpointPathError - Endpoint 경로에 문제가 있을 경우에 반환할 오류 구조
+	EndpointPathError struct {
+		Path   string
+		Method string
+	}
 )
-
-// EndpointConfig - 서비스 라우팅에 사용할 설정 구조
-type EndpointConfig struct {
-	// TODO: Name, Active 검증
-
-	// 설정 식별 명
-	Name string `yaml:"name"`
-	// 설정 활성화 여부
-	Active bool `yaml:"active"`
-	// Bypass 처리 여부
-	IsBypass bool
-	// 클라이언트에 노출될 URL 패턴
-	Endpoint string `yaml:"endpoint"`
-	// 전역으로 사용할 기본 Host 리스트
-	Host []string `yaml:"host"`
-	// Endpoint에 대한 HTTP 메서드 (GET, POST, PUT, etc) (기본값: GET)
-	Method string `yaml:"method"`
-	// Endpoint 처리 시간 (기본값: 서비스 값 사용)
-	Timeout time.Duration `yaml:"timeout"`
-	// GET 처리에 대한 캐시 TTL 기간 (기본값: 서비스 값 사용)
-	CacheTTL time.Duration `yaml:"cache_ttl"`
-	// 반환결과 처리에 사용할 인코딩
-	OutputEncoding string `yaml:"output_encoding"`
-	// Backend 에 전달되는 Query String에서 제외할 파라미터 Key 리스트
-	ExceptQueryStrings []string `yaml:"except_querystrings"`
-	// Backend 에 전달되는 Header에서 제외할 파라미터 Key 리스트
-	ExceptHeaders []string `yaml:"except_headers"`
-	// Endpoint 단위에서 적용할 Middleware 설정
-	Middleware MWConfig `yaml:"middleware"`
-	// Endpoint에서 호출할 Backend API 서버 호출/응답 처리 설정 리스트
-	Backend []*BackendConfig `yaml:"backend"`
-}
-
-// BackendConfig - Backend API Server 연결과 응답 처리를 위한 설정 구조
-type BackendConfig struct {
-	// Backend API Server의 Host URI (서비스에서 전역으로 설정한 경우는 생략 가능)
-	Host []string `yaml:"host"`
-	// Backend 처리 시간 (기본값: )
-	Timeout time.Duration `yaml:"timeout"`
-	// Backend 호출에 사용할 HTTP Method
-	Method string `yaml:"method"`
-	// Backend 호출에 사용할 URL Patthern
-	URLPattern string `yaml:"url_pattern"`
-	// 인코딩 포맷
-	Encoding string `yaml:"encoding"`
-	// Backend 결과를 묶을 Group 명 (기본값: )
-	Group string `yaml:"group"`
-	// Backend 결과에서 생략할 필드명 리스트 (flatmap 적용 "." operation)
-	Blacklist []string `yaml:"blacklist"`
-	// Backend 결과에서 추출할 필드명 리스트 (flatmap 적용 "." operation)
-	Whitelist []string `yaml:"whitelist"`
-	// Backend 결과에서 필드명을 변경할 리스트 맵
-	Mapping map[string]string `yaml:"mapping"`
-	// Backend 결과가 컬랙션인지 여부
-	IsCollection bool `yaml:"is_collection"`
-	// Backend 결과가 컬랙션인 경우에 core.CollectionTag ("collection") 으로 JSON 포맷을 할 것인지 여부 (True 면 core.CollectionTag ("collection") 으로 JSON 전환, false면 Array 상태로 반환)
-	WrapCollectionToJSON bool `yaml:"wrap_collection_to_json"`
-	// Backend 결과 중에서 특정한 필드만 처리할 경우의 필드명
-	Target string `yaml:"target"`
-	// Backend 에서 동작할 Middleware 설정
-	Middleware MWConfig `yaml:"middleware"`
-	// HostSanitizationDisabled - host 정보의 정제작업 비활성화 여부
-	HostSanitizationDisabled bool `yaml:"disable_host_sanitize"`
-	// API 호출의 응답을 파싱하기 위한 디코더 (내부 사용)
-	Decoder encoding.Decoder `yaml:"-" json:"-"`
-	// URLPattern에서 파라미터 변환에 사용할 키 관리 (내부 사용)
-	URLKeys []string
-}
-
-// TLSConfig - 서비스에서 사용할 TLS 설정 구조
-type TLSConfig struct {
-	// Port
-	Port int `mapstructure:"port"`
-	// Redirect
-	Redirect bool `mapstructure:"redirect"`
-	// TLS 비활성화 여부
-	IsDisabled bool `mapstructure:"disabled"`
-	// 공개 키 경로
-	PublicKey string `mapstructure:"public_key"`
-	// 비밀 키 경로
-	PrivateKey string `mapstructure:"private_key"`
-	// TLS 최소 버전
-	MinVersion string `mapstructure:"min_version"`
-	// TLS 최대 버전
-	MaxVersion string `mapstructure:"max_version"`
-	// Curve 설정들의 리스트 (use 23 for CurveP256, 24 for CurveP384 or 25 for CurveP521)
-	CurvePreferences []uint16 `mapstructure:"curve_preferences"`
-	// 서버에서 사용을 강제하는 Cipher Suite 리스트
-	PreferServerCipherSuites bool `mapstructure:"prefer_server_cipher_suites"`
-	// Chiper Suite 리스트
-	CipherSuites []uint16 `mapstructure:"cipher_suites"`
-}
-
-// MWConfig - Middleware 설정을 저장하기 위한 맵 구조 (개별 Middlewares에서 설정 Parsing 적용)
-type MWConfig map[string]interface{}
-
-// UnsupportedVersionError - 설정 초기화 과정에서 버전 검증을 통해 반환할 오류 구조
-type UnsupportedVersionError struct {
-	Have int
-	Want int
-}
-
-// WrongNumberOfParamsError - 파라미터의 IN/OUT 갯수가 다를 경우에 반환할 오류 구조
-type WrongNumberOfParamsError struct {
-	Endpoint     string
-	Method       string
-	Backend      int
-	InputParams  []string
-	OutputParams []string
-}
-
-// UndefinedOutputParamError - IN 파라미터에 대한 OUT 파라미터가 지정되지 않았을 경우에 반환할 오류 구조
-type UndefinedOutputParamError struct {
-	Endpoint     string
-	Method       string
-	Backend      int
-	InputParams  []string
-	OutputParams []string
-	Param        string
-}
-
-// EndpointMatchError - Endpoint 패턴에 문제가 있을 경우에 반환할 오류 구조
-type EndpointMatchError struct {
-	Path   string
-	Method string
-	Err    error
-}
-
-// NoBackendsError - Backend가 지정되지 않았을 경우에 반환할 오류 구조
-type NoBackendsError struct {
-	Path   string
-	Method string
-}
-
-// EndpointPathError - Endpoint 경로에 문제가 있을 경우에 반환할 오류 구조
-type EndpointPathError struct {
-	Path   string
-	Method string
-}
 
 // ===== [ Implementations ] =====
 
@@ -447,24 +460,29 @@ func (eConf *EndpointConfig) InitBackendURLMappings(bIdx int, inputParams map[st
 }
 
 // Validate - Endpoint 별 세부 필수 항목 검증
-func (eConf *EndpointConfig) Validate() error {
+func (eConf *EndpointConfig) Validate() (bool, error) {
 	// TODO: Structure Validation with GoValidate
+	isValid, err := govalidator.ValidateStruct(eConf)
+	if !isValid || nil != err {
+		return isValid, err
+	}
+
 	matched, err := regexp.MatchString(core.DebugPattern, eConf.Endpoint)
 	if err != nil {
-		return &EndpointMatchError{
+		return false, &EndpointMatchError{
 			Err:    err,
 			Path:   eConf.Endpoint,
 			Method: eConf.Method,
 		}
 	}
 	if matched {
-		return &EndpointPathError{Path: eConf.Endpoint, Method: eConf.Method}
+		return false, &EndpointPathError{Path: eConf.Endpoint, Method: eConf.Method}
 	}
 
 	if len(eConf.Backend) == 0 {
-		return &NoBackendsError{Path: eConf.Endpoint, Method: eConf.Method}
+		return false, &NoBackendsError{Path: eConf.Endpoint, Method: eConf.Method}
 	}
-	return nil
+	return true, nil
 }
 
 // Error - 비 호환 버전에 대한 오류 문자열 반환
@@ -550,7 +568,7 @@ func InitDefinitions(sConf *ServiceConfig, defs []*EndpointConfig) error {
 	for _, def := range defs {
 		def.Endpoint = core.CleanPath(def.Endpoint)
 
-		if err := def.Validate(); err != nil {
+		if isValid, err := def.Validate(); !isValid || nil != err {
 			return err
 		}
 

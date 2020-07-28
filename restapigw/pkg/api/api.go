@@ -2,9 +2,11 @@
 package api
 
 import (
+	"net/http"
 	"reflect"
 
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/errors"
 )
 
 // ===== [ Constants and Variables ] =====
@@ -16,6 +18,20 @@ const (
 	UpdatedOperation
 	// AddedOperation - 설정 등록 작업
 	AddedOperation
+)
+
+var (
+	// ErrAPIDefinitionNotFound is used when the api was not found in the datastore
+	ErrAPIDefinitionNotFound = errors.NewWithCode(http.StatusNotFound, "api definition not found")
+
+	// ErrAPINameExists is used when the API name is already registered on the datastore
+	ErrAPINameExists = errors.NewWithCode(http.StatusConflict, "api name is already registered")
+
+	// ErrAPIListenPathExists is used when the API listen path is already registered on the datastore
+	ErrAPIListenPathExists = errors.NewWithCode(http.StatusConflict, "api listen path is already registered")
+
+	// ErrDBContextNotSet is used when the database request context is not set
+	ErrDBContextNotSet = errors.NewWithCode(http.StatusInternalServerError, "DB context was not set for this request")
 )
 
 // ===== [ Types ] =====
@@ -51,7 +67,7 @@ func (c *Configuration) EqualsTo(tc *Configuration) bool {
 // ===== [ Private Functions ] =====
 // ===== [ Public Functions ] =====
 
-// NewEndpoint - 기본 값으로 설정된 API Routing Endpoint 인스턴스 생성
-func NewEndpoint() *config.EndpointConfig {
+// NewDefinition - 기본 값으로 설정된 API Routing Endpoint 인스턴스 생성
+func NewDefinition() *config.EndpointConfig {
 	return &config.EndpointConfig{}
 }

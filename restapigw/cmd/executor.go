@@ -12,6 +12,9 @@ import (
 
 	// Opencensus 연동을 위한 Exporter 로드 및 초기화
 	_ "github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/opencensus/exporters/jaeger"
+
+	// 각종 필요 패키지 로드 및 초기화
+	_ "github.com/cloud-barista/cb-apigw/restapigw/pkg/jwt/basic"
 )
 
 // ===== [ Constants and Variables ] =====
