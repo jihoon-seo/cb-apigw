@@ -1,12 +1,12 @@
 package router
 
 import (
-	"errors"
 	"net/http"
 	"sync"
 
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/errors"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/proxy"
 )
 

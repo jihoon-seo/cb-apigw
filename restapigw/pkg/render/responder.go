@@ -3,8 +3,9 @@ package render
 
 import (
 	"bytes"
-	"encoding/json"
 	"net/http"
+
+	jsoniter "github.com/json-iterator/go"
 )
 
 // ===== [ Constants and Variables ] =====
@@ -22,9 +23,10 @@ type (
 // JSON - Content-Type 을 `application/json`으로 설정하고 HTML escape 처리를 제공
 func JSON(rw http.ResponseWriter, code int, v interface{}) {
 	buf := &bytes.Buffer{}
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	enc := json.NewEncoder(buf)
 	enc.SetEscapeHTML(true)
-	if err := enc.Encode(v); err != nil {
+	if err := enc.Encode(v); nil != err {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}

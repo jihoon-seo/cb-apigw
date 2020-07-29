@@ -65,10 +65,10 @@ func (s *Server) addInternalRoutes(ge *gin.Engine, guard jwt.Guard) {
 	groupAPI.Use(ginAdapter.Wrap(jwt.NewMiddleware(guard).Handler))
 	{
 		groupAPI.GET("/", gin.WrapH(s.apiHandler.Get()))
-		groupAPI.GET("/{name}", gin.WrapH(s.apiHandler.GetBy()))
+		groupAPI.GET("/:name", gin.WrapH(s.apiHandler.GetBy()))
 		groupAPI.POST("/", gin.WrapH(s.apiHandler.Post()))
-		groupAPI.PUT("/{name}", gin.WrapH(s.apiHandler.PutBy()))
-		groupAPI.DELETE("/{name}", gin.WrapH(s.apiHandler.DeleteBy()))
+		groupAPI.PUT("/:name", gin.WrapH(s.apiHandler.PutBy()))
+		groupAPI.DELETE("/:name", gin.WrapH(s.apiHandler.DeleteBy()))
 	}
 
 	if s.profilingEnabled {

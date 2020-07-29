@@ -3,11 +3,11 @@ package gin
 
 import (
 	"bytes"
-	"errors"
 	"net/http"
 	"strings"
 
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/errors"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/proxy"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/router"

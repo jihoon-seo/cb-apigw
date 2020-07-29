@@ -3,10 +3,10 @@ package proxy
 
 import (
 	"context"
-	"errors"
 	"io"
 
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/errors"
 )
 
 // ===== [ Constants and Variables ] =====

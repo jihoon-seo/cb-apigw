@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net"
@@ -14,6 +15,8 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+
+	jsoniter "github.com/json-iterator/go"
 )
 
 // ===== [ Constants and Variables ] =====
@@ -287,4 +290,24 @@ func GetClientIPHelper(req *http.Request) (string, error) {
 
 	err = errors.New("error: Could not find clients IP address")
 	return "", err
+}
+
+// JSONDecode - 지정한 Source의 JSON 정보를 지정한 Target으로 설정
+func JSONDecode(source io.Reader, target interface{}) error {
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
+	dec := json.NewDecoder(source)
+	dec.UseNumber()
+	return dec.Decode(target)
+}
+
+// JSONMarshal - 지정한 정보를 JSON 으로 Marshal 처리
+func JSONMarshal(data interface{}) ([]byte, error) {
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
+	return json.Marshal(data)
+}
+
+// JSONUnmarshal - 지정한 JSON 문자열 Byte를 지정한 Target으로 설정
+func JSONUnmarshal(source []byte, target interface{}) error {
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
+	return json.Unmarshal(source, target)
 }

@@ -26,6 +26,7 @@ require (
 	github.com/gin-gonic/gin v1.1.5-0.20170702092826-d459835d2b07
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79
 	github.com/influxdata/influxdb v1.7.8
+	github.com/json-iterator/go v1.1.10
 	github.com/mattn/go-isatty v0.0.9 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a
 	github.com/rs/cors v1.7.0

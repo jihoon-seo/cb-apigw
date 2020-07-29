@@ -2,11 +2,12 @@
 package health
 
 import (
-	"encoding/json"
 	"net/http"
 	"runtime"
 	"sync"
 	"time"
+
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
 )
 
 // ===== [ Constants and Variables ] =====
@@ -165,7 +166,7 @@ func HandlerFunc(rw http.ResponseWriter, req *http.Request) {
 
 	rw.Header().Set("Content-Type", "application/json")
 	c := newCheck(status, failures)
-	data, err := json.Marshal(c)
+	data, err := core.JSONMarshal(c)
 	if err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
 		http.Error(rw, err.Error(), http.StatusInternalServerError)

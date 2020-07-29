@@ -2,7 +2,6 @@
 package config
 
 import (
-	"errors"
 	"fmt"
 	"regexp"
 	"sort"
@@ -12,6 +11,7 @@ import (
 	"github.com/asaskevich/govalidator"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/encoding"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/errors"
 	"github.com/spf13/viper"
 )
 
@@ -144,69 +144,71 @@ type (
 		// TODO: Name, Active 검증
 
 		// 설정 식별 명
-		Name string `yaml:"name"`
+		Name string `yaml:"name" json:"name"`
 		// 설정 활성화 여부
-		Active bool `yaml:"active"`
-		// Bypass 처리 여부
-		IsBypass bool
+		Active bool `yaml:"active" json:"active"`
 		// 클라이언트에 노출될 URL 패턴
-		Endpoint string `yaml:"endpoint"`
+		Endpoint string `yaml:"endpoint" json:"endpoint"`
 		// 전역으로 사용할 기본 Host 리스트
-		Host []string `yaml:"host"`
+		Host []string `yaml:"host" json:"host"`
 		// Endpoint에 대한 HTTP 메서드 (GET, POST, PUT, etc) (기본값: GET)
-		Method string `yaml:"method"`
+		Method string `yaml:"method" json:"method"`
 		// Endpoint 처리 시간 (기본값: 서비스 값 사용)
-		Timeout time.Duration `yaml:"timeout"`
+		Timeout time.Duration `yaml:"timeout" json:"timeout"`
 		// GET 처리에 대한 캐시 TTL 기간 (기본값: 서비스 값 사용)
-		CacheTTL time.Duration `yaml:"cache_ttl"`
+		CacheTTL time.Duration `yaml:"cache_ttl" json:"cache_ttl"`
 		// 반환결과 처리에 사용할 인코딩
-		OutputEncoding string `yaml:"output_encoding"`
+		OutputEncoding string `yaml:"output_encoding" json:"output_encoding"`
 		// Backend 에 전달되는 Query String에서 제외할 파라미터 Key 리스트
-		ExceptQueryStrings []string `yaml:"except_querystrings"`
+		ExceptQueryStrings []string `yaml:"except_querystrings" json:"except_querystrings"`
 		// Backend 에 전달되는 Header에서 제외할 파라미터 Key 리스트
-		ExceptHeaders []string `yaml:"except_headers"`
+		ExceptHeaders []string `yaml:"except_headers" json:"except_headers"`
 		// Endpoint 단위에서 적용할 Middleware 설정
-		Middleware MWConfig `yaml:"middleware"`
+		Middleware MWConfig `yaml:"middleware" json:"middleware"`
 		// Health Check 설정
-		HealthCheck HealthCheck `yaml:"health_check"`
+		HealthCheck HealthCheck `yaml:"health_check" json:"health_check"`
 		// Endpoint에서 호출할 Backend API 서버 호출/응답 처리 설정 리스트
-		Backend []*BackendConfig `yaml:"backend"`
+		Backend []*BackendConfig `yaml:"backend" json:"backend"`
+
+		// Bypass 처리 여부 (내부 처리용)
+		IsBypass bool `yaml:"-" json:"-"`
 	}
 
 	// BackendConfig - Backend API Server 연결과 응답 처리를 위한 설정 구조
 	BackendConfig struct {
 		// Backend API Server의 Host URI (서비스에서 전역으로 설정한 경우는 생략 가능)
-		Host []string `yaml:"host"`
+		Host []string `yaml:"host" json:"host"`
 		// Backend 처리 시간 (기본값: )
-		Timeout time.Duration `yaml:"timeout"`
+		Timeout time.Duration `yaml:"timeout" json:"timeout"`
 		// Backend 호출에 사용할 HTTP Method
-		Method string `yaml:"method"`
+		Method string `yaml:"method" json:"method"`
 		// Backend 호출에 사용할 URL Patthern
-		URLPattern string `yaml:"url_pattern"`
+		URLPattern string `yaml:"url_pattern" json:"url_pattern"`
 		// 인코딩 포맷
-		Encoding string `yaml:"encoding"`
+		Encoding string `yaml:"encoding" json:"encoding"`
 		// Backend 결과를 묶을 Group 명 (기본값: )
-		Group string `yaml:"group"`
+		Group string `yaml:"group" json:"group"`
 		// Backend 결과에서 생략할 필드명 리스트 (flatmap 적용 "." operation)
-		Blacklist []string `yaml:"blacklist"`
+		Blacklist []string `yaml:"blacklist" json:"blacklist"`
 		// Backend 결과에서 추출할 필드명 리스트 (flatmap 적용 "." operation)
-		Whitelist []string `yaml:"whitelist"`
+		Whitelist []string `yaml:"whitelist" json:"whitelist"`
 		// Backend 결과에서 필드명을 변경할 리스트 맵
-		Mapping map[string]string `yaml:"mapping"`
+		Mapping map[string]string `yaml:"mapping" json:"mapping"`
 		// Backend 결과가 컬랙션인지 여부
-		IsCollection bool `yaml:"is_collection"`
+		IsCollection bool `yaml:"is_collection" json:"is_collection"`
 		// Backend 결과가 컬랙션인 경우에 core.CollectionTag ("collection") 으로 JSON 포맷을 할 것인지 여부 (True 면 core.CollectionTag ("collection") 으로 JSON 전환, false면 Array 상태로 반환)
-		WrapCollectionToJSON bool `yaml:"wrap_collection_to_json"`
+		WrapCollectionToJSON bool `yaml:"wrap_collection_to_json" json:"wrap_collection_to_json"`
 		// Backend 결과 중에서 특정한 필드만 처리할 경우의 필드명
-		Target string `yaml:"target"`
+		Target string `yaml:"target" json:"target"`
 		// Backend 에서 동작할 Middleware 설정
-		Middleware MWConfig `yaml:"middleware"`
+		Middleware MWConfig `yaml:"middleware" json:"middleware"`
 		// HostSanitizationDisabled - host 정보의 정제작업 비활성화 여부
-		HostSanitizationDisabled bool `yaml:"disable_host_sanitize"`
+		HostSanitizationDisabled bool `yaml:"disable_host_sanitize" json:"disable_host_sanitize"`
+
 		// API 호출의 응답을 파싱하기 위한 디코더 (내부 사용)
 		Decoder encoding.Decoder `yaml:"-" json:"-"`
 		// URLPattern에서 파라미터 변환에 사용할 키 관리 (내부 사용)
-		URLKeys []string
+		URLKeys []string `yaml:"-" json:"-"`
 	}
 
 	// TLSConfig - 서비스에서 사용할 TLS 설정 구조

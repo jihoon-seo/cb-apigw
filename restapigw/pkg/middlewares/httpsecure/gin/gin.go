@@ -1,12 +1,11 @@
 package gin
 
 import (
-	"errors"
-
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/errors"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/httpsecure"
 	"github.com/gin-gonic/gin"
 	"github.com/unrolled/secure"
-	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
-	"github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/httpsecure"
 )
 
 // ===== [ Constants and Variables ] =====

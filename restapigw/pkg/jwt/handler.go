@@ -3,12 +3,12 @@ package jwt
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/errors"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/jwt/provider"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/render"
@@ -78,7 +78,7 @@ func (h *Handler) Refresh() http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		parser := Parser{h.Guard.ParserConfig}
 		token, _ := parser.ParseFromRequest(req)
-		claims := token.Claims.(jwt.MapClaims)
+		claims := token.Claims.(*AppClaims).MapClaims
 
 		origIat := int64(claims["iat"].(float64))
 

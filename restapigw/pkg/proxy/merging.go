@@ -3,7 +3,6 @@ package proxy
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -11,6 +10,7 @@ import (
 	"time"
 
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/errors"
 )
 
 // ===== [ Constants and Variables ] =====

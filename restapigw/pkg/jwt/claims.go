@@ -2,8 +2,7 @@
 package jwt
 
 import (
-	"encoding/json"
-
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/errors"
 
 	"github.com/dgrijalva/jwt-go"
@@ -27,7 +26,7 @@ type (
 
 // UnmarshalJSON - AppClaims에 대한 Claims를 unmarshal 처리
 func (ac *AppClaims) UnmarshalJSON(text []byte) error {
-	return json.Unmarshal(text, &ac.MapClaims)
+	return core.JSONUnmarshal(text, &ac.MapClaims)
 }
 
 // Valid - 현재는 시간정보(exp, iat, nbf, ...Valid)를 기준으로 하며, 이런 정보가 없다고 해도 Valid 한 것으로 처리

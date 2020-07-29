@@ -5,10 +5,10 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
-	"errors"
 	"net/http"
 	"strings"
 
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/errors"
 	"github.com/dgrijalva/jwt-go"
 )
 

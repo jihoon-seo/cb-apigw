@@ -2,9 +2,9 @@
 package basic
 
 import (
-	"encoding/json"
 	"net/http"
 
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/errors"
 )
 
@@ -52,7 +52,7 @@ func (pv *PasswordVerifier) getUserFromRequest(req *http.Request) (*user, error)
 		contentType := filterFlags(req.Header.Get("Content-Type"))
 		switch contentType {
 		case contentTypeJSON:
-			err := json.NewDecoder(req.Body).Decode(&u)
+			err := core.JSONDecode(req.Body, &u)
 			if err != nil {
 				return u, errors.Wrap(err, "could not parse the json body")
 			}

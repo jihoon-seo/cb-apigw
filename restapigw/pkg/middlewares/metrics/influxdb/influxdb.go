@@ -3,10 +3,10 @@ package influxdb
 
 import (
 	"context"
-	"errors"
 	"os"
 	"time"
 
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/errors"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/metrics"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/metrics/influxdb/counter"

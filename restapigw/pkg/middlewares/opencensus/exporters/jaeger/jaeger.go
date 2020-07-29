@@ -2,9 +2,9 @@ package jaeger
 
 import (
 	"context"
-	"errors"
 
 	"contrib.go.opencensus.io/exporter/jaeger"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/errors"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/middlewares/opencensus"
 )
 

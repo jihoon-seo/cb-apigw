@@ -2,12 +2,12 @@
 package admin
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/api"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
 	ginAdapter "github.com/cloud-barista/cb-apigw/restapigw/pkg/core/adapters/gin"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/errors"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/render"
@@ -77,6 +77,7 @@ func (ah *APIHandler) Get() http.HandlerFunc {
 			return
 		}
 
+		//render.JSON(rw, http.StatusOK, core.ConvertStructForJSON(ah.Configs.Definitions))
 		render.JSON(rw, http.StatusOK, ah.Configs.Definitions)
 	}
 }
@@ -113,7 +114,7 @@ func (ah *APIHandler) PutBy() http.HandlerFunc {
 			return
 		}
 
-		err = json.NewDecoder(req.Body).Decode(def)
+		err = core.JSONDecode(req.Body, def)
 		if nil != err {
 			errors.Handler(rw, req, err)
 			return
@@ -154,7 +155,7 @@ func (ah *APIHandler) Post() http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		def := api.NewDefinition()
 
-		err := json.NewDecoder(req.Body).Decode(def)
+		err := core.JSONDecode(req.Body, def)
 		if nil != err {
 			errors.Handler(rw, req, err)
 			return
@@ -168,6 +169,7 @@ func (ah *APIHandler) Post() http.HandlerFunc {
 
 		// TODO: Plugin Validation
 
+		// 기존 정보가 존재하는지 검증 (Name 및 Endpoint Path, ...)
 		_, span := trace.StartSpan(req.Context(), "definition.Exists")
 		exists, err := ah.exists(def)
 		span.End()
