@@ -156,7 +156,7 @@ func RecoveryHandler(rw http.ResponseWriter, req *http.Request, err interface{})
 // at the point Wrap is called, and the supplied message.
 // If err is nil, Wrap returns nil.
 func Wrap(err error, message string) error {
-	if err == nil {
+	if nil == err {
 		return nil
 	}
 	err = &withMessage{
@@ -173,7 +173,7 @@ func Wrap(err error, message string) error {
 // at the point Wrapf is call, and the format specifier.
 // If err is nil, Wrapf returns nil.
 func Wrapf(err error, format string, args ...interface{}) error {
-	if err == nil {
+	if nil == err {
 		return nil
 	}
 	err = &withMessage{
@@ -189,7 +189,7 @@ func Wrapf(err error, format string, args ...interface{}) error {
 // WithStack annotates err with a stack trace at the point WithStack was called.
 // If err is nil, WithStack returns nil.
 func WithStack(err error) error {
-	if err == nil {
+	if nil == err {
 		return nil
 	}
 	return &withStack{
@@ -201,7 +201,7 @@ func WithStack(err error) error {
 // WithMessage annotates err with a new message.
 // If err is nil, WithMessage returns nil.
 func WithMessage(err error, message string) error {
-	if err == nil {
+	if nil == err {
 		return nil
 	}
 	return &withMessage{
@@ -226,7 +226,7 @@ func Cause(err error) error {
 		Cause() error
 	}
 
-	for err != nil {
+	for nil != err {
 		cause, ok := err.(causer)
 		if !ok {
 			break

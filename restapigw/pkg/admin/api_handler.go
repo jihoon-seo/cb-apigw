@@ -162,7 +162,7 @@ func (ah *APIHandler) Post() http.HandlerFunc {
 		}
 
 		isValid, err := def.Validate()
-		if false == isValid && err != nil {
+		if false == isValid && nil != err {
 			errors.Handler(rw, req, errors.NewWithCode(http.StatusBadRequest, err.Error()))
 			return
 		}
@@ -174,7 +174,7 @@ func (ah *APIHandler) Post() http.HandlerFunc {
 		exists, err := ah.exists(def)
 		span.End()
 
-		if err != nil || exists {
+		if nil != err || exists {
 			errors.Handler(rw, req, err)
 			return
 		}

@@ -145,7 +145,7 @@ func (s *Server) Start() error {
 
 // Stop - Admin API Server 종료
 func (s *Server) Stop() {
-	if s == nil {
+	if nil == s {
 		fmt.Println("server is null")
 		return
 	}

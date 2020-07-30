@@ -29,15 +29,15 @@ func (p Parser) Parse(configFile string) (ServiceConfig, error) {
 	var cfg ServiceConfig
 
 	// Reading
-	if err := p.viper.ReadInConfig(); err != nil {
+	if err := p.viper.ReadInConfig(); nil != err {
 		return cfg, checkErr(err, configFile)
 	}
 	// Unmarshal to struct
-	if err := p.viper.Unmarshal(&cfg); err != nil {
+	if err := p.viper.Unmarshal(&cfg); nil != err {
 		return cfg, checkErr(err, configFile)
 	}
 	// Initialize
-	if err := cfg.Init(); err != nil {
+	if err := cfg.Init(); nil != err {
 		return cfg, CheckErr(err, configFile)
 	}
 	return cfg, nil

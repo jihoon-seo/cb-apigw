@@ -293,7 +293,7 @@ type (
 
 // IsHTTPS - HTTPS 활성화 여부 검증
 func (t *TLSConfig) IsHTTPS() bool {
-	return t != nil && t.PublicKey != "" && t.PrivateKey != ""
+	return nil != t && "" != t.PublicKey && "" != t.PrivateKey
 }
 
 // Error - Endpoint 경로 오류 문자열 반환
@@ -370,13 +370,13 @@ func (sConf *ServiceConfig) Init() error {
 
 // initGlobalParams - 전역 설정 초기화
 func (sConf *ServiceConfig) initGlobalParams() {
-	if sConf.Port == 0 {
+	if 0 == sConf.Port {
 		sConf.Port = defaultPort
 	}
-	if sConf.MaxIdleConnectionsPerHost == 0 {
+	if 0 == sConf.MaxIdleConnectionsPerHost {
 		sConf.MaxIdleConnectionsPerHost = DefaultMaxIdleConnectionsPerHost
 	}
-	if sConf.Timeout == 0 {
+	if 0 == sConf.Timeout {
 		sConf.Timeout = DefaultTimeout
 	}
 
@@ -387,17 +387,17 @@ func (sConf *ServiceConfig) initGlobalParams() {
 // InitEndpointDefaults - Endpoint에 미 설정된 항목들을 기본 값으로 초기화
 func (eConf *EndpointConfig) InitEndpointDefaults() {
 	// TODO: ServiceConfig에서 Endpoint로 이동할 부분 검증 및 초기화 (For Endpoint)
-	if eConf.Method == "" {
+	if "" == eConf.Method {
 		eConf.Method = "GET"
 	}
-	if eConf.CacheTTL == 0 {
+	if 0 == eConf.CacheTTL {
 		eConf.CacheTTL = DefaultCacheTTL
 	}
-	if eConf.Timeout == 0 {
+	if 0 == eConf.Timeout {
 		eConf.Timeout = DefaultTimeout
 	}
 	// 기본 출력 포맷 설정 (JSON)
-	if eConf.OutputEncoding == "" {
+	if "" == eConf.OutputEncoding {
 		eConf.OutputEncoding = encoding.JSON
 	}
 }
@@ -406,14 +406,14 @@ func (eConf *EndpointConfig) InitEndpointDefaults() {
 func (eConf *EndpointConfig) InitBackendDefaults(bIdx int) {
 	// TODO: ServiceConfig에서 Endpoint로 이동할 부분 검증 및 초기화 (For Backend)
 	backend := eConf.Backend[bIdx]
-	if len(backend.Host) == 0 {
+	if 0 == len(backend.Host) {
 		// URL 미 지정시 전역 URL 사용
 		backend.Host = eConf.Host
 	} else if !backend.HostSanitizationDisabled {
 		backend.Host = core.CleanHosts(backend.Host)
 	}
 	// Method 미 지정시 Endpoint Method 사용
-	if backend.Method == "" {
+	if "" == backend.Method {
 		backend.Method = eConf.Method
 	}
 	backend.Timeout = eConf.Timeout
@@ -470,7 +470,7 @@ func (eConf *EndpointConfig) Validate() (bool, error) {
 	}
 
 	matched, err := regexp.MatchString(core.DebugPattern, eConf.Endpoint)
-	if err != nil {
+	if nil != err {
 		return false, &EndpointMatchError{
 			Err:    err,
 			Path:   eConf.Endpoint,
@@ -481,7 +481,7 @@ func (eConf *EndpointConfig) Validate() (bool, error) {
 		return false, &EndpointPathError{Path: eConf.Endpoint, Method: eConf.Method}
 	}
 
-	if len(eConf.Backend) == 0 {
+	if 0 == len(eConf.Backend) {
 		return false, &NoBackendsError{Path: eConf.Endpoint, Method: eConf.Method}
 	}
 	return true, nil
@@ -563,7 +563,7 @@ func fromSetToSortedSlice(set map[string]interface{}) []string {
 
 // InitDefinitions - 로드된 Endpoint Definitions에 대한 기본 설정 값을 처리한다.
 func InitDefinitions(sConf *ServiceConfig, defs []*EndpointConfig) error {
-	if defs == nil || len(defs) == 0 {
+	if defs == nil || 0 == len(defs) {
 		return nil
 	}
 
@@ -585,7 +585,7 @@ func InitDefinitions(sConf *ServiceConfig, defs []*EndpointConfig) error {
 
 		def.InitEndpointDefaults()
 
-		if def.OutputEncoding == encoding.NOOP && len(def.Backend) > 1 {
+		if def.OutputEncoding == encoding.NOOP && 1 < len(def.Backend) {
 			return errInvalidNoOpEncoding
 		}
 
@@ -595,7 +595,7 @@ func InitDefinitions(sConf *ServiceConfig, defs []*EndpointConfig) error {
 		for bIdx, bConf := range def.Backend {
 			def.InitBackendDefaults(bIdx)
 
-			if err := def.InitBackendURLMappings(bIdx, inputSet); err != nil {
+			if err := def.InitBackendURLMappings(bIdx, inputSet); nil != err {
 				return err
 			}
 

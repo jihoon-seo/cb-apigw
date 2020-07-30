@@ -18,20 +18,23 @@ const (
 	UpdatedOperation
 	// AddedOperation - 설정 등록 작업
 	AddedOperation
+	// ApplyOperation - 설정 변경사항 모두 저장 (File or ETCD, ...)
+	ApplyOperation
 )
 
 var (
-	// ErrAPIDefinitionNotFound is used when the api was not found in the datastore
+	// ErrAPIDefinitionNotFound - 레파지토리에 API 정의가 존재하지 않는 경우 오류
 	ErrAPIDefinitionNotFound = errors.NewWithCode(http.StatusNotFound, "api definition not found")
-
-	// ErrAPINameExists is used when the API name is already registered on the datastore
+	// ErrAPIsNotChanged - 레파지토리에 저장할 API 정의 변경 사항이 존재하지 않는 경우 오류
+	ErrAPIsNotChanged = errors.NewWithCode(http.StatusNotModified, "api definitions are not changed")
+	// ErrAPINameExists - 레파지토리에 동일한 이름의 API 정의가 존재하는 경우 오류
 	ErrAPINameExists = errors.NewWithCode(http.StatusConflict, "api name is already registered")
-
-	// ErrAPIListenPathExists is used when the API listen path is already registered on the datastore
+	// ErrAPIListenPathExists - 레파지토리에 동일한 수신 경로의 API 정의가 존재하는 경우 오류
 	ErrAPIListenPathExists = errors.NewWithCode(http.StatusConflict, "api listen path is already registered")
 
+	// TODO: ETCD, Database 관련 오류들
 	// ErrDBContextNotSet is used when the database request context is not set
-	ErrDBContextNotSet = errors.NewWithCode(http.StatusInternalServerError, "DB context was not set for this request")
+	// ErrDBContextNotSet = errors.NewWithCode(http.StatusInternalServerError, "DB context was not set for this request")
 )
 
 // ===== [ Types ] =====

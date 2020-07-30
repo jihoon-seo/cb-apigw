@@ -25,12 +25,12 @@ func secureHandler(opts secure.Options) gin.HandlerFunc {
 	secMw := secure.New(opts)
 	return func(c *gin.Context) {
 		err := secMw.Process(c.Writer, c.Request)
-		if err != nil {
+		if nil != err {
 			c.Abort()
 			return
 		}
 		// Redirect 관련 상태 코드인 경우
-		if status := c.Writer.Status(); status > 300 && status < 399 {
+		if status := c.Writer.Status(); 300 < status && 399 > status {
 			c.Abort()
 		}
 	}
@@ -41,7 +41,7 @@ func secureHandler(opts secure.Options) gin.HandlerFunc {
 // Register - Gin Engine 에 httpsecure middleware 설정을 등록
 func Register(mwConf config.MWConfig, engine *gin.Engine) error {
 	conf := httpsecure.ParseConfig(mwConf)
-	if conf == nil {
+	if nil == conf {
 		return errNoConfig
 	}
 	engine.Use(secureHandler(secure.Options{

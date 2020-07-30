@@ -37,7 +37,7 @@ func (m *Middleware) Handler(h http.Handler) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		parser := Parser{m.Guard.ParserConfig}
 		_, err := parser.ParseFromRequest(req)
-		if err != nil {
+		if nil != err {
 			logging.GetLogger().WithError(err).Debug("failed to parse the token")
 			render.JSON(rw, http.StatusUnauthorized, err.Error())
 			return

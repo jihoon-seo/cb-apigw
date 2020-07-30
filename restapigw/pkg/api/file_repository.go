@@ -3,7 +3,6 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
@@ -35,23 +34,22 @@ type (
 
 func (fsr *FileSystemRepository) parseEndpoint(apiDef []byte) endpointDefinitions {
 	var apiConfigs endpointDefinitions
-	//apiConfigs := endpointDefinitions{}
+	log := logging.GetLogger()
 
-	//	logging.GetLogger().Printf("YAML: %s", string(apiDef))
-
-	// Try unmarshalling as Array of multiple definitions
-	if err := yaml.Unmarshal(apiDef, &apiConfigs); err != nil {
-		// Try unmarshalling as Single Definition
+	// API 정의들 Unmarshalling
+	if err := yaml.Unmarshal(apiDef, &apiConfigs); nil != err {
+		// 오류 발생시 단일 Definition으로 다시 처리
 		apiConfigs.Definitions = append(apiConfigs.Definitions, NewDefinition())
-		if err := yaml.Unmarshal(apiDef, &apiConfigs.Definitions[0]); err != nil {
-			logging.GetLogger().WithError(err).Error("Couldn't parsing api definitions")
+		if err := yaml.Unmarshal(apiDef, &apiConfigs.Definitions[0]); nil != err {
+			log.WithError(err).Error("Couldn't parsing api definitions")
 		}
 	}
 
+	// 로드된 Endpoint 정보 출력
 	for idx, ec := range apiConfigs.Definitions {
-		fmt.Printf("Endpoint(%d) : %+v\n", idx, ec)
+		log.Debugf("Endpoint(%d) : %+v\n", idx, ec)
 		for bIdx, bc := range ec.Backend {
-			fmt.Printf("Backend(%d) : %v\n", bIdx, bc)
+			log.Debugf("Backend(%d) : %v\n", bIdx, bc)
 		}
 	}
 
@@ -106,7 +104,7 @@ func NewFileSystemRepository(dir string) (*FileSystemRepository, error) {
 	}
 
 	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
+	if nil != err {
 		return nil, errors.Wrap(err, "failed to create a file system watcher")
 	}
 
@@ -118,20 +116,20 @@ func NewFileSystemRepository(dir string) (*FileSystemRepository, error) {
 			logger.WithField("path", filePath)
 
 			appConfigBody, err := ioutil.ReadFile(filePath)
-			if err != nil {
+			if nil != err {
 				logger.WithError(err).Error("Couldn't load the api definition file")
 				return nil, err
 			}
 
 			err = repo.watcher.Add(filePath)
-			if err != nil {
+			if nil != err {
 				logger.WithError(err).Error("Couldn't load the api definition file")
 				return nil, err
 			}
 
 			definition := repo.parseEndpoint(appConfigBody)
 			for _, v := range definition.Definitions {
-				if err = repo.add(v); err != nil {
+				if err = repo.add(v); nil != err {
 					logger.WithField("endpoint", v.Endpoint).WithError(err).Error("Failed during add endpoint to the repository")
 					return nil, err
 				}

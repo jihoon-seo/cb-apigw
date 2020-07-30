@@ -68,7 +68,7 @@ func findValidAPIHealthChecks(defs []*config.EndpointConfig) []*config.EndpointC
 	var validDefs []*config.EndpointConfig
 
 	for _, def := range defs {
-		if def.Active && def.HealthCheck.URL != "" {
+		if def.Active && "" != def.HealthCheck.URL {
 			validDefs = append(validDefs, def)
 		}
 	}
@@ -109,7 +109,7 @@ func NewStatusHandler(conf *api.Configuration, logger logging.Logger) http.Handl
 		for _, def := range defs {
 			if name == def.Name {
 				resp, err := doStatusRequest(def, false, logger)
-				if err != nil {
+				if nil != err {
 					logger.WithField("name", name).WithError(err).Error("[ADMIN Server] Error requesting service health status")
 					rw.WriteHeader(http.StatusInternalServerError)
 					rw.Write([]byte(err.Error()))
@@ -117,11 +117,11 @@ func NewStatusHandler(conf *api.Configuration, logger logging.Logger) http.Handl
 				}
 
 				body, err := ioutil.ReadAll(resp.Body)
-				if closeErr := resp.Body.Close(); closeErr != nil {
+				if closeErr := resp.Body.Close(); nil != closeErr {
 					logger.WithField("name", name).WithError(closeErr).Error("[ADMIN Server] Error closing health status body")
 				}
 
-				if err != nil {
+				if nil != err {
 					logger.WithField("name", name).WithError(err).Error("[ADMIN Server] Error reading health status body")
 					rw.WriteHeader(http.StatusInternalServerError)
 					rw.Write([]byte(err.Error()))

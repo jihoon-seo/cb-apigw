@@ -59,12 +59,12 @@ type (
 func (p *Parser) jwtFromHeader(req *http.Request, key string) (string, error) {
 	authHeader := req.Header.Get(key)
 
-	if authHeader == "" {
+	if "" == authHeader {
 		return "", errors.New("auth header empty")
 	}
 
 	parts := strings.SplitN(authHeader, " ", 2)
-	if !(len(parts) == 2 && parts[0] == "Bearer") {
+	if !(2 == len(parts) && "Bearer" == parts[0]) {
 		return "", errors.New("invalid auth header")
 	}
 
@@ -74,7 +74,7 @@ func (p *Parser) jwtFromHeader(req *http.Request, key string) (string, error) {
 func (p *Parser) jwtFromQuery(req *http.Request, key string) (string, error) {
 	token := req.URL.Query().Get(key)
 
-	if token == "" {
+	if "" == token {
 		return "", errors.New("query token empty")
 	}
 
@@ -104,7 +104,7 @@ func (p *Parser) Parse(tokenString string) (*jwt.Token, error) {
 				return []byte(method.Key), nil
 			case *jwt.SigningMethodRSA:
 				block, _ := pem.Decode([]byte(method.Key))
-				if block == nil {
+				if nil == block {
 					return nil, ErrInvalidPEMBlock
 				}
 				if got, want := block.Type, "PUBLIC KEY"; got != want {
@@ -125,12 +125,12 @@ func (p *Parser) Parse(tokenString string) (*jwt.Token, error) {
 			}
 		})
 
-		if err != nil {
+		if nil != err {
 			if err == ErrSigningMethodMismatch {
 				continue
 			}
 
-			if validationErr, ok := err.(*jwt.ValidationError); ok && (validationErr.Errors&jwt.ValidationErrorUnverifiable > 0 || validationErr.Errors&jwt.ValidationErrorSignatureInvalid > 0) {
+			if validationErr, ok := err.(*jwt.ValidationError); ok && (0 < validationErr.Errors&jwt.ValidationErrorUnverifiable || 0 < validationErr.Errors&jwt.ValidationErrorSignatureInvalid) {
 				continue
 			}
 		}
@@ -156,7 +156,7 @@ func (p *Parser) ParseFromRequest(req *http.Request) (*jwt.Token, error) {
 		token, err = p.jwtFromCookie(req, parts[1])
 	}
 
-	if err != nil {
+	if nil != err {
 		return nil, err
 	}
 

@@ -106,7 +106,7 @@ func Register(c Config) {
 	mu.Lock()
 	defer mu.Unlock()
 
-	if c.Timeout == 0 {
+	if 0 == c.Timeout {
 		c.Timeout = time.Second * 2
 	}
 	checks = append(checks, c)
@@ -155,7 +155,7 @@ func HandlerFunc(rw http.ResponseWriter, req *http.Request) {
 				setStatus(&status, c.SkipOnErr)
 				break loop
 			case res := <-resChan:
-				if res.err != nil {
+				if nil != res.err {
 					failures[res.name] = res.err.Error()
 					setStatus(&status, res.skipOnErr)
 				}
@@ -167,7 +167,7 @@ func HandlerFunc(rw http.ResponseWriter, req *http.Request) {
 	rw.Header().Set("Content-Type", "application/json")
 	c := newCheck(status, failures)
 	data, err := core.JSONMarshal(c)
-	if err != nil {
+	if nil != err {
 		rw.WriteHeader(http.StatusInternalServerError)
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return

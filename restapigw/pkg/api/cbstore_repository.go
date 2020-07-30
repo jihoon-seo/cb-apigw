@@ -31,7 +31,7 @@ func NewCbStoreRepository(key string) (*CbStoreRepository, error) {
 
 	// Test Data Input
 	keyValue, _ := repo.store.Get(key)
-	if keyValue.Key == "" || keyValue.Value == "" {
+	if "" == keyValue.Key || "" == keyValue.Value {
 		dir, err := os.Getwd()
 		if nil != err {
 			return nil, err
@@ -47,7 +47,7 @@ func NewCbStoreRepository(key string) (*CbStoreRepository, error) {
 	keyValue, _ = repo.store.Get(key)
 
 	// Parse Definitions
-	if keyValue.Value != "" {
+	if "" != keyValue.Value {
 		// TODO: Parsing Definitions
 	}
 

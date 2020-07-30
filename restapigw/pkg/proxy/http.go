@@ -58,7 +58,7 @@ func NewHTTPProxyWithHTTPExecutor(bconf *config.BackendConfig, hre client.HTTPRe
 func NewHTTPProxyDetailed(bconf *config.BackendConfig, hre client.HTTPRequestExecutor, hsh client.HTTPStatusHandler, hrp HTTPResponseParser) Proxy {
 	return func(ctx context.Context, req *Request) (*Response, error) {
 		reqToBackend, err := http.NewRequest(strings.ToTitle(req.Method), req.URL.String(), req.Body)
-		if err != nil {
+		if nil != err {
 			return nil, err
 		}
 
@@ -71,16 +71,16 @@ func NewHTTPProxyDetailed(bconf *config.BackendConfig, hre client.HTTPRequestExe
 		}
 
 		// Body Size 정보 설정
-		if req.Body != nil {
-			if v, ok := req.Headers["Content-Length"]; ok && len(v) == 1 && v[0] != "chunked" {
-				if size, err := strconv.Atoi(v[0]); err == nil {
+		if nil != req.Body {
+			if v, ok := req.Headers["Content-Length"]; ok && 1 == len(v) && "chunked" != v[0] {
+				if size, err := strconv.Atoi(v[0]); nil == err {
 					reqToBackend.ContentLength = int64(size)
 				}
 			}
 		}
 
 		// Backend 호출에 필요한 Query String 정보 설정
-		if req.Query != nil {
+		if nil != req.Query {
 			q := reqToBackend.URL.Query()
 			for k, v := range req.Query {
 				q.Add(k, v[0])
@@ -92,7 +92,7 @@ func NewHTTPProxyDetailed(bconf *config.BackendConfig, hre client.HTTPRequestExe
 
 		// Backed 호출
 		resp, err := hre(ctx, reqToBackend)
-		if reqToBackend.Body != nil {
+		if nil != reqToBackend.Body {
 			reqToBackend.Body.Close()
 		}
 
@@ -104,13 +104,13 @@ func NewHTTPProxyDetailed(bconf *config.BackendConfig, hre client.HTTPRequestExe
 		}
 
 		// 응답이 없어서 상태 확인이 안되는 경우
-		if resp == nil && err != nil {
+		if nil == resp && nil != err {
 			return nil, err
 		}
 
 		// Response Status 처리
 		resp, err = hsh(ctx, resp)
-		if err != nil {
+		if nil != err {
 			if t, ok := err.(responseError); ok {
 				return &Response{
 					Data: map[string]interface{}{
@@ -132,7 +132,7 @@ func NewHTTPProxyDetailed(bconf *config.BackendConfig, hre client.HTTPRequestExe
 // NewRequestBuilderChain - Request 파라미터와 Backend Path를 설정한 Proxy 호출 체인을 생성한다.
 func NewRequestBuilderChain(bConf *config.BackendConfig) CallChain {
 	return func(next ...Proxy) Proxy {
-		if len(next) > 1 {
+		if 1 < len(next) {
 			panic(ErrTooManyProxies)
 		}
 		return func(ctx context.Context, req *Request) (*Response, error) {
@@ -150,7 +150,7 @@ func NewRequestBuilderChain(bConf *config.BackendConfig) CallChain {
 			b.WriteString(bConf.Host[0])
 			b.WriteString(r.Path) // generated path replaced with paramters
 			newURL, err := url.Parse(b.String())
-			if err != nil {
+			if nil != err {
 				return nil, err
 			}
 			r.URL = newURL

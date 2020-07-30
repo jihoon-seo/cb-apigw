@@ -32,6 +32,7 @@ type (
 		io.Closer
 
 		FindAll() ([]*config.EndpointConfig, error)
+		Write() error
 	}
 
 	// Watcher - Routing 정보 변경을 감시하는 기능을 제공하는 인터페이스 형식

@@ -99,7 +99,7 @@ func parseTLSVersion(key string) uint16 {
 
 func parseCurveIDs(conf *config.TLSConfig) []tls.CurveID {
 	l := len(conf.CurvePreferences)
-	if l == 0 {
+	if 0 == l {
 		return defaultCurves
 	}
 
@@ -112,7 +112,7 @@ func parseCurveIDs(conf *config.TLSConfig) []tls.CurveID {
 
 func parseCipherSuites(conf *config.TLSConfig) []uint16 {
 	l := len(conf.CipherSuites)
-	if l == 0 {
+	if 0 == l {
 		return defaultCipherSuites
 	}
 
@@ -158,15 +158,15 @@ func RunServer(ctx context.Context, sConf config.ServiceConfig, handler http.Han
 	done := make(chan error)
 	s := NewServer(sConf, handler)
 
-	if s.TLSConfig == nil {
+	if nil == s.TLSConfig {
 		go func() {
 			done <- s.ListenAndServe()
 		}()
 	} else {
-		if sConf.TLS.PublicKey == "" {
+		if "" == sConf.TLS.PublicKey {
 			return ErrPublicKey
 		}
-		if sConf.TLS.PrivateKey == "" {
+		if "" == sConf.TLS.PrivateKey {
 			return ErrPrivateKey
 		}
 		go func() {

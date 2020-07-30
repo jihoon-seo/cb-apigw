@@ -193,7 +193,7 @@ func (s *Server) StartWithContext(ctx context.Context) error {
 
 		<-ctx.Done()
 		reqAcceptGraceTimeout := time.Duration(s.serviceConfig.GraceTimeout)
-		if reqAcceptGraceTimeout > 0 {
+		if 0 < reqAcceptGraceTimeout {
 			s.logger.Infof("[SERVER] Waiting %s for incoming requests to cease", reqAcceptGraceTimeout)
 			time.Sleep(reqAcceptGraceTimeout)
 		}
@@ -208,7 +208,7 @@ func (s *Server) StartWithContext(ctx context.Context) error {
 	go func() {
 		httpServer.InitHTTPDefaultTransport(s.serviceConfig)
 
-		if err := httpServer.RunServer(ctx, s.serviceConfig, s.router.Engine()); err != nil {
+		if err := httpServer.RunServer(ctx, s.serviceConfig, s.router.Engine()); nil != err {
 			s.logger.Error(err.Error())
 		}
 	}()

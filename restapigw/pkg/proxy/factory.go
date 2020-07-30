@@ -64,7 +64,7 @@ func (df defaultFactory) New(cfg *config.EndpointConfig) (p Proxy, err error) {
 	default:
 		p, err = df.newMulti(cfg)
 	}
-	if err != nil {
+	if nil != err {
 		return
 	}
 

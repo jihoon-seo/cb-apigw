@@ -65,11 +65,11 @@ func CleanHosts(hosts []string) []string {
 // CleanHost - 지정된 호스트에 대해 패턴 검증 및 정리
 func CleanHost(host string) string {
 	matches := HOSTPattern.FindAllStringSubmatch(host, -1)
-	if len(matches) != 1 {
+	if 1 != len(matches) {
 		panic(fmt.Errorf("invalid host: %s", host))
 	}
 	keys := matches[0][1:]
-	if keys[0] == "" {
+	if "" == keys[0] {
 		keys[0] = "http://"
 	}
 	return strings.Join(keys, "")

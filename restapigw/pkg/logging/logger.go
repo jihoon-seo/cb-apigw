@@ -62,7 +62,7 @@ func (l *Logger) SetFields(fields Fields) *Logger {
 // init - 패키지 초기화
 func init() {
 	// FIXME: CBLOG 경로관련 문제 (현재 경로로 환경변수 설정)
-	if dir, err := os.Getwd(); err == nil {
+	if dir, err := os.Getwd(); nil == err {
 		os.Setenv("CBLOG_ROOT", dir)
 	}
 }

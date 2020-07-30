@@ -35,13 +35,13 @@ func (p *Producer) NewProxyCallChain(layer, name string) proxy.CallChain {
 
 // ProxyFactory - Metrics 처리를 수행하는 ProxyFactory 생성
 func (p *Producer) ProxyFactory(segmentName string, next proxy.Factory) proxy.FactoryFunc {
-	if p.Config == nil || !p.Config.ProxyEnabled {
+	if nil == p.Config || !p.Config.ProxyEnabled {
 		return next.New
 	}
 
 	return proxy.FactoryFunc(func(eConf *config.EndpointConfig) (proxy.Proxy, error) {
 		next, err := next.New(eConf)
-		if err != nil {
+		if nil != err {
 			return proxy.DummyProxy, err
 		}
 		return p.NewProxyCallChain(segmentName, eConf.Endpoint)(next), nil
@@ -50,7 +50,7 @@ func (p *Producer) ProxyFactory(segmentName string, next proxy.Factory) proxy.Fa
 
 // BackendFactory - Metrics 처리를 수행하는 BackendFactory 생성
 func (p *Producer) BackendFactory(segmentName string, next proxy.BackendFactory) proxy.BackendFactory {
-	if p.Config == nil || !p.Config.BackendEnabled {
+	if nil == p.Config || !p.Config.BackendEnabled {
 		return next
 	}
 
@@ -93,14 +93,14 @@ func NewProxyMetrics(parent *metrics.Registry) *ProxyMetrics {
 // NewProxyCallChain - Metrics 처리를 수행하는 Proxy 호출 체인 생성
 func NewProxyCallChain(layer, name string, pm *ProxyMetrics) proxy.CallChain {
 	return func(next ...proxy.Proxy) proxy.Proxy {
-		if len(next) > 1 {
+		if 1 < len(next) {
 			panic(proxy.ErrTooManyProxies)
 		}
 
 		return func(ctx context.Context, request *proxy.Request) (*proxy.Response, error) {
 			// Bypass Backend URLPattern을 실제 URL Path로 변경
 			urlPath := name
-			if request.IsBypass || layer == "pipe" {
+			if request.IsBypass || "pipe" == layer {
 				urlPath = request.Path
 			}
 
@@ -114,8 +114,8 @@ func NewProxyCallChain(layer, name string, pm *ProxyMetrics) proxy.CallChain {
 
 			// Metric 처리를 위한 호출 결과 정보 등록
 			go func(duration int64, resp *proxy.Response, err error) {
-				errored := strconv.FormatBool(err != nil)
-				completed := strconv.FormatBool(resp != nil && resp.IsComplete)
+				errored := strconv.FormatBool(nil != err)
+				completed := strconv.FormatBool(nil != resp && resp.IsComplete)
 				labels := "layer." + layer + ".name." + urlPath + ".complete." + completed + ".error." + errored
 				pm.Counter("requests." + labels).Inc(1)
 				pm.Histogram("latency." + labels).Update(duration)

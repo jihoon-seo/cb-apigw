@@ -37,7 +37,7 @@ func (h *Handler) Login(conf config.CredentialsConfig, logger logging.Logger) ht
 	return func(rw http.ResponseWriter, req *http.Request) {
 		accessToken, err := extractAccessToken(req)
 
-		if err != nil {
+		if nil != err {
 			logger.WithError(err).Debug("[ADMIN API] failed to extract access token")
 		}
 
@@ -102,7 +102,7 @@ func (h *Handler) Refresh() http.HandlerFunc {
 
 		// 현재는 HSxxx 형식 알고리즘만 지원
 		tokenString, err := newToken.SignedString([]byte(h.Guard.SigningMethod.Key))
-		if err != nil {
+		if nil != err {
 			render.JSON(rw, http.StatusUnauthorized, "create JWT Token failed")
 			return
 		}
@@ -122,7 +122,7 @@ func extractAccessToken(req *http.Request) (string, error) {
 	// Access Key들을 검증하는 OAuth 활용
 	authHeaderValue := req.Header.Get("Authorization")
 	parts := strings.Split(authHeaderValue, " ")
-	if len(parts) < 2 {
+	if 2 > len(parts) {
 		return "", errors.New("attempted access with malformed header, no auth header found")
 	}
 

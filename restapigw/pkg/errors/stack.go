@@ -33,7 +33,7 @@ func (f Frame) pc() uintptr { return uintptr(f) - 1 }
 // function for this Frame's pc.
 func (f Frame) file() string {
 	fn := runtime.FuncForPC(f.pc())
-	if fn == nil {
+	if nil == fn {
 		return "unknown"
 	}
 	file, _ := fn.FileLine(f.pc())
@@ -44,7 +44,7 @@ func (f Frame) file() string {
 // function for this Frame's pc.
 func (f Frame) line() int {
 	fn := runtime.FuncForPC(f.pc())
-	if fn == nil {
+	if nil == fn {
 		return 0
 	}
 	_, line := fn.FileLine(f.pc())
@@ -69,7 +69,7 @@ func (f Frame) Format(s fmt.State, verb rune) {
 		case s.Flag('+'):
 			pc := f.pc()
 			fn := runtime.FuncForPC(pc)
-			if fn == nil {
+			if nil == fn {
 				io.WriteString(s, "unknown")
 			} else {
 				file, _ := fn.FileLine(pc)
@@ -176,7 +176,7 @@ func trimGOPATH(name, file string) string {
 	i := len(file)
 	for n := 0; n < goal; n++ {
 		i = strings.LastIndex(file[:i], sep)
-		if i == -1 {
+		if -1 == i {
 			// not enough separators found, set i so that the slice expression
 			// below leaves file unmodified
 			i = -len(sep)

@@ -35,7 +35,7 @@ func RedirectHTTPS(port int) http.HandlerFunc {
 			Host:   fmt.Sprintf("%s:%v", host, port),
 			Path:   req.URL.Path,
 		}
-		if len(req.URL.RawQuery) > 0 {
+		if 0 < len(req.URL.RawQuery) {
 			target.RawQuery += "?" + req.URL.RawQuery
 		}
 		logging.GetLogger().Infof("redirect to: %s", target.String())

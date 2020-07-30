@@ -77,14 +77,14 @@ func (we WrappedError) GetError() error {
 // getClientIPByRequestRemoteAddr - Request의 Remote Addr를 통한 IP 검증
 func getClientIPByRequestRemoteAddr(req *http.Request) (string, error) {
 	ip, port, err := net.SplitHostPort(req.RemoteAddr)
-	if err != nil {
+	if nil != err {
 		log.Printf("debug: Getting req.RemoteAddr: %v\n", err)
 		return "", err
 	}
 	log.Printf("debug: With req.RemoteAddr found IP: %v, Port: %v\n", ip, port)
 
 	userIP := net.ParseIP(ip)
-	if userIP == nil {
+	if nil == userIP {
 		message := fmt.Sprintf("debug: Parsing IP from Request.RemoteAddr got nothing.")
 		log.Println(message)
 		return "", fmt.Errorf(message)
@@ -103,7 +103,7 @@ func getClientIPByHeaders(req *http.Request) (string, error) {
 
 	for _, v := range ipSlice {
 		log.Printf("debug: client request header check gives ip: %v\n", v)
-		if v != "" {
+		if "" != v {
 			return v, nil
 		}
 	}
@@ -115,19 +115,19 @@ func getClientIPByHeaders(req *http.Request) (string, error) {
 // getMyInterfaceAddr - Private network IP를 통한 IP 검증
 func getMyInterfaceAddr() (net.IP, error) {
 	ifaces, err := net.Interfaces()
-	if err != nil {
+	if nil != err {
 		return nil, err
 	}
 	addresses := []net.IP{}
 	for _, iface := range ifaces {
-		if iface.Flags&net.FlagUp == 0 {
+		if 0 == iface.Flags&net.FlagUp {
 			continue // interface down
 		}
-		if iface.Flags&net.FlagLoopback != 0 {
+		if 0 != iface.Flags&net.FlagLoopback {
 			continue // loopback interface
 		}
 		addrs, err := iface.Addrs()
-		if err != nil {
+		if nil != err {
 			continue
 		}
 
@@ -139,18 +139,18 @@ func getMyInterfaceAddr() (net.IP, error) {
 			case *net.IPAddr:
 				ip = v.IP
 			}
-			if ip == nil || ip.IsLoopback() {
+			if nil == ip || ip.IsLoopback() {
 				continue
 			}
 			ip = ip.To4()
-			if ip == nil {
+			if nil == ip {
 				continue // not an ipv4 address
 			}
 			addresses = append(addresses, ip)
 		}
 	}
 
-	if len(addresses) == 0 {
+	if 0 == len(addresses) {
 		return nil, fmt.Errorf("no address found, net.InterfaceAddrs: %v", addresses)
 	}
 
@@ -249,7 +249,7 @@ func ContainsString(s []string, v string) bool {
 // GetResponseString - http.Response Body를 문자열로 반환
 func GetResponseString(resp *http.Response) (string, error) {
 	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
+	if nil != err {
 		return "", err
 	}
 
@@ -265,10 +265,10 @@ func GetResponseString(resp *http.Response) (string, error) {
 func GetClientIPHelper(req *http.Request) (string, error) {
 	// Try parse "Origin" from header
 	url, err := url.Parse(req.Header.Get("Origin"))
-	if err == nil {
+	if nil == err {
 		host := url.Host
 		ip, _, err := net.SplitHostPort(host)
-		if err == nil {
+		if nil == err {
 			log.Printf("debug: Found IP using Header (Origin) sniffing, ip: %v\n", ip)
 			return ip, nil
 		}
@@ -276,14 +276,14 @@ func GetClientIPHelper(req *http.Request) (string, error) {
 
 	// Try parse request
 	ip, err := getClientIPByRequestRemoteAddr(req)
-	if err == nil {
+	if nil == err {
 		log.Printf("debug: Found IP using Request, ip: %v\n", ip)
 		return ip, nil
 	}
 
 	// Try parse "X-Forwarder" from header
 	ip, err = getClientIPByHeaders(req)
-	if err == nil {
+	if nil == err {
 		log.Printf("debug: Found IP using Request Headers (X-Forwarder) sniffing, ip: %v\n", ip)
 		return ip, nil
 	}

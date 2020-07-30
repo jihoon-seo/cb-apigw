@@ -76,7 +76,7 @@ func (rcw readCloserWrapper) closeOnCancel() {
 
 // EmptyChain - 테스트나 오류 처리를 위한 빈 Proxy Chain 생성
 func EmptyChain(next ...Proxy) Proxy {
-	if len(next) > 1 {
+	if 1 < len(next) {
 		panic(ErrTooManyProxies)
 	}
 	return next[0]

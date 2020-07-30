@@ -38,7 +38,7 @@ func IssueAdminToken(signingMethod SigningMethod, claims jwt.MapClaims, expireIn
 
 	// 토큰 서명
 	accessToken, err := token.SignedString([]byte(signingMethod.Key))
-	if err != nil {
+	if nil != err {
 		return nil, err
 	}
 

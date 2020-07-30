@@ -34,7 +34,7 @@ func JSONCollectionDecoder(r io.Reader, v *map[string]interface{}) error {
 	var collection []interface{}
 	// d := json.NewDecoder(r)
 	// d.UseNumber()
-	// if err := d.Decode(&collection); err != nil {
+	// if err := d.Decode(&collection); nil != err {
 	// 	return err
 	// }
 	if err := core.JSONDecode(r, &collection); nil != err {
@@ -50,7 +50,7 @@ func JSONWrapedCollectionDecoder(r io.Reader, v *map[string]interface{}) error {
 	var collection []interface{}
 	// d := json.NewDecoder(r)
 	// d.UseNumber()
-	// if err := d.Decode(&collection); err != nil {
+	// if err := d.Decode(&collection); nil != err {
 	// 	return err
 	// }
 	if err := core.JSONDecode(r, &collection); nil != err {
