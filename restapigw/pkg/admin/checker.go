@@ -64,12 +64,14 @@ func check(def *config.EndpointConfig, logger logging.Logger) func() error {
 }
 
 // findValidAPIHealthChecks - 지정된 API Definition들 중에 HealthCheck 정보가 있는 것들만 추출
-func findValidAPIHealthChecks(defs []*config.EndpointConfig) []*config.EndpointConfig {
-	var validDefs []*config.EndpointConfig
+func findValidAPIHealthChecks(maps []*api.DefinitionMap) []*config.EndpointConfig {
+	validDefs := make([]*config.EndpointConfig, 0)
 
-	for _, def := range defs {
-		if def.Active && "" != def.HealthCheck.URL {
-			validDefs = append(validDefs, def)
+	for _, dm := range maps {
+		for _, def := range dm.Definitions {
+			if def.Active && "" != def.HealthCheck.URL {
+				validDefs = append(validDefs, def)
+			}
 		}
 	}
 
@@ -81,7 +83,7 @@ func findValidAPIHealthChecks(defs []*config.EndpointConfig) []*config.EndpointC
 // NewOverviewHandler - 모든 검증 대상에 대한 상태 검증용 핸들러 구성
 func NewOverviewHandler(conf *api.Configuration, logger logging.Logger) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
-		defs := findValidAPIHealthChecks(conf.Definitions)
+		defs := findValidAPIHealthChecks(conf.DefinitionMaps)
 
 		logger.WithField("len", len(defs)).Debug("[ADMIN Server] Loading health check endpoints")
 		health.Reset()
@@ -103,7 +105,7 @@ func NewOverviewHandler(conf *api.Configuration, logger logging.Logger) http.Han
 // NewStatusHandler - 단일 검증 대상에 대한 상태 검증용 핸들러 구성
 func NewStatusHandler(conf *api.Configuration, logger logging.Logger) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
-		defs := findValidAPIHealthChecks(conf.Definitions)
+		defs := findValidAPIHealthChecks(conf.DefinitionMaps)
 
 		name := ginAdapter.URLParam(req, "name")
 		for _, def := range defs {

@@ -68,40 +68,28 @@ func (s *Server) closeChannel() {
 }
 
 // applyChanges - 수신된 API 변경사항 반영
-func (s *Server) applyChanges(cfg *api.Configuration) {
+func (s *Server) applyChanges(conf *api.Configuration) {
 	s.logger.Debug("[SERVER] Refreshing configuration")
 
 	// 신규 라우팅 엔진 생성
 	s.router.UpdateEngine(s.serviceConfig)
 	// 변경된 Routing 규칙 적용
-	s.router.RegisterAPIs(&s.serviceConfig, cfg.Definitions)
+	s.router.RegisterAPIs(&s.serviceConfig, conf.GetAllDefinitions())
 
 	s.logger.Debug("[SERVER] Configuration refreshing complete")
 }
 
 // updateConfiguration - 지정된 설정변경 메시지를 관리하는 설정에 반영
-func (s *Server) updateConfiguration(cfg api.ConfigurationMessage) {
-	currDefinitions := s.currConfigurations.Definitions
-
-	switch cfg.Operation {
+func (s *Server) updateConfiguration(cm api.ChangeMessage) error {
+	switch cm.Operation {
 	case api.AddedOperation:
-		currDefinitions = append(currDefinitions, cfg.Configuration)
+		return s.currConfigurations.AddDefinition(cm.Source, cm.Definition)
 	case api.UpdatedOperation:
-		for i, d := range currDefinitions {
-			if d.Name == cfg.Configuration.Name {
-				currDefinitions[i] = cfg.Configuration
-			}
-		}
+		return s.currConfigurations.UpdateDefinition(cm.Source, cm.Definition)
 	case api.RemovedOperation:
-		for i, d := range currDefinitions {
-			if d.Name == cfg.Configuration.Name {
-				copy(currDefinitions[1:], currDefinitions[i+1:])
-				currDefinitions = currDefinitions[:len(currDefinitions)-1]
-			}
-		}
+		return s.currConfigurations.RemoveDefinition(cm.Source, cm.Definition)
 	}
-
-	s.currConfigurations.Definitions = currDefinitions
+	return nil
 }
 
 // listenProviders - Server가 종료되는 시점까지 Repository 변경사항 처리
@@ -121,7 +109,7 @@ func (s *Server) listenProviders(stop chan struct{}) {
 			}
 
 			s.logger.Debug("[SERVER] Configuration change detected by repository")
-			s.currConfigurations.Definitions = configMsg.Configurations.Definitions
+			s.currConfigurations.DefinitionMaps = configMsg.Configurations.DefinitionMaps
 			s.applyChanges(configMsg.Configurations)
 		}
 	}
@@ -149,7 +137,7 @@ func (s *Server) startProvider(ctx context.Context) error {
 
 	// API 변경 대기
 	go func() {
-		ch := make(chan api.ConfigurationMessage)
+		ch := make(chan api.ChangeMessage)
 		listener, providerIsListener := s.provider.(api.Listener)
 		if providerIsListener {
 			listener.Listen(ctx, ch)
@@ -164,8 +152,12 @@ func (s *Server) startProvider(ctx context.Context) error {
 
 				// 변경된 설정 갱신
 				s.logger.Debug("[SERVER] Configuration change detected by Admin API")
-				s.updateConfiguration(c)
-				s.applyChanges(s.currConfigurations)
+				err := s.updateConfiguration(c)
+				if nil == err {
+					s.applyChanges(s.currConfigurations)
+				} else {
+					s.logger.WithError(err).Debug("can not apply configuration changes")
+				}
 
 				if providerIsListener {
 					ch <- c
@@ -217,19 +209,19 @@ func (s *Server) StartWithContext(ctx context.Context) error {
 	go s.listenProviders(s.stopChan)
 
 	// API 설정 정보 검색
-	defs, err := s.provider.FindAll()
+	definifionMaps, err := s.provider.FindAll()
 	if nil != err {
 		return errors.Wrap(err, "could not find all configurations from the repository")
 	}
 
 	// Admin Server 구동
-	s.currConfigurations = &api.Configuration{Definitions: defs}
+	s.currConfigurations = &api.Configuration{DefinitionMaps: definifionMaps}
 	if err := s.startProvider(ctx); nil != err {
 		s.logger.WithError(err).Fatal("Could not start api providers")
 	}
 
 	// API Definition에 대한 Router 연계 처리
-	s.router.RegisterAPIs(&s.serviceConfig, s.currConfigurations.Definitions)
+	s.router.RegisterAPIs(&s.serviceConfig, s.currConfigurations.GetAllDefinitions())
 
 	s.logger.Info("[SERVER] Started")
 	return nil

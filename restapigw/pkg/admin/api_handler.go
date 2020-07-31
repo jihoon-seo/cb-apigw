@@ -6,9 +6,7 @@ import (
 	"net/http"
 
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/api"
-	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
-	ginAdapter "github.com/cloud-barista/cb-apigw/restapigw/pkg/core/adapters/gin"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/errors"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/render"
 	"go.opencensus.io/trace"
@@ -20,7 +18,7 @@ import (
 type (
 	// APIHandler - Admin API 운영을 위한 REST Handler 정보 형식
 	APIHandler struct {
-		configurationChan chan<- api.ConfigurationMessage
+		configurationChan chan<- api.ChangeMessage
 
 		Configs *api.Configuration
 	}
@@ -28,99 +26,43 @@ type (
 
 // ===== [ Implementations ] =====
 
-// exists - 지정한 Endpoint Defintion이 존재하는지 검증
-func (ah *APIHandler) exists(def *config.EndpointConfig) (bool, error) {
-	for _, storedDef := range ah.Configs.Definitions {
-		if storedDef.Name == def.Name {
-			return true, api.ErrAPINameExists
-		}
-
-		if storedDef.Endpoint == def.Endpoint {
-			return true, api.ErrAPIListenPathExists
-		}
-	}
-
-	return false, nil
-}
-
-// findByName - 지정한 이름의 Endpoint Definition이 존재하는지 검증
-func (ah *APIHandler) findByName(name string) *config.EndpointConfig {
-	for _, storedDef := range ah.Configs.Definitions {
-		if storedDef.Name == name {
-			return storedDef
-		}
-	}
-
-	return nil
-}
-
-// findByListenPath - 지정한 Path의 Endpoint Definition이 존재하는 검증
-func (ah *APIHandler) findByListenPath(listenPath string) *config.EndpointConfig {
-	for _, cfg := range ah.Configs.Definitions {
-		if cfg.Endpoint == listenPath {
-			return cfg
-		}
-	}
-
-	return nil
-}
-
-// Get - 전체 Definition 정보 반환
-func (ah *APIHandler) Get() http.HandlerFunc {
+// GetDefinitions - 전체 Definition 정보 반환
+func (ah *APIHandler) GetDefinitions() http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		_, span := trace.StartSpan(req.Context(), "definitions.GetAll")
 		defer span.End()
 
-		if nil == ah.Configs.Definitions {
+		if nil == ah.Configs.DefinitionMaps {
 			// API Definition이 없을 경우는 빈 JSON Array 처리 (ID 기준)
 			render.JSON(rw, http.StatusOK, []int{})
 			return
 		}
 
-		//render.JSON(rw, http.StatusOK, core.ConvertStructForJSON(ah.Configs.Definitions))
-		render.JSON(rw, http.StatusOK, ah.Configs.Definitions)
+		render.JSON(rw, http.StatusOK, ah.Configs.DefinitionMaps)
 	}
 }
 
-// GetBy - Request의 name 정보 기준으로 Definition 정보 반환
-func (ah *APIHandler) GetBy() http.HandlerFunc {
+// UpdateDefinition - Request의 name 정보를 기준으로 Definition 정보 갱신
+func (ah *APIHandler) UpdateDefinition() http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
-		name := ginAdapter.URLParam(req, "name")
-		_, span := trace.StartSpan(req.Context(), "definition.FindByName")
-		def := ah.findByName(name)
-		span.End()
+		cm := &api.ConfigModel{}
 
-		if nil == def {
-			errors.Handler(rw, req, api.ErrAPIDefinitionNotFound)
-			return
-		}
-
-		render.JSON(rw, http.StatusOK, def)
-	}
-}
-
-// PutBy - Request의 name 정보를 기준으로 Definition 정보 갱신
-func (ah *APIHandler) PutBy() http.HandlerFunc {
-	return func(rw http.ResponseWriter, req *http.Request) {
-		var err error
-
-		name := ginAdapter.URLParam(req, "name")
-		_, span := trace.StartSpan(req.Context(), "definition.FindByName")
-		def := ah.findByName(name)
-		span.End()
-
-		if nil == def {
-			errors.Handler(rw, req, api.ErrAPIDefinitionNotFound)
-			return
-		}
-
-		err = core.JSONDecode(req.Body, def)
+		err := core.JSONDecode(req.Body, cm)
 		if nil != err {
 			errors.Handler(rw, req, err)
 			return
 		}
 
-		isValid, err := def.Validate()
+		_, span := trace.StartSpan(req.Context(), "definition.FindByName")
+		def := ah.Configs.FindByName(cm.Source, cm.Definition.Name)
+		span.End()
+
+		if nil == def {
+			errors.Handler(rw, req, api.ErrAPIDefinitionNotFound)
+			return
+		}
+
+		isValid, err := cm.Definition.Validate()
 		if !isValid && nil != err {
 			errors.Handler(rw, req, errors.NewWithCode(http.StatusBadRequest, err.Error()))
 			return
@@ -130,19 +72,20 @@ func (ah *APIHandler) PutBy() http.HandlerFunc {
 
 		// 동일한 경로가 다른 Definition 이름으로 등록되어있는 경우 검증
 		_, span = trace.StartSpan(req.Context(), "repo.FindByListenPath")
-		existingDef := ah.findByListenPath(def.Endpoint)
+		existingDef := ah.Configs.FindByListenPath(cm.Source, cm.Definition.Endpoint)
 		span.End()
 
-		if nil != existingDef && existingDef.Name != def.Name {
+		if nil != existingDef && existingDef.Name != cm.Definition.Name {
 			errors.Handler(rw, req, api.ErrAPIListenPathExists)
 			return
 		}
 
 		// Definition 갱신 채널 처리
 		_, span = trace.StartSpan(req.Context(), "repo.Update")
-		ah.configurationChan <- api.ConfigurationMessage{
-			Operation:     api.UpdatedOperation,
-			Configuration: def,
+		ah.configurationChan <- api.ChangeMessage{
+			Source:     cm.Source,
+			Operation:  api.UpdatedOperation,
+			Definition: cm.Definition,
 		}
 		span.End()
 
@@ -150,18 +93,18 @@ func (ah *APIHandler) PutBy() http.HandlerFunc {
 	}
 }
 
-// Post - Request의 body 정보를 기준으로 Definition 정보 추가
-func (ah *APIHandler) Post() http.HandlerFunc {
+// AddDefinition - Request의 body 정보를 기준으로 Definition 정보 추가
+func (ah *APIHandler) AddDefinition() http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
-		def := api.NewDefinition()
+		cm := &api.ConfigModel{}
 
-		err := core.JSONDecode(req.Body, def)
+		err := core.JSONDecode(req.Body, cm)
 		if nil != err {
 			errors.Handler(rw, req, err)
 			return
 		}
 
-		isValid, err := def.Validate()
+		isValid, err := cm.Definition.Validate()
 		if false == isValid && nil != err {
 			errors.Handler(rw, req, errors.NewWithCode(http.StatusBadRequest, err.Error()))
 			return
@@ -171,7 +114,7 @@ func (ah *APIHandler) Post() http.HandlerFunc {
 
 		// 기존 정보가 존재하는지 검증 (Name 및 Endpoint Path, ...)
 		_, span := trace.StartSpan(req.Context(), "definition.Exists")
-		exists, err := ah.exists(def)
+		exists, err := ah.Configs.Exists(cm.Source, cm.Definition)
 		span.End()
 
 		if nil != err || exists {
@@ -181,34 +124,43 @@ func (ah *APIHandler) Post() http.HandlerFunc {
 
 		// Definition 갱신 채널 처리
 		_, span = trace.StartSpan(req.Context(), "repo.Add")
-		ah.configurationChan <- api.ConfigurationMessage{
-			Operation:     api.AddedOperation,
-			Configuration: def,
+		ah.configurationChan <- api.ChangeMessage{
+			Source:     cm.Source,
+			Operation:  api.AddedOperation,
+			Definition: cm.Definition,
 		}
 		span.End()
 
-		rw.Header().Add("Location", fmt.Sprintf("/apis/%s", def.Name))
+		rw.Header().Add("Location", fmt.Sprintf("/apis/%s", cm.Definition.Name))
 		rw.WriteHeader(http.StatusCreated)
 	}
 }
 
-// DeleteBy - Request의 name 정보를 기준으로 Definition 정보 삭제
-func (ah *APIHandler) DeleteBy() http.HandlerFunc {
+// RemoveDefinition - Request의 name 정보를 기준으로 Definition 정보 삭제
+func (ah *APIHandler) RemoveDefinition() http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
+		cm := &api.ConfigModel{}
+
+		err := core.JSONDecode(req.Body, cm)
+		if nil != err {
+			errors.Handler(rw, req, err)
+			return
+		}
+
 		_, span := trace.StartSpan(req.Context(), "repo.Remove")
 		defer span.End()
 
-		name := ginAdapter.URLParam(req, "name")
-		cfg := ah.findByName(name)
-		if cfg == nil {
+		cm.Definition = ah.Configs.FindByName(cm.Source, cm.Definition.Name)
+		if nil == cm.Definition {
 			errors.Handler(rw, req, api.ErrAPIDefinitionNotFound)
 			return
 		}
 
 		// Definition 갱신 채널 처리
-		ah.configurationChan <- api.ConfigurationMessage{
-			Operation:     api.RemovedOperation,
-			Configuration: cfg,
+		ah.configurationChan <- api.ChangeMessage{
+			Source:     cm.Source,
+			Operation:  api.RemovedOperation,
+			Definition: cm.Definition,
 		}
 
 		rw.WriteHeader(http.StatusNoContent)
@@ -219,7 +171,7 @@ func (ah *APIHandler) DeleteBy() http.HandlerFunc {
 // ===== [ Public Functions ] =====
 
 // NewAPIHandler - 지정한 Configuration 변경을 설정한 Admin API Handler 인스턴스 생성
-func NewAPIHandler(configurationChan chan<- api.ConfigurationMessage) *APIHandler {
+func NewAPIHandler(configurationChan chan<- api.ChangeMessage) *APIHandler {
 	return &APIHandler{
 		configurationChan: configurationChan,
 	}

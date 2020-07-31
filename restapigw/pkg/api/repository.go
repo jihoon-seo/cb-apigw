@@ -27,11 +27,20 @@ var (
 
 // ===== [ Types ] =====
 type (
+	// DefinitionMap - 리파지토리의 API Definition 관리 정보 구조
+	DefinitionMap struct {
+		Source      string                   `json:"source"`
+		HasChanges  bool                     `json:"-"`
+		Definitions []*config.EndpointConfig `json:"definitions"`
+	}
+
 	// Repository - Routing 정보 관리 기능을 제공하는 인터페이스 형식
 	Repository interface {
 		io.Closer
 
-		FindAll() ([]*config.EndpointConfig, error)
+		//FindSources() ([]string, error)
+		FindAll() ([]*DefinitionMap, error)
+		//FindAllBySource(source string) ([]*config.EndpointConfig, error)
 		Write() error
 	}
 
@@ -42,7 +51,7 @@ type (
 
 	// Listener - Configuration 변경을 처리하기 위한 Listaner 인터페이스 형식
 	Listener interface {
-		Listen(ctx context.Context, configurationChan <-chan ConfigurationMessage)
+		Listen(ctx context.Context, configurationChan <-chan ChangeMessage)
 	}
 )
 

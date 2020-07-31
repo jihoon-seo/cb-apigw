@@ -21,6 +21,11 @@ type (
 )
 
 // ===== [ Implementations ] =====
+// Write - 변경된 리파지토리 내용을 대상 파일로 출력
+func (csr *CbStoreRepository) Write() error {
+	return nil
+}
+
 // ===== [ Private Functions ] =====
 // ===== [ Public Functions ] =====
 

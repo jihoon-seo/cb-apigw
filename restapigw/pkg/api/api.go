@@ -43,9 +43,15 @@ type (
 	// ConfigurationOperation - Configuration 변경에 연계되는 Operation 형식
 	ConfigurationOperation int
 
-	// Configuration - API Endpoints
+	// ConfigModel - 클라이언트와 통신에 사용할 정보 구조
+	ConfigModel struct {
+		Source     string                 `json:"source"`
+		Definition *config.EndpointConfig `json:"definition"`
+	}
+
+	// Configuration - API Definitions 관리 구조
 	Configuration struct {
-		Definitions []*config.EndpointConfig
+		DefinitionMaps []*DefinitionMap
 	}
 
 	// ConfigurationChanged - Configuration 변경이 발생했을 떄 전송되는 메시지 처리 형식
@@ -53,10 +59,11 @@ type (
 		Configurations *Configuration
 	}
 
-	// ConfigurationMessage - Configuration 변경시 사용할 메시지 형식
-	ConfigurationMessage struct {
-		Operation     ConfigurationOperation
-		Configuration *config.EndpointConfig
+	// ChangeMessage - Configuration 변경시 사용할 메시지 형식
+	ChangeMessage struct {
+		Operation  ConfigurationOperation
+		Source     string
+		Definition *config.EndpointConfig
 	}
 )
 
@@ -65,6 +72,116 @@ type (
 // EqualsTo - 현재 동작 중인 설정과 지정된 설정이 동일한지 여부 검증
 func (c *Configuration) EqualsTo(tc *Configuration) bool {
 	return reflect.DeepEqual(c, tc)
+}
+
+// GetAllDefinitions - 관리하고 있는 API Definition들 반환
+func (c *Configuration) GetAllDefinitions() []*config.EndpointConfig {
+	defs := make([]*config.EndpointConfig, 0)
+	for _, dm := range c.DefinitionMaps {
+		for _, def := range dm.Definitions {
+			defs = append(defs, def)
+		}
+	}
+	return defs
+}
+
+// Exists - 지정한 Definition이 존재하는지 검증
+func (c *Configuration) Exists(source string, ec *config.EndpointConfig) (bool, error) {
+	for _, dm := range c.DefinitionMaps {
+		if dm.Source == source {
+			for _, def := range dm.Definitions {
+				if def.Name == ec.Name {
+					return true, ErrAPINameExists
+				}
+
+				if def.Endpoint == ec.Endpoint {
+					return true, ErrAPIListenPathExists
+				}
+			}
+		} else {
+			return false, nil
+		}
+	}
+
+	return false, nil
+}
+
+// FindByName - 지정한 이름의 Endpoint Definition이 존재하는지 검증
+func (c *Configuration) FindByName(source, name string) *config.EndpointConfig {
+	for _, dm := range c.DefinitionMaps {
+		if dm.Source == source {
+			for _, def := range dm.Definitions {
+				if def.Name == name {
+					return def
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+// FindByListenPath - 지정한 Path의 Endpoint Definition이 존재하는 검증
+func (c *Configuration) FindByListenPath(source, listenPath string) *config.EndpointConfig {
+	for _, dm := range c.DefinitionMaps {
+		if dm.Source == source {
+			for _, def := range dm.Definitions {
+				if def.Endpoint == listenPath {
+					return def
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+// AddDefinition - 지정한 정보를 기준으로 관리 중인 API Defintion 추가
+func (c *Configuration) AddDefinition(source string, ec *config.EndpointConfig) error {
+	for _, dm := range c.DefinitionMaps {
+		if dm.Source == source {
+			dm.Definitions = append(dm.Definitions, ec)
+		} else {
+			return errors.New("Specific source path not exist [" + source + "]")
+		}
+	}
+	return nil
+}
+
+// UpdateDefinition - 지정한 정보를 기준으로 관리 중인 API Definition 갱신
+func (c *Configuration) UpdateDefinition(source string, ec *config.EndpointConfig) error {
+	for _, dm := range c.DefinitionMaps {
+		if dm.Source == source {
+			for i, def := range dm.Definitions {
+				if def.Name == ec.Name {
+					dm.Definitions[i] = ec
+					return nil
+				}
+			}
+		} else {
+			return errors.New("Specific source path not exist [" + source + "]")
+		}
+	}
+
+	return errors.New("No definition to update in source path [" + source + "]")
+}
+
+// RemoveDefinition - 지정한 정보를 기준으로 관리 중인 API Definition 삭제
+func (c *Configuration) RemoveDefinition(source string, ec *config.EndpointConfig) error {
+	for _, dm := range c.DefinitionMaps {
+		if dm.Source == source {
+			for i, def := range dm.Definitions {
+				if def.Name == ec.Name {
+					copy(dm.Definitions[1:], dm.Definitions[i+1:])
+					dm.Definitions = dm.Definitions[:len(dm.Definitions)-1]
+					return nil
+				}
+			}
+		} else {
+			return errors.New("Specific source path not exist [" + source + "]")
+		}
+	}
+	return errors.New("No defintion to remove in source path [" + source + "]")
 }
 
 // ===== [ Private Functions ] =====

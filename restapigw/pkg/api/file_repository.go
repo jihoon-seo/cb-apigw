@@ -18,8 +18,8 @@ import (
 // ===== [ Types ] =====
 
 type (
-	// Endpoint List 구조
-	endpointDefinitions struct {
+	// sourceDefinitions - 리파지토리 Source에 저장된 API Definition 구조
+	sourceDefinitions struct {
 		Definitions []*config.EndpointConfig `mapstructure:"definitions" yaml:"definitions"`
 	}
 
@@ -32,8 +32,8 @@ type (
 
 // ===== [ Implementations ] =====
 
-func (fsr *FileSystemRepository) parseEndpoint(apiDef []byte) endpointDefinitions {
-	var apiConfigs endpointDefinitions
+func (fsr *FileSystemRepository) parseEndpoint(apiDef []byte) sourceDefinitions {
+	var apiConfigs sourceDefinitions
 	log := logging.GetLogger()
 
 	// API 정의들 Unmarshalling
@@ -56,6 +56,11 @@ func (fsr *FileSystemRepository) parseEndpoint(apiDef []byte) endpointDefinition
 	return apiConfigs
 }
 
+// Write - 변경된 리파지토리 내용을 대상 파일로 출력
+func (fsr *FileSystemRepository) Write() error {
+	return nil
+}
+
 // Watch - 파일 리파지토리의 대상 파일 변경 감시 및 처리
 func (fsr *FileSystemRepository) Watch(ctx context.Context, configChan chan<- ConfigurationChanged) {
 	go func() {
@@ -71,7 +76,13 @@ func (fsr *FileSystemRepository) Watch(ctx context.Context, configChan chan<- Co
 						continue
 					}
 					configChan <- ConfigurationChanged{
-						Configurations: &Configuration{Definitions: fsr.parseEndpoint(body).Definitions},
+						Configurations: &Configuration{DefinitionMaps: []*DefinitionMap{
+							{
+								Source:      event.Name,
+								HasChanges:  false,
+								Definitions: fsr.parseEndpoint(body).Definitions,
+							},
+						}},
 					}
 				}
 			case err := <-fsr.watcher.Errors:
@@ -129,7 +140,7 @@ func NewFileSystemRepository(dir string) (*FileSystemRepository, error) {
 
 			definition := repo.parseEndpoint(appConfigBody)
 			for _, v := range definition.Definitions {
-				if err = repo.add(v); nil != err {
+				if err = repo.add(filePath, v); nil != err {
 					logger.WithField("endpoint", v.Endpoint).WithError(err).Error("Failed during add endpoint to the repository")
 					return nil, err
 				}

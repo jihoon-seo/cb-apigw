@@ -23,7 +23,7 @@ import (
 type (
 	// Server - Admin API Server 관리 정보 형식
 	Server struct {
-		ConfigurationChan chan api.ConfigurationMessage
+		ConfigurationChan chan api.ChangeMessage
 
 		apiHandler *APIHandler
 		logger     logging.Logger
@@ -64,11 +64,13 @@ func (s *Server) addInternalRoutes(ge *gin.Engine, guard jwt.Guard) {
 	groupAPI := ge.Group("/apis")
 	groupAPI.Use(ginAdapter.Wrap(jwt.NewMiddleware(guard).Handler))
 	{
-		groupAPI.GET("/", gin.WrapH(s.apiHandler.Get()))
-		groupAPI.GET("/:name", gin.WrapH(s.apiHandler.GetBy()))
-		groupAPI.POST("/", gin.WrapH(s.apiHandler.Post()))
-		groupAPI.PUT("/:name", gin.WrapH(s.apiHandler.PutBy()))
-		groupAPI.DELETE("/:name", gin.WrapH(s.apiHandler.DeleteBy()))
+		groupAPI.GET("/", gin.WrapH(s.apiHandler.GetDefinitions()))
+		groupAPI.POST("/", gin.WrapH(s.apiHandler.AddDefinition()))
+		groupAPI.PUT("/", gin.WrapH(s.apiHandler.UpdateDefinition()))
+		groupAPI.DELETE("/", gin.WrapH(s.apiHandler.RemoveDefinition()))
+		// TODO: New Source
+		// TODO: Get List by source
+
 	}
 
 	if s.profilingEnabled {
@@ -87,7 +89,7 @@ func (s *Server) addInternalRoutes(ge *gin.Engine, guard jwt.Guard) {
 }
 
 // isClosedChannel - 이미 채널이 종료되었는지 검증
-func (s *Server) isClosedChannel(ch <-chan api.ConfigurationMessage) bool {
+func (s *Server) isClosedChannel(ch <-chan api.ChangeMessage) bool {
 	select {
 	case <-ch:
 		return true
@@ -181,7 +183,7 @@ func (s *Server) AddRoutes(ge *gin.Engine) {
 
 // New - Admin Server 구동
 func New(opts ...Option) *Server {
-	configurationChan := make(chan api.ConfigurationMessage)
+	configurationChan := make(chan api.ChangeMessage)
 	s := &Server{
 		ConfigurationChan: configurationChan,
 		apiHandler:        NewAPIHandler(configurationChan),
