@@ -4,60 +4,53 @@ package api
 import (
 	"context"
 	"io/ioutil"
+	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
-	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/errors"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
 	"gopkg.in/fsnotify.v1"
-	"gopkg.in/yaml.v2"
 )
 
 // ===== [ Constants and Variables ] =====
 // ===== [ Types ] =====
 
 type (
-	// sourceDefinitions - 리파지토리 Source에 저장된 API Definition 구조
-	sourceDefinitions struct {
-		Definitions []*config.EndpointConfig `mapstructure:"definitions" yaml:"definitions"`
-	}
 
 	// FileSystemRepository - 파일 시스템 기반 Repository 관리 정보 형식
 	FileSystemRepository struct {
 		*InMemoryRepository
-		watcher *fsnotify.Watcher
+		watcher    *fsnotify.Watcher
+		sourcePath string
 	}
 )
 
 // ===== [ Implementations ] =====
 
-func (fsr *FileSystemRepository) parseEndpoint(apiDef []byte) sourceDefinitions {
-	var apiConfigs sourceDefinitions
-	log := logging.GetLogger()
-
-	// API 정의들 Unmarshalling
-	if err := yaml.Unmarshal(apiDef, &apiConfigs); nil != err {
-		// 오류 발생시 단일 Definition으로 다시 처리
-		apiConfigs.Definitions = append(apiConfigs.Definitions, NewDefinition())
-		if err := yaml.Unmarshal(apiDef, &apiConfigs.Definitions[0]); nil != err {
-			log.WithError(err).Error("Couldn't parsing api definitions")
-		}
-	}
-
-	// 로드된 Endpoint 정보 출력
-	for idx, ec := range apiConfigs.Definitions {
-		log.Debugf("Endpoint(%d) : %+v\n", idx, ec)
-		for bIdx, bc := range ec.Backend {
-			log.Debugf("Backend(%d) : %v\n", bIdx, bc)
-		}
-	}
-
-	return apiConfigs
-}
-
 // Write - 변경된 리파지토리 내용을 대상 파일로 출력
-func (fsr *FileSystemRepository) Write() error {
+func (fsr *FileSystemRepository) Write(definitionMaps []*DefinitionMap) error {
+	fsr.Sources = definitionMaps
+
+	for _, dm := range fsr.Sources {
+		if dm.State == "REMOVED" {
+			err := os.Remove(path.Join(fsr.sourcePath, dm.Source))
+			if nil != err {
+				return err
+			}
+		} else if dm.State != "" {
+			data, err := sourceDefinitions(dm)
+			if nil != err {
+				return err
+			}
+			err = ioutil.WriteFile(path.Join(fsr.sourcePath, dm.Source), data, os.FileMode(0666))
+			if nil != err {
+				return err
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -79,8 +72,8 @@ func (fsr *FileSystemRepository) Watch(ctx context.Context, configChan chan<- Co
 						Configurations: &Configuration{DefinitionMaps: []*DefinitionMap{
 							{
 								Source:      event.Name,
-								HasChanges:  false,
-								Definitions: fsr.parseEndpoint(body).Definitions,
+								State:       "",
+								Definitions: parseEndpoint(body).Definitions,
 							},
 						}},
 					}
@@ -106,7 +99,7 @@ func (fsr *FileSystemRepository) Close() error {
 // NewFileSystemRepository - 파일 시스템 기반의 Repository 인스턴스 생성
 func NewFileSystemRepository(dir string) (*FileSystemRepository, error) {
 	logger := logging.GetLogger()
-	repo := FileSystemRepository{InMemoryRepository: NewInMemoryRepository()}
+	repo := FileSystemRepository{InMemoryRepository: NewInMemoryRepository(), sourcePath: dir}
 
 	// Grab json files from directory
 	files, err := ioutil.ReadDir(dir)
@@ -122,8 +115,9 @@ func NewFileSystemRepository(dir string) (*FileSystemRepository, error) {
 	repo.watcher = watcher
 
 	for _, f := range files {
-		if strings.Contains(f.Name(), ".yaml") {
-			filePath := filepath.Join(dir, f.Name())
+		if strings.HasSuffix(f.Name(), ".yaml") {
+			fileName := f.Name()
+			filePath := filepath.Join(dir, fileName)
 			logger.WithField("path", filePath)
 
 			appConfigBody, err := ioutil.ReadFile(filePath)
@@ -138,9 +132,9 @@ func NewFileSystemRepository(dir string) (*FileSystemRepository, error) {
 				return nil, err
 			}
 
-			definition := repo.parseEndpoint(appConfigBody)
+			definition := parseEndpoint(appConfigBody)
 			for _, v := range definition.Definitions {
-				if err = repo.add(filePath, v); nil != err {
+				if err = repo.add(fileName, v); nil != err {
 					logger.WithField("endpoint", v.Endpoint).WithError(err).Error("Failed during add endpoint to the repository")
 					return nil, err
 				}

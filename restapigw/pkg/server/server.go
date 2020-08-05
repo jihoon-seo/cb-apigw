@@ -25,7 +25,7 @@ type (
 	Server struct {
 		serviceConfig      config.ServiceConfig
 		logger             logging.Logger
-		provider           api.Repository
+		repository         api.Repository
 		currConfigurations *api.Configuration
 		adminServer        *admin.Server
 		router             router.Router
@@ -79,6 +79,18 @@ func (s *Server) applyChanges(conf *api.Configuration) {
 	s.logger.Debug("[SERVER] Configuration refreshing complete")
 }
 
+// applySources - 관리 중인 리포지토리 출력
+func (s *Server) applySources() error {
+	err := s.repository.Write(s.currConfigurations.DefinitionMaps)
+	if nil != err {
+		return err
+	}
+
+	// 삭제된 Configuration 조정
+	s.currConfigurations.ClearRemoved()
+	return nil
+}
+
 // updateConfiguration - 지정된 설정변경 메시지를 관리하는 설정에 반영
 func (s *Server) updateConfiguration(cm api.ChangeMessage) error {
 	switch cm.Operation {
@@ -88,6 +100,12 @@ func (s *Server) updateConfiguration(cm api.ChangeMessage) error {
 		return s.currConfigurations.UpdateDefinition(cm.Source, cm.Definition)
 	case api.RemovedOperation:
 		return s.currConfigurations.RemoveDefinition(cm.Source, cm.Definition)
+	case api.AddedSourceOperation:
+		return s.currConfigurations.AddSource(cm.Source)
+	case api.RemovedSourceOperation:
+		return s.currConfigurations.RemoveSource(cm.Source)
+	case api.ApplySourcesOperation:
+		return s.applySources()
 	}
 	return nil
 }
@@ -138,7 +156,7 @@ func (s *Server) startProvider(ctx context.Context) error {
 	// API 변경 대기
 	go func() {
 		ch := make(chan api.ChangeMessage)
-		listener, providerIsListener := s.provider.(api.Listener)
+		listener, providerIsListener := s.repository.(api.Listener)
 		if providerIsListener {
 			listener.Listen(ctx, ch)
 		}
@@ -154,7 +172,9 @@ func (s *Server) startProvider(ctx context.Context) error {
 				s.logger.Debug("[SERVER] Configuration change detected by Admin API")
 				err := s.updateConfiguration(c)
 				if nil == err {
-					s.applyChanges(s.currConfigurations)
+					if c.Operation != api.ApplySourcesOperation && c.Operation != api.AddedSourceOperation {
+						s.applyChanges(s.currConfigurations)
+					}
 				} else {
 					s.logger.WithError(err).Debug("can not apply configuration changes")
 				}
@@ -170,7 +190,7 @@ func (s *Server) startProvider(ctx context.Context) error {
 	}()
 
 	// 파일 변경등의 검사
-	if watcher, ok := s.provider.(api.Watcher); ok {
+	if watcher, ok := s.repository.(api.Watcher); ok {
 		watcher.Watch(ctx, s.configChan)
 	}
 
@@ -209,7 +229,7 @@ func (s *Server) StartWithContext(ctx context.Context) error {
 	go s.listenProviders(s.stopChan)
 
 	// API 설정 정보 검색
-	definifionMaps, err := s.provider.FindAll()
+	definifionMaps, err := s.repository.FindAll()
 	if nil != err {
 		return errors.Wrap(err, "could not find all configurations from the repository")
 	}
@@ -273,7 +293,7 @@ func WithLogger(logger logging.Logger) Option {
 // WithRepository - API Repository 인스턴스 설정
 func WithRepository(repo api.Repository) Option {
 	return func(s *Server) {
-		s.provider = repo
+		s.repository = repo
 	}
 }
 

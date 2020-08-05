@@ -11,6 +11,7 @@ import (
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/errors"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
+	"gopkg.in/yaml.v2"
 )
 
 // ===== [ Constants and Variables ] =====
@@ -27,10 +28,15 @@ var (
 
 // ===== [ Types ] =====
 type (
-	// DefinitionMap - 리파지토리의 API Definition 관리 정보 구조
+	// SourceDefinitions - 리파지토리 Source에 저장된 API Definition 구조 (로드/저장용)
+	SourceDefinitions struct {
+		Definitions []*config.EndpointConfig `mapstructure:"definitions" yaml:"definitions"`
+	}
+
+	// DefinitionMap - 리파지토리의 API Definition 관리 정보 구조 (관리 및 클라이언트 연계용)
 	DefinitionMap struct {
 		Source      string                   `json:"source"`
-		HasChanges  bool                     `json:"-"`
+		State       string                   `json:"-"`
 		Definitions []*config.EndpointConfig `json:"definitions"`
 	}
 
@@ -38,10 +44,8 @@ type (
 	Repository interface {
 		io.Closer
 
-		//FindSources() ([]string, error)
 		FindAll() ([]*DefinitionMap, error)
-		//FindAllBySource(source string) ([]*config.EndpointConfig, error)
-		Write() error
+		Write([]*DefinitionMap) error
 	}
 
 	// Watcher - Routing 정보 변경을 감시하는 기능을 제공하는 인터페이스 형식
@@ -57,6 +61,42 @@ type (
 
 // ===== [ Implementations ] =====
 // ===== [ Private Functions ] =====
+
+// parseEndpoint - 지정된 정보를 Definition 정보로 전환
+func parseEndpoint(apiDef []byte) SourceDefinitions {
+	var apiConfigs SourceDefinitions
+	log := logging.GetLogger()
+
+	// API 정의들 Unmarshalling
+	if err := yaml.Unmarshal(apiDef, &apiConfigs); nil != err {
+		// 오류 발생시 단일 Definition으로 다시 처리
+		apiConfigs.Definitions = append(apiConfigs.Definitions, NewDefinition())
+		if err := yaml.Unmarshal(apiDef, &apiConfigs.Definitions[0]); nil != err {
+			log.WithError(err).Error("Couldn't parsing api definitions")
+		}
+	}
+
+	// 로드된 Endpoint 정보 출력
+	for idx, ec := range apiConfigs.Definitions {
+		log.Debugf("Endpoint(%d) : %+v\n", idx, ec)
+		for bIdx, bc := range ec.Backend {
+			log.Debugf("Backend(%d) : %v\n", bIdx, bc)
+		}
+	}
+
+	return apiConfigs
+}
+
+// sourceDefinitions - 출력을 위한 Source Definition 구조 반환
+func sourceDefinitions(dm *DefinitionMap) ([]byte, error) {
+	sd := &SourceDefinitions{Definitions: dm.Definitions}
+	data, err := yaml.Marshal(sd)
+	if nil != err {
+		return nil, err
+	}
+	return data, nil
+}
+
 // ===== [ Public Functions ] =====
 
 // BuildRepository - 시스템 설정에 정의된 DSN(Data Source Name) 기준으로 저장소 구성
@@ -67,14 +107,18 @@ func BuildRepository(dsn string, refreshTime time.Duration) (Repository, error) 
 		return nil, errors.Wrap(err, "Error parsing the DSN")
 	}
 
+	if "" == dsnURL.Path {
+		return nil, errors.New("Path not found from DSN")
+	}
+
 	switch dsnURL.Scheme {
 	// CB-STORE (NutsDB or ETCD) 사용
 	case cbStore:
 		logger.Debug("CB-Store (NutsDB or ETCD) based configuration choosen")
-		apiKey := dsnURL.Path
+		storeKey := dsnURL.Path
 
-		logger.WithField("key", apiKey).Debug("Trying to load API configuration files")
-		repo, err := NewCbStoreRepository(apiKey)
+		logger.WithField("key", storeKey).Debug("Trying to load API configuration files")
+		repo, err := NewCbStoreRepository(storeKey)
 		if nil != err {
 			return nil, errors.Wrap(err, "could not create a CB-Store repository")
 		}

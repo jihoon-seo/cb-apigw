@@ -64,13 +64,15 @@ func (s *Server) addInternalRoutes(ge *gin.Engine, guard jwt.Guard) {
 	groupAPI := ge.Group("/apis")
 	groupAPI.Use(ginAdapter.Wrap(jwt.NewMiddleware(guard).Handler))
 	{
-		groupAPI.GET("/", gin.WrapH(s.apiHandler.GetDefinitions()))
-		groupAPI.POST("/", gin.WrapH(s.apiHandler.AddDefinition()))
-		groupAPI.PUT("/", gin.WrapH(s.apiHandler.UpdateDefinition()))
-		groupAPI.DELETE("/", gin.WrapH(s.apiHandler.RemoveDefinition()))
-		// TODO: New Source
-		// TODO: Get List by source
-
+		// Definitions
+		groupAPI.GET("/", gin.WrapH(s.apiHandler.GetDefinitions()))      // Get definitions list
+		groupAPI.POST("/", gin.WrapH(s.apiHandler.AddDefinition()))      // Add definition
+		groupAPI.PUT("/", gin.WrapH(s.apiHandler.UpdateDefinition()))    // Update definition
+		groupAPI.DELETE("/", gin.WrapH(s.apiHandler.RemoveDefinition())) // Remove definition
+		// Sources
+		groupAPI.POST("/source", gin.WrapH(s.apiHandler.AddSource()))      // Add source
+		groupAPI.PUT("/source", gin.WrapH(s.apiHandler.ApplySources()))    // Apply Changes to persistence
+		groupAPI.DELETE("/source", gin.WrapH(s.apiHandler.RemoveSource())) // Remove soruce (all definitions in source)
 	}
 
 	if s.profilingEnabled {

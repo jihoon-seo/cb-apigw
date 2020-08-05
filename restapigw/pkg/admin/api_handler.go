@@ -38,11 +38,11 @@ func (ah *APIHandler) GetDefinitions() http.HandlerFunc {
 			return
 		}
 
-		render.JSON(rw, http.StatusOK, ah.Configs.DefinitionMaps)
+		render.JSON(rw, http.StatusOK, ah.Configs.GetDefinitionMaps())
 	}
 }
 
-// UpdateDefinition - Request의 name 정보를 기준으로 Definition 정보 갱신
+// UpdateDefinition - Request의 정보를 기준으로 Definition 정보 갱신
 func (ah *APIHandler) UpdateDefinition() http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		cm := &api.ConfigModel{}
@@ -70,9 +70,9 @@ func (ah *APIHandler) UpdateDefinition() http.HandlerFunc {
 
 		// TODO: Plugin Validation
 
-		// 동일한 경로가 다른 Definition 이름으로 등록되어있는 경우 검증
+		// 동일한 경로가 다른 Definition 이름으로 등록되어있는 경우 검증 (전체 대상)
 		_, span = trace.StartSpan(req.Context(), "repo.FindByListenPath")
-		existingDef := ah.Configs.FindByListenPath(cm.Source, cm.Definition.Endpoint)
+		existingDef := ah.Configs.FindByListenPath(cm.Definition.Endpoint)
 		span.End()
 
 		if nil != existingDef && existingDef.Name != cm.Definition.Name {
@@ -93,7 +93,7 @@ func (ah *APIHandler) UpdateDefinition() http.HandlerFunc {
 	}
 }
 
-// AddDefinition - Request의 body 정보를 기준으로 Definition 정보 추가
+// AddDefinition - Request 정보를 기준으로 Definition 정보 추가
 func (ah *APIHandler) AddDefinition() http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		cm := &api.ConfigModel{}
@@ -131,12 +131,12 @@ func (ah *APIHandler) AddDefinition() http.HandlerFunc {
 		}
 		span.End()
 
-		rw.Header().Add("Location", fmt.Sprintf("/apis/%s", cm.Definition.Name))
+		rw.Header().Add("Location", fmt.Sprintf("/apis"))
 		rw.WriteHeader(http.StatusCreated)
 	}
 }
 
-// RemoveDefinition - Request의 name 정보를 기준으로 Definition 정보 삭제
+// RemoveDefinition - Request 정보를 기준으로 Definition 정보 삭제
 func (ah *APIHandler) RemoveDefinition() http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		cm := &api.ConfigModel{}
@@ -164,6 +164,90 @@ func (ah *APIHandler) RemoveDefinition() http.HandlerFunc {
 		}
 
 		rw.WriteHeader(http.StatusNoContent)
+	}
+}
+
+// AddSource - Request 정보를 기준으로 Definition을 관리하기 위한 신규 Source 생성
+func (ah *APIHandler) AddSource() http.HandlerFunc {
+	return func(rw http.ResponseWriter, req *http.Request) {
+		cm := &api.ConfigModel{}
+
+		err := core.JSONDecode(req.Body, cm)
+		if nil != err {
+			errors.Handler(rw, req, err)
+			return
+		}
+
+		// 기존 정보가 존재하는지 검증 (Name 및 Endpoint Path, ...)
+		_, span := trace.StartSpan(req.Context(), "repo.Exists")
+		exists := ah.Configs.ExistSource(cm.Source)
+		span.End()
+
+		if exists {
+			errors.Handler(rw, req, api.ErrSourceExists)
+			return
+		}
+
+		// Source 등록
+		_, span = trace.StartSpan(req.Context(), "repo.AddSource")
+		// Source 추가 채널 처리
+		ah.configurationChan <- api.ChangeMessage{
+			Source:    cm.Source,
+			Operation: api.AddedSourceOperation,
+		}
+		span.End()
+
+		rw.Header().Add("Location", fmt.Sprintf("/apis"))
+		rw.WriteHeader(http.StatusCreated)
+	}
+}
+
+// RemoveSource - Request 정보를 기준으로 관리 중인 Source 삭제
+func (ah *APIHandler) RemoveSource() http.HandlerFunc {
+	return func(rw http.ResponseWriter, req *http.Request) {
+		cm := &api.ConfigModel{}
+
+		err := core.JSONDecode(req.Body, cm)
+		if nil != err {
+			errors.Handler(rw, req, err)
+			return
+		}
+
+		_, span := trace.StartSpan(req.Context(), "repo.Exists")
+		exists := ah.Configs.ExistSource(cm.Source)
+		span.End()
+
+		if !exists {
+			errors.Handler(rw, req, api.ErrSourceNotExists)
+			return
+		}
+
+		// Source 삭제
+		_, span = trace.StartSpan(req.Context(), "repo.RemoveSource")
+		// Source 삭제 채널 처리
+		ah.configurationChan <- api.ChangeMessage{
+			Source:    cm.Source,
+			Operation: api.RemovedSourceOperation,
+		}
+		span.End()
+
+		rw.WriteHeader(http.StatusNoContent)
+	}
+}
+
+// ApplySources - 관리 중인 Source들의 변경사항 적용 (Persistence)
+func (ah *APIHandler) ApplySources() http.HandlerFunc {
+	return func(rw http.ResponseWriter, req *http.Request) {
+		// Source 삭제
+		_, span := trace.StartSpan(req.Context(), "repo.ApplySources")
+		span.End()
+
+		// Source 출력 (Persistence)
+		ah.configurationChan <- api.ChangeMessage{
+			Operation: api.ApplySourcesOperation,
+		}
+
+		rw.WriteHeader(http.StatusOK)
 	}
 }
 

@@ -14,6 +14,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	jsoniter "github.com/json-iterator/go"
@@ -290,6 +291,19 @@ func GetClientIPHelper(req *http.Request) (string, error) {
 
 	err = errors.New("error: Could not find clients IP address")
 	return "", err
+}
+
+// GetLastPart - 지정한 문자열을 지정한 문자로 분리하고 마지막 부분 반환
+func GetLastPart(source, seperater string) string {
+	if "" == source {
+		return source
+	}
+
+	srcs := strings.Split(source, seperater)
+	if len(srcs) == 1 {
+		return srcs[0]
+	}
+	return srcs[len(srcs)-1]
 }
 
 // JSONDecode - 지정한 Source의 JSON 정보를 지정한 Target으로 설정
