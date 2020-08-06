@@ -2,6 +2,9 @@
 package api
 
 import (
+	"context"
+	"time"
+
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
 	cbstore "github.com/cloud-barista/cb-store"
@@ -15,8 +18,9 @@ type (
 	// CbStoreRepository - CB-Store 기반 Repository 관리 정보 형식
 	CbStoreRepository struct {
 		*InMemoryRepository
-		store    icbs.Store
-		storeKey string
+		store       icbs.Store
+		storeKey    string
+		refreshTime time.Duration
 	}
 )
 
@@ -32,12 +36,12 @@ func (csr *CbStoreRepository) Write(definitionMaps []*DefinitionMap) error {
 	csr.Sources = definitionMaps
 
 	for _, dm := range csr.Sources {
-		if dm.State == "REMOVED" {
+		if dm.State == REMOVED {
 			err := csr.store.Delete(csr.getStorePath(dm.Source))
 			if nil != err {
 				return err
 			}
-		} else if dm.State != "" {
+		} else if dm.State != NONE {
 			data, err := sourceDefinitions(dm)
 			if nil != err {
 				return err
@@ -48,6 +52,7 @@ func (csr *CbStoreRepository) Write(definitionMaps []*DefinitionMap) error {
 				return err
 			}
 		}
+		dm.State = NONE
 	}
 
 	return nil
@@ -59,13 +64,39 @@ func (csr *CbStoreRepository) Close() error {
 	return nil
 }
 
+// Watch - CB-STORE 리파지토리의 변경 감시 및 처리 (Timer Reading)
+func (csr *CbStoreRepository) Watch(ctx context.Context, configChan chan<- RepoChangedMessage) {
+	log := logging.GetLogger()
+	ticker := time.NewTicker(csr.refreshTime)
+
+	go func(refreshTicker *time.Ticker) {
+		defer refreshTicker.Stop()
+		log.Debug("Watching CB-Store repository...")
+
+		for {
+			select {
+			case <-refreshTicker.C:
+				definitionMaps, err := csr.FindAll()
+				if nil != err {
+					log.WithError(err).Error("Failed to get API definitions on watch")
+					continue
+				}
+
+				configChan <- RepoChangedMessage{Configurations: &Configuration{DefinitionMaps: definitionMaps}}
+			case <-ctx.Done():
+				return
+			}
+		}
+	}(ticker)
+}
+
 // ===== [ Private Functions ] =====
 // ===== [ Public Functions ] =====
 
 // NewCbStoreRepository - CB-Store 기반의 Repository 인스턴스 생성
-func NewCbStoreRepository(key string) (*CbStoreRepository, error) {
-	logger := logging.GetLogger()
-	repo := CbStoreRepository{InMemoryRepository: NewInMemoryRepository(), store: cbstore.GetStore(), storeKey: key}
+func NewCbStoreRepository(key string, refreshTime time.Duration) (*CbStoreRepository, error) {
+	log := logging.GetLogger()
+	repo := CbStoreRepository{InMemoryRepository: NewInMemoryRepository(), store: cbstore.GetStore(), storeKey: key, refreshTime: refreshTime}
 
 	// TODO: Watching
 
@@ -81,7 +112,7 @@ func NewCbStoreRepository(key string) (*CbStoreRepository, error) {
 		definition := parseEndpoint([]byte(kv.Value))
 		for _, def := range definition.Definitions {
 			if err := repo.add(core.GetLastPart(kv.Key, "/"), def); nil != err {
-				logger.WithField("endpoint", def.Endpoint).WithError(err).Error("Failed during add endpoint to the repository")
+				log.WithField("endpoint", def.Endpoint).WithError(err).Error("Failed during add endpoint to the repository")
 				return nil, err
 			}
 		}

@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/errors"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
 	"gopkg.in/fsnotify.v1"
@@ -34,46 +36,68 @@ func (fsr *FileSystemRepository) Write(definitionMaps []*DefinitionMap) error {
 	fsr.Sources = definitionMaps
 
 	for _, dm := range fsr.Sources {
-		if dm.State == "REMOVED" {
-			err := os.Remove(path.Join(fsr.sourcePath, dm.Source))
+		filePath := path.Join(fsr.sourcePath, dm.Source)
+		if dm.State == REMOVED {
+			err := os.Remove(filePath)
 			if nil != err {
 				return err
 			}
-		} else if dm.State != "" {
+			// 삭제된 Source에 대한 Watcher 제거
+			_ = fsr.watcher.Remove(filePath)
+		} else if dm.State != NONE {
 			data, err := sourceDefinitions(dm)
 			if nil != err {
 				return err
 			}
-			err = ioutil.WriteFile(path.Join(fsr.sourcePath, dm.Source), data, os.FileMode(0666))
+			err = ioutil.WriteFile(filePath, data, os.FileMode(0666))
 			if nil != err {
 				return err
 			}
+			if dm.State == ADDED {
+				// Source가 추가된 경우 Watcher 추가
+				_ = fsr.watcher.Add(filePath)
+			}
 		}
+
+		dm.State = NONE
 	}
 
 	return nil
 }
 
 // Watch - 파일 리파지토리의 대상 파일 변경 감시 및 처리
-func (fsr *FileSystemRepository) Watch(ctx context.Context, configChan chan<- ConfigurationChanged) {
+func (fsr *FileSystemRepository) Watch(ctx context.Context, configChan chan<- RepoChangedMessage) {
 	go func() {
 		log := logging.GetLogger()
 
 		for {
 			select {
 			case event := <-fsr.watcher.Events:
+				// 변경된 경우
 				if event.Op&fsnotify.Write == fsnotify.Write {
 					body, err := ioutil.ReadFile(event.Name)
 					if nil != err {
 						log.WithError(err).Error("Couldn't load the api defintion file")
 						continue
 					}
-					configChan <- ConfigurationChanged{
+					configChan <- RepoChangedMessage{
 						Configurations: &Configuration{DefinitionMaps: []*DefinitionMap{
 							{
-								Source:      event.Name,
-								State:       "",
+								Source:      core.GetLastPart(event.Name, "/"),
+								State:       CHANGED,
 								Definitions: parseEndpoint(body).Definitions,
+							},
+						}},
+					}
+				}
+				// 삭제 및 이름 변경된 경우
+				if event.Op&fsnotify.Remove == fsnotify.Remove || event.Op&fsnotify.Rename == fsnotify.Rename {
+					configChan <- RepoChangedMessage{
+						Configurations: &Configuration{DefinitionMaps: []*DefinitionMap{
+							{
+								Source:      core.GetLastPart(event.Name, "/"),
+								State:       REMOVED,
+								Definitions: make([]*config.EndpointConfig, 0),
 							},
 						}},
 					}
@@ -98,7 +122,7 @@ func (fsr *FileSystemRepository) Close() error {
 
 // NewFileSystemRepository - 파일 시스템 기반의 Repository 인스턴스 생성
 func NewFileSystemRepository(dir string) (*FileSystemRepository, error) {
-	logger := logging.GetLogger()
+	log := logging.GetLogger()
 	repo := FileSystemRepository{InMemoryRepository: NewInMemoryRepository(), sourcePath: dir}
 
 	// Grab json files from directory
@@ -118,24 +142,24 @@ func NewFileSystemRepository(dir string) (*FileSystemRepository, error) {
 		if strings.HasSuffix(f.Name(), ".yaml") {
 			fileName := f.Name()
 			filePath := filepath.Join(dir, fileName)
-			logger.WithField("path", filePath)
+			log.WithField("path", filePath)
 
 			appConfigBody, err := ioutil.ReadFile(filePath)
 			if nil != err {
-				logger.WithError(err).Error("Couldn't load the api definition file")
+				log.WithError(err).Error("Couldn't load the api definition file")
 				return nil, err
 			}
 
 			err = repo.watcher.Add(filePath)
 			if nil != err {
-				logger.WithError(err).Error("Couldn't load the api definition file")
+				log.WithError(err).Error("Couldn't load the api definition file")
 				return nil, err
 			}
 
 			definition := parseEndpoint(appConfigBody)
 			for _, v := range definition.Definitions {
 				if err = repo.add(fileName, v); nil != err {
-					logger.WithField("endpoint", v.Endpoint).WithError(err).Error("Failed during add endpoint to the repository")
+					log.WithField("endpoint", v.Endpoint).WithError(err).Error("Failed during add endpoint to the repository")
 					return nil, err
 				}
 			}

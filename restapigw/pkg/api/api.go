@@ -3,7 +3,6 @@ package api
 
 import (
 	"net/http"
-	"reflect"
 
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/errors"
@@ -24,6 +23,17 @@ const (
 	AddedSourceOperation
 	// ApplySourcesOperation - 설정 변경사항 모두 저장 (File or ETCD, ...)
 	ApplySourcesOperation
+)
+
+const (
+	// NONE - 로드한 후에 변경이 없는 상태
+	NONE ConfigurationState = iota
+	// ADDED - Source가 신규로 생성된 경우
+	ADDED
+	// REMOVED - Source가 삭제된 경우
+	REMOVED
+	// CHANGED - Source 내의 Definition이 추가/수정/삭제된 경우
+	CHANGED
 )
 
 var (
@@ -48,6 +58,8 @@ var (
 // ===== [ Types ] =====
 
 type (
+	// ConfigurationState - Configuration 변경 상태 형식
+	ConfigurationState int
 	// ConfigurationOperation - Configuration 변경에 연계되는 Operation 형식
 	ConfigurationOperation int
 
@@ -59,17 +71,16 @@ type (
 
 	// Configuration - API Definitions 관리 구조
 	Configuration struct {
-		status         string
 		DefinitionMaps []*DefinitionMap
 	}
 
-	// ConfigurationChanged - Configuration 변경이 발생했을 떄 전송되는 메시지 처리 형식
-	ConfigurationChanged struct {
+	// RepoChangedMessage - Repository의 변경이 발생한 경우 전송되는 메시지 형식 (Repository to Server)
+	RepoChangedMessage struct {
 		Configurations *Configuration
 	}
 
-	// ChangeMessage - Configuration 변경시 사용할 메시지 형식
-	ChangeMessage struct {
+	// ConfigChangedMessage - Configuration의 변경이 발생한 경우 전송되는 메시지 형식 (Server to Repository)
+	ConfigChangedMessage struct {
 		Operation  ConfigurationOperation
 		Source     string
 		Definition *config.EndpointConfig
@@ -78,16 +89,16 @@ type (
 
 // ===== [ Implementations ] =====
 
-// EqualsTo - 현재 동작 중인 설정과 지정된 설정이 동일한지 여부 검증
-func (c *Configuration) EqualsTo(tc *Configuration) bool {
-	return reflect.DeepEqual(c, tc)
-}
+// // EqualsTo - 현재 동작 중인 설정과 지정된 설정이 동일한지 여부 검증
+// func (c *Configuration) EqualsTo(tc *Configuration) bool {
+// 	return reflect.DeepEqual(c, tc)
+// }
 
 // GetAllDefinitions - 관리하고 있는 API Definition들 반환
 func (c *Configuration) GetAllDefinitions() []*config.EndpointConfig {
 	defs := make([]*config.EndpointConfig, 0)
 	for _, dm := range c.DefinitionMaps {
-		if dm.State != "REMOVED" {
+		if dm.State != REMOVED {
 			for _, def := range dm.Definitions {
 				defs = append(defs, def)
 			}
@@ -100,7 +111,7 @@ func (c *Configuration) GetAllDefinitions() []*config.EndpointConfig {
 func (c *Configuration) GetDefinitionMaps() []*DefinitionMap {
 	maps := make([]*DefinitionMap, 0)
 	for _, dm := range c.DefinitionMaps {
-		if dm.State != "REMOVED" {
+		if dm.State != REMOVED {
 			maps = append(maps, dm)
 		}
 	}
@@ -172,7 +183,9 @@ func (c *Configuration) AddDefinition(source string, ec *config.EndpointConfig) 
 	for _, dm := range c.DefinitionMaps {
 		if dm.Source == source {
 			dm.Definitions = append(dm.Definitions, ec)
-			dm.State = "CHANGED"
+			if dm.State != ADDED {
+				dm.State = CHANGED
+			}
 			return nil
 		}
 	}
@@ -186,7 +199,9 @@ func (c *Configuration) UpdateDefinition(source string, ec *config.EndpointConfi
 			for i, def := range dm.Definitions {
 				if def.Name == ec.Name {
 					dm.Definitions[i] = ec
-					dm.State = "CHANGED"
+					if dm.State != ADDED {
+						dm.State = CHANGED
+					}
 					return nil
 				}
 			}
@@ -204,7 +219,9 @@ func (c *Configuration) RemoveDefinition(source string, ec *config.EndpointConfi
 				if def.Name == ec.Name {
 					copy(dm.Definitions[1:], dm.Definitions[i+1:])
 					dm.Definitions = dm.Definitions[:len(dm.Definitions)-1]
-					dm.State = "CHANGED"
+					if dm.State != ADDED {
+						dm.State = CHANGED
+					}
 					return nil
 				}
 			}
@@ -215,7 +232,7 @@ func (c *Configuration) RemoveDefinition(source string, ec *config.EndpointConfi
 
 // AddSource - 지정한 정보를 기준으로 API Source 생성
 func (c *Configuration) AddSource(source string) error {
-	c.DefinitionMaps = append(c.DefinitionMaps, &DefinitionMap{Source: source, State: "ADD", Definitions: make([]*config.EndpointConfig, 0)})
+	c.DefinitionMaps = append(c.DefinitionMaps, &DefinitionMap{Source: source, State: ADDED, Definitions: make([]*config.EndpointConfig, 0)})
 	return nil
 }
 
@@ -223,7 +240,7 @@ func (c *Configuration) AddSource(source string) error {
 func (c *Configuration) RemoveSource(source string) error {
 	for _, dm := range c.DefinitionMaps {
 		if dm.Source == source {
-			dm.State = "REMOVED"
+			dm.State = REMOVED
 			return nil
 		}
 	}
@@ -233,7 +250,7 @@ func (c *Configuration) RemoveSource(source string) error {
 // ClearRemoved - 현재 관리 중인 API Defintion Soruce들 중에서 삭제된 내용을 제거
 func (c *Configuration) ClearRemoved() {
 	for i, dm := range c.DefinitionMaps {
-		if dm.State == "REMOVED" {
+		if dm.State == REMOVED {
 			copy(c.DefinitionMaps[1:], c.DefinitionMaps[i+1:])
 			c.DefinitionMaps = c.DefinitionMaps[:len(c.DefinitionMaps)-1]
 		}

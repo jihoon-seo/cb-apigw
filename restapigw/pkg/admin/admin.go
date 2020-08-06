@@ -23,7 +23,7 @@ import (
 type (
 	// Server - Admin API Server 관리 정보 형식
 	Server struct {
-		ConfigurationChan chan api.ChangeMessage
+		ConfigurationChan chan api.ConfigChangedMessage
 
 		apiHandler *APIHandler
 		logger     logging.Logger
@@ -91,7 +91,7 @@ func (s *Server) addInternalRoutes(ge *gin.Engine, guard jwt.Guard) {
 }
 
 // isClosedChannel - 이미 채널이 종료되었는지 검증
-func (s *Server) isClosedChannel(ch <-chan api.ChangeMessage) bool {
+func (s *Server) isClosedChannel(ch <-chan api.ConfigChangedMessage) bool {
 	select {
 	case <-ch:
 		return true
@@ -185,7 +185,7 @@ func (s *Server) AddRoutes(ge *gin.Engine) {
 
 // New - Admin Server 구동
 func New(opts ...Option) *Server {
-	configurationChan := make(chan api.ChangeMessage)
+	configurationChan := make(chan api.ConfigChangedMessage)
 	s := &Server{
 		ConfigurationChan: configurationChan,
 		apiHandler:        NewAPIHandler(configurationChan),

@@ -125,18 +125,18 @@ func NewWithCode(code int, message string) *Error {
 
 // Handler - 오류 정보를 JSON 형식으로 변환
 func Handler(rw http.ResponseWriter, req *http.Request, err interface{}) {
-	logger := logging.GetLogger()
-	logger.WithField("request-id", observability.RequestIDFromContext(req.Context()))
+	log := logging.GetLogger()
+	log.WithField("request-id", observability.RequestIDFromContext(req.Context()))
 
 	switch internalErr := err.(type) {
 	case *Error:
-		logger.SetFields(logging.Fields{"code": internalErr.Code, "error": internalErr.Error()}).Info("Internal error handled")
+		log.SetFields(logging.Fields{"code": internalErr.Code, "error": internalErr.Error()}).Info("Internal error handled")
 		render.JSON(rw, internalErr.Code, internalErr)
 	case error:
-		logger.WithError(internalErr).WithField("stack", string(debug.Stack())).Error("Internal server error handled")
+		log.WithError(internalErr).WithField("stack", string(debug.Stack())).Error("Internal server error handled")
 		render.JSON(rw, http.StatusInternalServerError, internalErr.Error())
 	default:
-		logger.WithField("error", err).WithField("stack", string(debug.Stack())).Error("Internal server error handled")
+		log.WithField("error", err).WithField("stack", string(debug.Stack())).Error("Internal server error handled")
 		render.JSON(rw, http.StatusInternalServerError, err)
 	}
 }

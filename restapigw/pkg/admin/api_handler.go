@@ -18,7 +18,7 @@ import (
 type (
 	// APIHandler - Admin API 운영을 위한 REST Handler 정보 형식
 	APIHandler struct {
-		configurationChan chan<- api.ChangeMessage
+		configurationChan chan<- api.ConfigChangedMessage
 
 		Configs *api.Configuration
 	}
@@ -82,7 +82,7 @@ func (ah *APIHandler) UpdateDefinition() http.HandlerFunc {
 
 		// Definition 갱신 채널 처리
 		_, span = trace.StartSpan(req.Context(), "repo.Update")
-		ah.configurationChan <- api.ChangeMessage{
+		ah.configurationChan <- api.ConfigChangedMessage{
 			Source:     cm.Source,
 			Operation:  api.UpdatedOperation,
 			Definition: cm.Definition,
@@ -124,7 +124,7 @@ func (ah *APIHandler) AddDefinition() http.HandlerFunc {
 
 		// Definition 갱신 채널 처리
 		_, span = trace.StartSpan(req.Context(), "repo.Add")
-		ah.configurationChan <- api.ChangeMessage{
+		ah.configurationChan <- api.ConfigChangedMessage{
 			Source:     cm.Source,
 			Operation:  api.AddedOperation,
 			Definition: cm.Definition,
@@ -157,7 +157,7 @@ func (ah *APIHandler) RemoveDefinition() http.HandlerFunc {
 		}
 
 		// Definition 갱신 채널 처리
-		ah.configurationChan <- api.ChangeMessage{
+		ah.configurationChan <- api.ConfigChangedMessage{
 			Source:     cm.Source,
 			Operation:  api.RemovedOperation,
 			Definition: cm.Definition,
@@ -191,7 +191,7 @@ func (ah *APIHandler) AddSource() http.HandlerFunc {
 		// Source 등록
 		_, span = trace.StartSpan(req.Context(), "repo.AddSource")
 		// Source 추가 채널 처리
-		ah.configurationChan <- api.ChangeMessage{
+		ah.configurationChan <- api.ConfigChangedMessage{
 			Source:    cm.Source,
 			Operation: api.AddedSourceOperation,
 		}
@@ -225,7 +225,7 @@ func (ah *APIHandler) RemoveSource() http.HandlerFunc {
 		// Source 삭제
 		_, span = trace.StartSpan(req.Context(), "repo.RemoveSource")
 		// Source 삭제 채널 처리
-		ah.configurationChan <- api.ChangeMessage{
+		ah.configurationChan <- api.ConfigChangedMessage{
 			Source:    cm.Source,
 			Operation: api.RemovedSourceOperation,
 		}
@@ -243,7 +243,7 @@ func (ah *APIHandler) ApplySources() http.HandlerFunc {
 		span.End()
 
 		// Source 출력 (Persistence)
-		ah.configurationChan <- api.ChangeMessage{
+		ah.configurationChan <- api.ConfigChangedMessage{
 			Operation: api.ApplySourcesOperation,
 		}
 
@@ -255,7 +255,7 @@ func (ah *APIHandler) ApplySources() http.HandlerFunc {
 // ===== [ Public Functions ] =====
 
 // NewAPIHandler - 지정한 Configuration 변경을 설정한 Admin API Handler 인스턴스 생성
-func NewAPIHandler(configurationChan chan<- api.ChangeMessage) *APIHandler {
+func NewAPIHandler(configurationChan chan<- api.ConfigChangedMessage) *APIHandler {
 	return &APIHandler{
 		configurationChan: configurationChan,
 	}

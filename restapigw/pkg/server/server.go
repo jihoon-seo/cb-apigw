@@ -3,6 +3,7 @@ package server
 
 import (
 	"context"
+	"reflect"
 	"time"
 
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/admin"
@@ -25,12 +26,12 @@ type (
 	Server struct {
 		serviceConfig      config.ServiceConfig
 		logger             logging.Logger
-		repository         api.Repository
+		repoProvider       api.Repository
 		currConfigurations *api.Configuration
 		adminServer        *admin.Server
 		router             router.Router
 
-		configChan chan api.ConfigurationChanged
+		configChan chan api.RepoChangedMessage
 		stopChan   chan struct{}
 	}
 )
@@ -38,7 +39,7 @@ type (
 // ===== [ Implementations ] =====
 
 // isConfigChanClosed - Configuration Changed Channel 종료 여부 검증
-func (s *Server) isConfigChanClosed(ch <-chan api.ConfigurationChanged) bool {
+func (s *Server) isConfigChanClosed(ch <-chan api.RepoChangedMessage) bool {
 	select {
 	case <-ch:
 		return true
@@ -81,7 +82,7 @@ func (s *Server) applyChanges(conf *api.Configuration) {
 
 // applySources - 관리 중인 리포지토리 출력
 func (s *Server) applySources() error {
-	err := s.repository.Write(s.currConfigurations.DefinitionMaps)
+	err := s.repoProvider.Write(s.currConfigurations.DefinitionMaps)
 	if nil != err {
 		return err
 	}
@@ -92,7 +93,7 @@ func (s *Server) applySources() error {
 }
 
 // updateConfiguration - 지정된 설정변경 메시지를 관리하는 설정에 반영
-func (s *Server) updateConfiguration(cm api.ChangeMessage) error {
+func (s *Server) updateConfiguration(cm api.ConfigChangedMessage) error {
 	switch cm.Operation {
 	case api.AddedOperation:
 		return s.currConfigurations.AddDefinition(cm.Source, cm.Definition)
@@ -121,14 +122,32 @@ func (s *Server) listenProviders(stop chan struct{}) {
 				return
 			}
 
-			if s.currConfigurations.EqualsTo(configMsg.Configurations) {
-				s.logger.Debug("[SERVER] Changed confiruations is same with current configurations. Skip changes")
-				continue
+			hasChanges := false
+			for _, dm := range configMsg.Configurations.DefinitionMaps {
+				for i, cdm := range s.currConfigurations.DefinitionMaps {
+					if dm.Source == cdm.Source {
+						if dm.State == api.REMOVED {
+							copy(s.currConfigurations.DefinitionMaps[1:], s.currConfigurations.DefinitionMaps[i+1:])
+							s.currConfigurations.DefinitionMaps = s.currConfigurations.DefinitionMaps[:len(s.currConfigurations.DefinitionMaps)-1]
+						} else {
+							if reflect.DeepEqual(cdm, dm) {
+								s.logger.Debug("[SERVER] Changed API Definition is same with current configurations. Skip changes [" + dm.Source + "]")
+								continue
+							}
+
+							cdm.Definitions = dm.Definitions
+							if !hasChanges {
+								hasChanges = true
+							}
+						}
+					}
+				}
 			}
 
-			s.logger.Debug("[SERVER] Configuration change detected by repository")
-			s.currConfigurations.DefinitionMaps = configMsg.Configurations.DefinitionMaps
-			s.applyChanges(configMsg.Configurations)
+			if hasChanges {
+				s.logger.Debug("[SERVER] Configuration change detected by Repository")
+				s.applyChanges(s.currConfigurations)
+			}
 		}
 	}
 }
@@ -155,8 +174,10 @@ func (s *Server) startProvider(ctx context.Context) error {
 
 	// API 변경 대기
 	go func() {
-		ch := make(chan api.ChangeMessage)
-		listener, providerIsListener := s.repository.(api.Listener)
+		ch := make(chan api.ConfigChangedMessage)
+
+		// Repository에 Listener 구현이 존재하는 경우 실행
+		listener, providerIsListener := s.repoProvider.(api.Listener)
 		if providerIsListener {
 			listener.Listen(ctx, ch)
 		}
@@ -168,7 +189,7 @@ func (s *Server) startProvider(ctx context.Context) error {
 					return
 				}
 
-				// 변경된 설정 갱신
+				// 변경된 내용을 API G/W Routing으로 반영
 				s.logger.Debug("[SERVER] Configuration change detected by Admin API")
 				err := s.updateConfiguration(c)
 				if nil == err {
@@ -179,6 +200,7 @@ func (s *Server) startProvider(ctx context.Context) error {
 					s.logger.WithError(err).Debug("can not apply configuration changes")
 				}
 
+				// 변경된 내용을 Repository로 전달해서 반영
 				if providerIsListener {
 					ch <- c
 				}
@@ -189,8 +211,8 @@ func (s *Server) startProvider(ctx context.Context) error {
 		}
 	}()
 
-	// 파일 변경등의 검사
-	if watcher, ok := s.repository.(api.Watcher); ok {
+	// Repository에 Watcher가 구현된 경우 실행
+	if watcher, ok := s.repoProvider.(api.Watcher); ok {
 		watcher.Watch(ctx, s.configChan)
 	}
 
@@ -229,7 +251,7 @@ func (s *Server) StartWithContext(ctx context.Context) error {
 	go s.listenProviders(s.stopChan)
 
 	// API 설정 정보 검색
-	definifionMaps, err := s.repository.FindAll()
+	definifionMaps, err := s.repoProvider.FindAll()
 	if nil != err {
 		return errors.Wrap(err, "could not find all configurations from the repository")
 	}
@@ -293,14 +315,14 @@ func WithLogger(logger logging.Logger) Option {
 // WithRepository - API Repository 인스턴스 설정
 func WithRepository(repo api.Repository) Option {
 	return func(s *Server) {
-		s.repository = repo
+		s.repoProvider = repo
 	}
 }
 
 // New - API G/W 운영을 위한 Server 인스턴스 생성
 func New(opts ...Option) *Server {
 	s := Server{
-		configChan: make(chan api.ConfigurationChanged, 100),
+		configChan: make(chan api.RepoChangedMessage, 100),
 		stopChan:   make(chan struct{}, 1),
 	}
 

@@ -51,7 +51,7 @@ repository:
   dsn: cbstore://api/restapigw/conf
 
 cluster:
-  update_frequency: 4s
+  update_frequency: 10s
   
 admin:
   port: 8001

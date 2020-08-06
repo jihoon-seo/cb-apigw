@@ -37,40 +37,40 @@ definitions:
                   - "products.*.template_suffix"
                   - "products.*.updated_at"
                   - "products.*.vendor"
-  # - name: Sequential Test
-  #   active: true
-  #   endpoint: "/sequential"
-  #   backend:
-  #     - host:
-  #         - "http://localhost:8100"
-  #       url_pattern: "/hotels/1.json"
-  #       whitelist:
-  #         - "destination_id"
-  #     - host:
-  #         - "http://localhost:8100"
-  #       url_pattern: "/destinations/{resp0_destination_id}.json"
-  #       middleware:
-  #         mw-http:
-  #           return_error_details: "sequential"
-  #   middleware:
-  #     mw-proxy:
-  #       sequential: true
-  # - name: Fail Test
-  #   active: true
-  #   endpoint: "/fail"
-  #   backend:
-  #     - host:
-  #         - "http://localhost:8100"
-  #       url_pattern: "/user/1.json"
-  #       group: "user"
-  #       target: "address"
-  #       middleware:
-  #         mw-http:
-  #           return_error_details: "fail_1"
-  #     - host:
-  #         - "http://fake_url_that_should_not_resolve.tld"
-  #       url_pattern: "/"
-  #       group: "none"
+  - name: Sequential Test
+    active: true
+    endpoint: "/sequential"
+    backend:
+      - host:
+          - "http://localhost:8100"
+        url_pattern: "/hotels/1.json"
+        whitelist:
+          - "destination_id"
+      - host:
+          - "http://localhost:8100"
+        url_pattern: "/destinations/{resp0_destination_id}.json"
+        middleware:
+          mw-http:
+            return_error_details: "sequential"
+    middleware:
+      mw-proxy:
+        sequential: true
+  - name: Fail Test
+    active: true
+    endpoint: "/fail"
+    backend:
+      - host:
+          - "http://localhost:8100"
+        url_pattern: "/user/1.json"
+        group: "user"
+        target: "address"
+        middleware:
+          mw-http:
+            return_error_details: "fail_1"
+      - host:
+          - "http://fake_url_that_should_not_resolve.tld"
+        url_pattern: "/"
+        group: "none"
   # - name: Public Test
   #   active: true
   #   endpoint: "/public"

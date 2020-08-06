@@ -49,7 +49,7 @@ func (imr *InMemoryRepository) add(source string, ec *config.EndpointConfig) err
 		sm.Definitions = append(sm.Definitions, ec)
 		log.Debug(ec.Name + " definition added to " + source + " source")
 	} else {
-		sm := &DefinitionMap{Source: source, State: "", Definitions: make([]*config.EndpointConfig, 0)}
+		sm := &DefinitionMap{Source: source, State: NONE, Definitions: make([]*config.EndpointConfig, 0)}
 		sm.Definitions = append(sm.Definitions, ec)
 		imr.Sources = append(imr.Sources, sm)
 	}

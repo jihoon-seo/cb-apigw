@@ -81,7 +81,7 @@ type (
 		serviceConfig      config.ServiceConfig
 		currConfiugrations *api.Configuration
 
-		configurationChan chan api.ConfigurationChanged
+		configurationChan chan api.RepoChangedMessage
 		stopChan          chan struct{}
 	}
 )

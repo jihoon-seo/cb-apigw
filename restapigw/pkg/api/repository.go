@@ -19,7 +19,6 @@ import (
 const (
 	file    = "file"
 	cbStore = "cbstore"
-	db      = "database"
 )
 
 var (
@@ -36,7 +35,7 @@ type (
 	// DefinitionMap - 리파지토리의 API Definition 관리 정보 구조 (관리 및 클라이언트 연계용)
 	DefinitionMap struct {
 		Source      string                   `json:"source"`
-		State       string                   `json:"-"`
+		State       ConfigurationState       `json:"-"`
 		Definitions []*config.EndpointConfig `json:"definitions"`
 	}
 
@@ -48,14 +47,14 @@ type (
 		Write([]*DefinitionMap) error
 	}
 
-	// Watcher - Routing 정보 변경을 감시하는 기능을 제공하는 인터페이스 형식
+	// Watcher - Repository에서 API Defintion 변경 여부 감시용
 	Watcher interface {
-		Watch(ctx context.Context, configurationChan chan<- ConfigurationChanged)
+		Watch(ctx context.Context, configurationChan chan<- RepoChangedMessage)
 	}
 
-	// Listener - Configuration 변경을 처리하기 위한 Listaner 인터페이스 형식
+	// Listener - 관리 중인 API Definition 변경 여부 감시용
 	Listener interface {
-		Listen(ctx context.Context, configurationChan <-chan ChangeMessage)
+		Listen(ctx context.Context, configurationChan <-chan ConfigChangedMessage)
 	}
 )
 
@@ -101,7 +100,7 @@ func sourceDefinitions(dm *DefinitionMap) ([]byte, error) {
 
 // BuildRepository - 시스템 설정에 정의된 DSN(Data Source Name) 기준으로 저장소 구성
 func BuildRepository(dsn string, refreshTime time.Duration) (Repository, error) {
-	logger := logging.GetLogger()
+	log := logging.GetLogger()
 	dsnURL, err := url.Parse(dsn)
 	if nil != err {
 		return nil, errors.Wrap(err, "Error parsing the DSN")
@@ -114,30 +113,26 @@ func BuildRepository(dsn string, refreshTime time.Duration) (Repository, error) 
 	switch dsnURL.Scheme {
 	// CB-STORE (NutsDB or ETCD) 사용
 	case cbStore:
-		logger.Debug("CB-Store (NutsDB or ETCD) based configuration choosen")
+		log.Debug("CB-Store (NutsDB or ETCD) based configuration choosen")
 		storeKey := dsnURL.Path
 
-		logger.WithField("key", storeKey).Debug("Trying to load API configuration files")
-		repo, err := NewCbStoreRepository(storeKey)
+		log.WithField("key", storeKey).Debug("Trying to load API configuration files")
+		repo, err := NewCbStoreRepository(storeKey, refreshTime)
 		if nil != err {
 			return nil, errors.Wrap(err, "could not create a CB-Store repository")
 		}
 		return repo, nil
 	// File(Memoery) 사용
 	case file:
-		logger.Debug("File system based configuration choosen")
+		log.Debug("File system based configuration choosen")
 		apiPath := fmt.Sprintf("%s/apis", dsnURL.Path)
 
-		logger.WithField("path", apiPath).Debug("Trying to load API configuration files")
+		log.WithField("path", apiPath).Debug("Trying to load API configuration files")
 		repo, err := NewFileSystemRepository(apiPath)
 		if nil != err {
 			return nil, errors.Wrap(err, "could not create a file system repository")
 		}
 		return repo, nil
-	// Database 사용
-	case db:
-		logger.Debug("File system based configuration choosen")
-		return nil, errors.New("The database scheme is not supported to load API definitions")
 	default:
 		return nil, errors.New("The selected scheme is not supported to load API definitions")
 	}
