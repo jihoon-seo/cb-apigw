@@ -47,8 +47,8 @@ middleware:
     allow_credentials: true
 
 repository:
-  #dsn: file:///Users/morris/Workspaces/etri/sources/2020/10/cb-apigw/restapigw/conf
-  dsn: cbstore://api/restapigw/conf
+  dsn: file:///Users/morris/Workspaces/etri/sources/2020/10/cb-apigw/restapigw/conf
+  #dsn: cbstore://api/restapigw/conf
 
 cluster:
   update_frequency: 10s

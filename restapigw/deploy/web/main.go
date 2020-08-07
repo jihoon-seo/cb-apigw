@@ -65,7 +65,7 @@ func checkDuration(checkTime time.Time, timestamp string, duration time.Duration
 	log.Printf("Durable timestamp: %v", ts)
 	log.Printf("Difference: %v", checkTime.Sub(ts))
 
-	return ts.Sub(checkTime) >= 0
+	return 0 <= ts.Sub(checkTime)
 }
 
 // makeToken - description
@@ -129,7 +129,7 @@ func validateToken() echo.HandlerFunc {
 		c.Bind(&newTask)
 
 		var tokenData = getTokenData(newTask.Token)
-		if len(tokenData[0]) == 0 {
+		if 0 == len(tokenData[0]) {
 			newTask.Message = "Token data not founded."
 		}
 

@@ -300,7 +300,7 @@ func GetLastPart(source, seperater string) string {
 	}
 
 	srcs := strings.Split(source, seperater)
-	if len(srcs) == 1 {
+	if 1 == len(srcs) {
 		return srcs[0]
 	}
 	return srcs[len(srcs)-1]

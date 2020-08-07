@@ -14,8 +14,6 @@ import (
 
 // ===== [ Constants and Variables ] =====
 
-var hasGlobalHost bool = false
-
 // ===== [ Types ] =====
 
 // ===== [ Implementations ] =====
@@ -54,17 +52,17 @@ func checkAndLoad(cmd *cobra.Command, args []string) (config.ServiceConfig, erro
 
 // checkAndPrintBackendConf - Backend 설정 정보를 검증하고 출력
 func checkAndPrintBackendConf(cmd *cobra.Command, eConf *config.EndpointConfig) error {
-	if len(eConf.Backend) == 0 {
+	if 0 == len(eConf.Backend) {
 		return errors.New("[CHECK - ERROR] No backend configuration, must be at least one backend")
 	}
 
 	cmd.Printf("\t\tBackends (%d):\n", len(eConf.Backend))
 	for _, backend := range eConf.Backend {
-		if !hasGlobalHost && len(backend.Host) == 0 {
+		if 0 == len(backend.Hosts) {
 			return errors.New("No backend host or global service host in configuration, must be specified host in backend or service")
 		}
 
-		cmd.Printf("\t\t\tHosts: %v, URL: %s, Method: %s\n", backend.Host, backend.URLPattern, backend.Method)
+		cmd.Printf("\t\t\tHosts: %v, URL: %s, Method: %s\n", backend.Hosts, backend.URLPattern, backend.Method)
 		cmd.Printf("\t\t\t\tTimeout: %s, Target: %s, Mapping: %v, Blacklist: %v, Whitelist: %v, Group: %v\n",
 			backend.Timeout, backend.Target, backend.Mapping, backend.Blacklist, backend.Whitelist,
 			backend.Group)
@@ -77,52 +75,6 @@ func checkAndPrintBackendConf(cmd *cobra.Command, eConf *config.EndpointConfig) 
 
 	return nil
 }
-
-// (temp) // checkAndPrintEndpointConf - Endpoint 설정 정보를 검증하고 출력
-// func checkAndPrintEndpointConf(cmd *cobra.Command, sConf config.ServiceConfig) error {
-// 	if len(sConf.Endpoints) == 0 {
-// 		return errors.New("No endpoint configuration, must be at least one endpoint")
-// 	}
-
-// 	cmd.Printf("Endpoints (%d):\n", len(sConf.Endpoints))
-// 	for _, endpoint := range sConf.Endpoints {
-// 		cmd.Printf("\tEndpoint: %s, Method: %s, CacheTTL: %s, Excepted Headers: %+v, Excepted Querystrings: %v\n",
-// 			endpoint.Endpoint, endpoint.Method, endpoint.CacheTTL.String(), endpoint.ExceptHeaders, endpoint.ExceptQueryStrings)
-
-// 		cmd.Printf("\t\tMiddleware (%d):\n", len(endpoint.Middleware))
-// 		for k, v := range endpoint.Middleware {
-// 			cmd.Printf("\t\t\t%s: %v\n", k, v)
-// 		}
-
-// 		err := checkAndPrintBackendConf(cmd, endpoint)
-// 		if err != nil {
-// 			return err
-// 		}
-// 	}
-
-// 	return nil
-// }
-
-// (temp) // checkAndPrintServiceConf - 서비스 설정 정보를 검증하고 출력
-// func checkAndPrintServiceConf(cmd *cobra.Command, sConf config.ServiceConfig) error {
-// 	cmd.Printf("Parsed configuration: CacheTTL: %s, Port: %d\n", sConf.CacheTTL.String(), sConf.Port)
-// 	cmd.Printf("Hosts: %v\n", sConf.Host)
-
-// 	// 전역 Host 정보 존재 여부
-// 	hasGlobalHost = len(sConf.Host) > 0
-
-// 	cmd.Printf("Moddleware (%d):\n", len(sConf.Middleware))
-// 	for k, v := range sConf.Middleware {
-// 		cmd.Printf("\t%s: %v\n", k, v)
-// 	}
-
-// 	err := checkAndPrintEndpointConf(cmd, sConf)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	return nil
-// }
 
 // checkFunc - 지정된 args 에서 설정과 관련된 정보를 로드/검증/출력 처리
 func checkFunc(cmd *cobra.Command, args []string) {

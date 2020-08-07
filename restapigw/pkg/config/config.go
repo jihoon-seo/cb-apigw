@@ -28,6 +28,13 @@ const (
 	ConfigVersion = 1
 )
 
+const (
+	// Roundrobin - Roundrobin 방식의 Load Balancing
+	Roundrobin LBModes = iota
+	// Weight - Weight 방식의 Load Balancing
+	Weight
+)
+
 var (
 	errInvalidHost         = errors.New("invalid host")
 	errInvalidNoOpEncoding = errors.New("can not use NoOp encoding with more than one backends connected to the same endpoint")
@@ -39,6 +46,9 @@ var (
 // TODO: Configuration 분리
 
 type (
+	// LBModes - Load Balancing Mode 유형 형식
+	LBModes int
+
 	// ServiceConfig - REST API Gateway 운영에 필요한 서비스 설정 형식
 	ServiceConfig struct {
 		// 서비스 식별 명 (기본값: '')
@@ -150,7 +160,7 @@ type (
 		// 클라이언트에 노출될 URL 패턴
 		Endpoint string `yaml:"endpoint" json:"endpoint"`
 		// 전역으로 사용할 기본 Host 리스트
-		Host []string `yaml:"host" json:"host"`
+		Hosts []*HostConfig `yaml:"hosts" json:"hosts"`
 		// Endpoint에 대한 HTTP 메서드 (GET, POST, PUT, etc) (기본값: GET)
 		Method string `yaml:"method" json:"method"`
 		// Endpoint 처리 시간 (기본값: 서비스 값 사용)
@@ -177,7 +187,7 @@ type (
 	// BackendConfig - Backend API Server 연결과 응답 처리를 위한 설정 구조
 	BackendConfig struct {
 		// Backend API Server의 Host URI (서비스에서 전역으로 설정한 경우는 생략 가능)
-		Host []string `yaml:"host" json:"host"`
+		Hosts []*HostConfig `yaml:"hosts" json:"hosts"`
 		// Backend 처리 시간 (기본값: )
 		Timeout time.Duration `yaml:"timeout" json:"timeout"`
 		// Backend 호출에 사용할 HTTP Method
@@ -209,6 +219,13 @@ type (
 		Decoder encoding.Decoder `yaml:"-" json:"-"`
 		// URLPattern에서 파라미터 변환에 사용할 키 관리 (내부 사용)
 		URLKeys []string `yaml:"-" json:"-"`
+	}
+
+	// HostConfig - Backend Load balancing 처리를 위한 Host 구조
+	HostConfig struct {
+		Host   string  `mapstructure:"host"`
+		LBMode LBModes `mapstructure:"mode"`
+		Weight int     `mapstructure:"weight"`
 	}
 
 	// TLSConfig - 서비스에서 사용할 TLS 설정 구조
@@ -406,11 +423,11 @@ func (eConf *EndpointConfig) InitEndpointDefaults() {
 func (eConf *EndpointConfig) InitBackendDefaults(bIdx int) {
 	// TODO: ServiceConfig에서 Endpoint로 이동할 부분 검증 및 초기화 (For Backend)
 	backend := eConf.Backend[bIdx]
-	if 0 == len(backend.Host) {
+	if 0 == len(backend.Hosts) {
 		// URL 미 지정시 전역 URL 사용
-		backend.Host = eConf.Host
+		backend.Hosts = eConf.Hosts
 	} else if !backend.HostSanitizationDisabled {
-		backend.Host = core.CleanHosts(backend.Host)
+		cleanHosts(backend.Hosts)
 	}
 	// Method 미 지정시 Endpoint Method 사용
 	if "" == backend.Method {
@@ -557,6 +574,13 @@ func fromSetToSortedSlice(set map[string]interface{}) []string {
 	}
 	sort.Strings(res)
 	return res
+}
+
+// cleanHosts - Endpoint 및 Backend 설정에서 HostConfig 정보의 Host를 조정
+func cleanHosts(hcs []*HostConfig) {
+	for _, hc := range hcs {
+		hc.Host = core.CleanHost(hc.Host)
+	}
 }
 
 // ===== [ Public Functions ] =====

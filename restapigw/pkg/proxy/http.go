@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 
@@ -143,18 +142,6 @@ func NewRequestBuilderChain(bConf *config.BackendConfig) CallChain {
 				r.Method = bConf.Method
 			}
 
-			// =====
-			// FIXME: Loadbalancer가 추가되면 아래의 부분은 Loadbalancer 처리로 대체
-			// Builds the URL for Backend call (Currently use only first url)
-			var b strings.Builder
-			b.WriteString(bConf.Host[0])
-			b.WriteString(r.Path) // generated path replaced with paramters
-			newURL, err := url.Parse(b.String())
-			if nil != err {
-				return nil, err
-			}
-			r.URL = newURL
-			// =====
 			return next[0](ctx, &r)
 		}
 	}

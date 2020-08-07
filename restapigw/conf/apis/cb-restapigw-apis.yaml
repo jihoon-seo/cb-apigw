@@ -10,13 +10,24 @@ definitions:
     #  - "querystring"
     except_headers:
     #  - "Testing"
-    host:
-      - "http://localhost:8100"
+    hosts:
+      - host: "http://localhost:8100"
+        weight: 0
+      - host: "http://localhost:8200"
+        weight: 0
     backend:
       - url_pattern: "/shop/campaigns.json"
+        hosts:
+          - host: "http://localhost:8100"
+            weight: 30
+          - host: "http://localhost:8200"
+            weigth: 60
         whitelist:
           - "campaigns"
       - url_pattern: "/shop/products.json"
+        hosts:
+          - host: "http://localhost:8100"
+          - host: "http://localhost:8200"
         middleware:
           mw-proxy:
             flatmap_filter:
@@ -37,47 +48,52 @@ definitions:
                   - "products.*.template_suffix"
                   - "products.*.updated_at"
                   - "products.*.vendor"
-  - name: Sequential Test
-    active: true
-    endpoint: "/sequential"
-    backend:
-      - host:
-          - "http://localhost:8100"
-        url_pattern: "/hotels/1.json"
-        whitelist:
-          - "destination_id"
-      - host:
-          - "http://localhost:8100"
-        url_pattern: "/destinations/{resp0_destination_id}.json"
-        middleware:
-          mw-http:
-            return_error_details: "sequential"
-    middleware:
-      mw-proxy:
-        sequential: true
-  - name: Fail Test
-    active: true
-    endpoint: "/fail"
-    backend:
-      - host:
-          - "http://localhost:8100"
-        url_pattern: "/user/1.json"
-        group: "user"
-        target: "address"
-        middleware:
-          mw-http:
-            return_error_details: "fail_1"
-      - host:
-          - "http://fake_url_that_should_not_resolve.tld"
-        url_pattern: "/"
-        group: "none"
+  # - name: Sequential Test
+  #   active: true
+  #   endpoint: "/sequential"
+  #   backend:
+  #     - hosts:
+  #         - host: "http://localhost:8100"
+  #           weight: 0
+  #       url_pattern: "/hotels/1.json"
+  #       whitelist:
+  #         - "destination_id"
+  #     - hosts:
+  #         - host: "http://localhost:8100"
+  #           weight: 0
+  #       url_pattern: "/destinations/{resp0_destination_id}.json"
+  #       middleware:
+  #         mw-http:
+  #           return_error_details: "sequential"
+  #   middleware:
+  #     mw-proxy:
+  #       sequential: true
+  # - name: Fail Test
+  #   active: true
+  #   endpoint: "/fail"
+  #   backend:
+  #     - hosts:
+  #         - host: "http://localhost:8100"
+  #           weight: 0
+  #       url_pattern: "/user/1.json"
+  #       group: "user"
+  #       target: "address"
+  #       middleware:
+  #         mw-http:
+  #           return_error_details: "fail_1"
+  #     - hosts:
+  #         - host: "http://fake_url_that_should_not_resolve.tld"
+  #           weight: 0
+  #       url_pattern: "/"
+  #       group: "none"
   # - name: Public Test
   #   active: true
   #   endpoint: "/public"
   #   method: GET
   #   backend:
-  #     - host: 
-  #         - "https://api.github.com"
+  #     - hosts: 
+  #         - host: "https://api.github.com"
+  #           weight: 0
   #       url_pattern: "/users/ccambo"
   #       whitelist:
   #         - "avatar_url"
@@ -96,8 +112,9 @@ definitions:
   #       middleware:
   #         mw-httpcache: 
   #           enabled: true
-  #     - host: 
-  #         - "https://api.bitbucket.org"
+  #     - hosts: 
+  #         - host: "https://api.bitbucket.org"
+  #           weight: 0
   #       url_pattern: "/2.0/users/kpacha"
   #       whitelist:
   #         - "links.avatar"
@@ -112,8 +129,9 @@ definitions:
   #   endpoint: "/github/{user}"
   #   method: GET
   #   backend:
-  #     - host:
-  #         - https://api.github.com
+  #     - hosts:
+  #         - host: https://api.github.com
+  #           weight: 0
   #       url_pattern: "/users/{user}"
   #       disable_host_sanitize: true
   # - name: Collection Test
@@ -121,8 +139,9 @@ definitions:
   #   endpoint: "/collection"
   #   method: GET
   #   backend:
-  #     - host:
-  #         - "http://localhost:8100"
+  #     - hosts:
+  #         - host: "http://localhost:8100"
+  #           weight: 0
   #       url_pattern: "/destinations/2.json"
   #       wrap_collection_to_json: false
   #       is_collection: true
@@ -146,7 +165,9 @@ definitions:
     ##############
     # - endpoint: "/spider/*bypass"
     #   backend:
-    #     - host: "http://cb-spider:1024"
+    #     - hosts:
+    #         - host: "http://cb-spider:1024"
+    #           weight: 0
     #       url_pattern: "*bypass"
   
     #################
@@ -154,6 +175,8 @@ definitions:
     #################
     # - endpoint: "/tumblebug/*bypass"
     #   backend:
-    #     - host: "http://cb-tumblebug:1323"
+    #     - hosts: 
+    #         - host: "http://cb-tumblebug:1323"
+    #           weight: 0
     #       url_pattern: "*bypass"
   
