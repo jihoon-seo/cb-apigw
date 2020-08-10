@@ -19,15 +19,17 @@ definitions:
       - url_pattern: "/shop/campaigns.json"
         hosts:
           - host: "http://localhost:8100"
-            weight: 30
+            weight: 3
           - host: "http://localhost:8200"
-            weigth: 60
+            weight: 5
+        lb_mode: "wrr"
         whitelist:
           - "campaigns"
       - url_pattern: "/shop/products.json"
         hosts:
           - host: "http://localhost:8100"
           - host: "http://localhost:8200"
+        lb_mode: "rr"
         middleware:
           mw-proxy:
             flatmap_filter:

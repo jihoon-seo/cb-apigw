@@ -325,3 +325,11 @@ func JSONUnmarshal(source []byte, target interface{}) error {
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	return json.Unmarshal(source, target)
 }
+
+// GCD - 지정한 두개의 숫자에 대한 최대 공약수 계산
+func GCD(x, y int) int {
+	for y != 0 {
+		x, y = y, x%y
+	}
+	return x
+}

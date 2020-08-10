@@ -214,6 +214,8 @@ type (
 		Middleware MWConfig `yaml:"middleware" json:"middleware"`
 		// HostSanitizationDisabled - host 정보의 정제작업 비활성화 여부
 		HostSanitizationDisabled bool `yaml:"disable_host_sanitize" json:"disable_host_sanitize"`
+		// BalanceMode - Backend Loadbalacing 모드 ("roundrobin", "weight", "" - random)
+		BalanceMode string `yaml:"lb_mode" json:"lb_mode"`
 
 		// API 호출의 응답을 파싱하기 위한 디코더 (내부 사용)
 		Decoder encoding.Decoder `yaml:"-" json:"-"`
@@ -223,9 +225,8 @@ type (
 
 	// HostConfig - Backend Load balancing 처리를 위한 Host 구조
 	HostConfig struct {
-		Host   string  `mapstructure:"host"`
-		LBMode LBModes `mapstructure:"mode"`
-		Weight int     `mapstructure:"weight"`
+		Host   string `mapstructure:"host"`
+		Weight int    `mapstructure:"weight"`
 	}
 
 	// TLSConfig - 서비스에서 사용할 TLS 설정 구조

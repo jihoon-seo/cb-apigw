@@ -11,15 +11,19 @@ var ()
 // ===== [ Types ] =====
 type (
 	// FixedSubscriber - Backend Hosts 정보 관리 형식 (갱신되지 않는 형식)
-	FixedSubscriber []*config.HostConfig
+	FixedSubscriber struct {
+		mode  string
+		hosts []*config.HostConfig
+	}
 
 	// Subscriber - Backend Hosts 정보 관리 인터페이스
 	Subscriber interface {
-		Hosts() ([]string, error)
+		Mode() string
+		Hosts() ([]*config.HostConfig, error)
 	}
 
 	// SubscriberFunc - Subcriber 사용을 위한 함수 어뎁터
-	SubscriberFunc func() ([]string, error)
+	SubscriberFunc func() ([]*config.HostConfig, error)
 
 	// SubscriberFactory - 지정된 Backend 설정에 따른 Subscriber 구성 팩토리 함수 형식
 	SubscriberFactory func(*config.BackendConfig) Subscriber
@@ -28,15 +32,16 @@ type (
 // ===== [ Implementations ] =====
 
 // Hosts - Subscriber에서 관리되는 Hosts 반환
-func (sf SubscriberFunc) Hosts() ([]string, error) { return sf() }
+func (sf SubscriberFunc) Hosts() ([]*config.HostConfig, error) { return sf() }
+
+// Mode - Load Balancing Mode 반환
+func (fs FixedSubscriber) Mode() string {
+	return fs.mode
+}
 
 // Hosts - FixedSubcriber에서 관리되는 Hosts 반환
-func (fs FixedSubscriber) Hosts() ([]string, error) {
-	hosts := make([]string, 0)
-	for _, hc := range fs {
-		hosts = append(hosts, hc.Host)
-	}
-	return hosts, nil
+func (fs FixedSubscriber) Hosts() ([]*config.HostConfig, error) {
+	return fs.hosts, nil
 }
 
 // ===== [ Private Functions ] =====
@@ -44,5 +49,5 @@ func (fs FixedSubscriber) Hosts() ([]string, error) {
 
 // FixedSubscrberFactory - 지정된 Backend 설정에 따른 Fixed Subscriber를 구성
 func FixedSubscrberFactory(bConf *config.BackendConfig) Subscriber {
-	return FixedSubscriber(bConf.Hosts)
+	return FixedSubscriber{mode: bConf.BalanceMode, hosts: bConf.Hosts}
 }
