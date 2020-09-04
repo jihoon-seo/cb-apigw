@@ -5,7 +5,7 @@ cache_ttl: 3600s
 timeout: 1m
 debug: true
 router_engine: gin
-host: 
+host:
   - "http://localhost:8100"
 middleware:
   mw-metrics:
@@ -52,7 +52,7 @@ repository:
 
 cluster:
   update_frequency: 10s
-  
+
 admin:
   port: 8001
   credentials:
@@ -60,6 +60,6 @@ admin:
     secret: test
     basic:
       users:
-        admin: 'test'
+        admin: "test@admin00"
   profiling_enabled: true
   profiling_public: true

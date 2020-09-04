@@ -49,9 +49,11 @@ func (s *Server) addInternalPublicRoutes(ge *gin.Engine) {
 // addInternalAUthRoutes - ADMIN Server의 Auth 처리용 Routes 설정
 func (s *Server) addInternalAuthRoutes(ge *gin.Engine, guard jwt.Guard) {
 	handlers := jwt.Handler{Guard: guard}
-	ge.POST("/login", gin.WrapH(handlers.Login(s.Credentials, s.logger)))
+
 	authGroup := ge.Group("/auth")
 	{
+		authGroup.POST("/login", gin.WrapH(handlers.Login(s.Credentials, s.logger)))
+		authGroup.POST("/logout", gin.WrapH(handlers.Logout(s.Credentials, s.logger)))
 		authGroup.GET("/refresh_token", gin.WrapH(handlers.Refresh()))
 	}
 }

@@ -7,11 +7,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/admin/response"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/errors"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/jwt/provider"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
-	"github.com/cloud-barista/cb-apigw/restapigw/pkg/render"
 	"github.com/dgrijalva/jwt-go"
 	"golang.org/x/oauth2"
 )
@@ -48,8 +48,7 @@ func (h *Handler) Login(conf config.CredentialsConfig, logger logging.Logger) ht
 		verified, err := p.Verify(req, httpClient)
 
 		if nil != err || !verified {
-			logger.WithError(err).Debug(err.Error())
-			render.JSON(rw, http.StatusUnauthorized, err.Error())
+			response.Errorf(rw, req, http.StatusUnauthorized, err)
 			return
 		}
 
@@ -59,17 +58,32 @@ func (h *Handler) Login(conf config.CredentialsConfig, logger logging.Logger) ht
 
 		claims, err := p.GetClaims(httpClient)
 		if nil != err {
-			render.JSON(rw, http.StatusBadRequest, err.Error())
+			response.Errorf(rw, req, http.StatusBadRequest, err)
 			return
 		}
 
 		token, err := IssueAdminToken(h.Guard.SigningMethod, claims, h.Guard.Timeout)
 		if nil != err {
-			render.JSON(rw, http.StatusUnauthorized, "problem issuing JWT")
+			response.Errorf(rw, req, http.StatusUnauthorized, err)
 			return
 		}
 
-		render.JSON(rw, http.StatusOK, token)
+		response.Write(rw, req, token)
+	}
+}
+
+// Logout - JWT Token 기반으로 인증 해제 처리
+func (h *Handler) Logout(conf config.CredentialsConfig, logger logging.Logger) http.HandlerFunc {
+	return func(rw http.ResponseWriter, req *http.Request) {
+		accessToken, err := extractAccessToken(req)
+
+		if nil != err || "" == accessToken {
+			logger.WithError(err).Debug("[ADMIN API] failed to extract access token")
+			response.Errorf(rw, req, http.StatusBadRequest, err)
+			return
+		}
+
+		response.Write(rw, req, nil)
 	}
 }
 
@@ -83,7 +97,7 @@ func (h *Handler) Refresh() http.HandlerFunc {
 		origIat := int64(claims["iat"].(float64))
 
 		if origIat < time.Now().Add(-h.Guard.MaxRefresh).Unix() {
-			render.JSON(rw, http.StatusUnauthorized, "token is expired")
+			response.Errorf(rw, req, http.StatusUnauthorized, errors.New("token is expired"))
 			return
 		}
 
@@ -103,14 +117,15 @@ func (h *Handler) Refresh() http.HandlerFunc {
 		// 현재는 HSxxx 형식 알고리즘만 지원
 		tokenString, err := newToken.SignedString([]byte(h.Guard.SigningMethod.Key))
 		if nil != err {
-			render.JSON(rw, http.StatusUnauthorized, "create JWT Token failed")
+			response.Errorf(rw, req, http.StatusUnauthorized, errors.New("create JWT Token failed"))
 			return
 		}
 
-		render.JSON(rw, http.StatusOK, render.M{
-			"token":  tokenString,
-			"type":   "Bearer",
-			"expire": expire.Format(time.RFC3339),
+		response.Write(rw, req, &AccessToken{
+			Type:  "Bearer",
+			Token: tokenString,
+			//Expires: expire.Format(time.RFC3339),
+			Expires: expire.Unix(),
 		})
 	}
 }

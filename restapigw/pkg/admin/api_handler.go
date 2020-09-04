@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/admin/response"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/api"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/errors"
-	"github.com/cloud-barista/cb-apigw/restapigw/pkg/render"
 	"go.opencensus.io/trace"
 )
 
@@ -34,11 +34,11 @@ func (ah *APIHandler) GetDefinitions() http.HandlerFunc {
 
 		if nil == ah.Configs.DefinitionMaps {
 			// API Definition이 없을 경우는 빈 JSON Array 처리 (ID 기준)
-			render.JSON(rw, http.StatusOK, []int{})
+			response.Write(rw, req, []int{})
 			return
 		}
 
-		render.JSON(rw, http.StatusOK, ah.Configs.GetDefinitionMaps())
+		response.Write(rw, req, ah.Configs.GetDefinitionMaps())
 	}
 }
 

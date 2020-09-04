@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/admin/response"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
-	"github.com/cloud-barista/cb-apigw/restapigw/pkg/render"
 )
 
 // ===== [ Constants and Variables ] =====
@@ -20,8 +20,8 @@ import (
 
 // Home handler is just a nice home page message
 func Home() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		render.JSON(w, http.StatusOK, "Welcome to "+core.AppName+" - ADMIN Manager")
+	return func(rw http.ResponseWriter, req *http.Request) {
+		response.Write(rw, req, "Welcome to "+core.AppName+" - ADMIN Manager")
 	}
 }
 
