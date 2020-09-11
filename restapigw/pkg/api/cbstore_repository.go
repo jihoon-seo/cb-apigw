@@ -33,21 +33,21 @@ func (csr *CbStoreRepository) getStorePath(path string) string {
 
 // Write - 변경된 리파지토리 내용을 대상 파일로 출력
 func (csr *CbStoreRepository) Write(definitionMaps []*DefinitionMap) error {
-	csr.Sources = definitionMaps
+	csr.Groups = definitionMaps
 
-	for _, dm := range csr.Sources {
+	for _, dm := range csr.Groups {
 		if dm.State == REMOVED {
-			err := csr.store.Delete(csr.getStorePath(dm.Source))
+			err := csr.store.Delete(csr.getStorePath(dm.Name))
 			if nil != err {
 				return err
 			}
 		} else if dm.State != NONE {
-			data, err := sourceDefinitions(dm)
+			data, err := groupDefinitions(dm)
 			if nil != err {
 				return err
 			}
 
-			err = csr.store.Put(csr.getStorePath(dm.Source), string(data))
+			err = csr.store.Put(csr.getStorePath(dm.Name), string(data))
 			if nil != err {
 				return err
 			}

@@ -27,14 +27,14 @@ var (
 
 // ===== [ Types ] =====
 type (
-	// SourceDefinitions - 리파지토리 Source에 저장된 API Definition 구조 (로드/저장용)
-	SourceDefinitions struct {
+	// GroupDefinitions - 리파지토리 Group에 저장된 API Definition 구조 (로드/저장용)
+	GroupDefinitions struct {
 		Definitions []*config.EndpointConfig `mapstructure:"definitions" yaml:"definitions"`
 	}
 
 	// DefinitionMap - 리파지토리의 API Definition 관리 정보 구조 (관리 및 클라이언트 연계용)
 	DefinitionMap struct {
-		Source      string                   `json:"source"`
+		Name        string                   `json:"name"`
 		State       ConfigurationState       `json:"-"`
 		Definitions []*config.EndpointConfig `json:"definitions"`
 	}
@@ -62,8 +62,8 @@ type (
 // ===== [ Private Functions ] =====
 
 // parseEndpoint - 지정된 정보를 Definition 정보로 전환
-func parseEndpoint(apiDef []byte) SourceDefinitions {
-	var apiConfigs SourceDefinitions
+func parseEndpoint(apiDef []byte) GroupDefinitions {
+	var apiConfigs GroupDefinitions
 	log := logging.GetLogger()
 
 	// API 정의들 Unmarshalling
@@ -86,9 +86,9 @@ func parseEndpoint(apiDef []byte) SourceDefinitions {
 	return apiConfigs
 }
 
-// sourceDefinitions - 출력을 위한 Source Definition 구조 반환
-func sourceDefinitions(dm *DefinitionMap) ([]byte, error) {
-	sd := &SourceDefinitions{Definitions: dm.Definitions}
+// groupDefinitions - 출력을 위한 Group Definition 구조 반환
+func groupDefinitions(dm *DefinitionMap) ([]byte, error) {
+	sd := &GroupDefinitions{Definitions: dm.Definitions}
 	data, err := yaml.Marshal(sd)
 	if nil != err {
 		return nil, err
@@ -98,7 +98,7 @@ func sourceDefinitions(dm *DefinitionMap) ([]byte, error) {
 
 // ===== [ Public Functions ] =====
 
-// BuildRepository - 시스템 설정에 정의된 DSN(Data Source Name) 기준으로 저장소 구성
+// BuildRepository - 시스템 설정에 정의된 DSN(Data Group Name) 기준으로 저장소 구성
 func BuildRepository(dsn string, refreshTime time.Duration) (Repository, error) {
 	log := logging.GetLogger()
 	dsnURL, err := url.Parse(dsn)

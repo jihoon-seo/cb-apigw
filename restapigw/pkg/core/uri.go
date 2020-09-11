@@ -111,8 +111,3 @@ func ExtractPlaceHoldersFromURLTemplate(subject string, pattern *regexp.Regexp) 
 	}
 	return keys
 }
-
-// // NewURIParser - URIParser 인스턴스 생성
-// func NewURIParser() URIParser {
-// 	return URI(RoutingPattern)
-// }

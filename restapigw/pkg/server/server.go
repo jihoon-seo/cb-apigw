@@ -80,8 +80,8 @@ func (s *Server) applyChanges(conf *api.Configuration) {
 	s.logger.Debug("[SERVER] Configuration refreshing complete")
 }
 
-// applySources - 관리 중인 리포지토리 출력
-func (s *Server) applySources() error {
+// applyGroups - 관리 중인 리포지토리 출력
+func (s *Server) applyGroups() error {
 	err := s.repoProvider.Write(s.currConfigurations.DefinitionMaps)
 	if nil != err {
 		return err
@@ -96,17 +96,20 @@ func (s *Server) applySources() error {
 func (s *Server) updateConfiguration(cm api.ConfigChangedMessage) error {
 	switch cm.Operation {
 	case api.AddedOperation:
-		return s.currConfigurations.AddDefinition(cm.Source, cm.Definition)
+		return s.currConfigurations.AddDefinition(cm.Name, cm.Definitions[0])
 	case api.UpdatedOperation:
-		return s.currConfigurations.UpdateDefinition(cm.Source, cm.Definition)
+		return s.currConfigurations.UpdateDefinition(cm.Name, cm.Definitions[0])
 	case api.RemovedOperation:
-		return s.currConfigurations.RemoveDefinition(cm.Source, cm.Definition)
-	case api.AddedSourceOperation:
-		return s.currConfigurations.AddSource(cm.Source)
-	case api.RemovedSourceOperation:
-		return s.currConfigurations.RemoveSource(cm.Source)
-	case api.ApplySourcesOperation:
-		return s.applySources()
+		return s.currConfigurations.RemoveDefinition(cm.Name, cm.Definitions[0])
+	case api.AddedGroupOperation:
+		if len(cm.Definitions) > 0 {
+			return s.currConfigurations.AddGroupAndDefinitions(cm.Name, cm.Definitions)
+		}
+		return s.currConfigurations.AddGroup(cm.Name)
+	case api.RemovedGroupOperation:
+		return s.currConfigurations.RemoveGroup(cm.Name)
+	case api.ApplyGroupsOperation:
+		return s.applyGroups()
 	}
 	return nil
 }
@@ -125,13 +128,13 @@ func (s *Server) listenProviders(stop chan struct{}) {
 			hasChanges := false
 			for _, dm := range configMsg.Configurations.DefinitionMaps {
 				for i, cdm := range s.currConfigurations.DefinitionMaps {
-					if dm.Source == cdm.Source {
+					if dm.Name == cdm.Name {
 						if dm.State == api.REMOVED {
 							copy(s.currConfigurations.DefinitionMaps[1:], s.currConfigurations.DefinitionMaps[i+1:])
 							s.currConfigurations.DefinitionMaps = s.currConfigurations.DefinitionMaps[:len(s.currConfigurations.DefinitionMaps)-1]
 						} else {
 							if reflect.DeepEqual(cdm, dm) {
-								s.logger.Debug("[SERVER] Changed API Definition is same with current configurations. Skip changes [" + dm.Source + "]")
+								s.logger.Debug("[SERVER] Changed API Definition is same with current configurations. Skip changes [" + dm.Name + "]")
 								continue
 							}
 
@@ -193,7 +196,7 @@ func (s *Server) startProvider(ctx context.Context) error {
 				s.logger.Debug("[SERVER] Configuration change detected by Admin API")
 				err := s.updateConfiguration(c)
 				if nil == err {
-					if c.Operation != api.ApplySourcesOperation && c.Operation != api.AddedSourceOperation {
+					if c.Operation != api.ApplyGroupsOperation && (c.Operation != api.AddedGroupOperation || (c.Operation == api.AddedGroupOperation && len(c.Definitions) > 0)) {
 						s.applyChanges(s.currConfigurations)
 					}
 				} else {

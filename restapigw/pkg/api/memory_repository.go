@@ -14,16 +14,16 @@ type (
 	// InMemoryRepository - Memory 기반의 Repository 관리 형식
 	InMemoryRepository struct {
 		sync.RWMutex
-		Sources []*DefinitionMap
+		Groups []*DefinitionMap
 	}
 )
 
 // ===== [ Implementations ] =====
 
-// getSource - 지정한 소스 경로에 맞는 SourceMap 반환
-func (imr *InMemoryRepository) getSource(path string) *DefinitionMap {
-	for _, sm := range imr.Sources {
-		if sm.Source == path {
+// getGroup - 지정한 소스 경로에 맞는 GroupMap 반환
+func (imr *InMemoryRepository) getGroup(path string) *DefinitionMap {
+	for _, sm := range imr.Groups {
+		if sm.Name == path {
 			return sm
 		}
 	}
@@ -32,7 +32,7 @@ func (imr *InMemoryRepository) getSource(path string) *DefinitionMap {
 }
 
 // Add adds an api definition to the repository
-func (imr *InMemoryRepository) add(source string, ec *config.EndpointConfig) error {
+func (imr *InMemoryRepository) add(group string, ec *config.EndpointConfig) error {
 	imr.Lock()
 	defer imr.Unlock()
 
@@ -44,14 +44,14 @@ func (imr *InMemoryRepository) add(source string, ec *config.EndpointConfig) err
 		return err
 	}
 
-	sm := imr.getSource(source)
+	sm := imr.getGroup(group)
 	if nil != sm {
 		sm.Definitions = append(sm.Definitions, ec)
-		log.Debug(ec.Name + " definition added to " + source + " source")
+		log.Debug(ec.Name + " definition added to " + group + " group")
 	} else {
-		sm := &DefinitionMap{Source: source, State: NONE, Definitions: make([]*config.EndpointConfig, 0)}
+		sm := &DefinitionMap{Name: group, State: NONE, Definitions: make([]*config.EndpointConfig, 0)}
 		sm.Definitions = append(sm.Definitions, ec)
-		imr.Sources = append(imr.Sources, sm)
+		imr.Groups = append(imr.Groups, sm)
 	}
 	return nil
 }
@@ -61,26 +61,26 @@ func (imr *InMemoryRepository) Close() error {
 	return nil
 }
 
-// FindSources - 리포지토리에서 관리하는 API Source 경로들을 반환
-func (imr *InMemoryRepository) FindSources() ([]string, error) {
+// FindGroups - 리포지토리에서 관리하는 API Group 경로들을 반환
+func (imr *InMemoryRepository) FindGroups() ([]string, error) {
 	imr.RLock()
 	defer imr.RUnlock()
 
-	sources := make([]string, 0)
-	for _, sm := range imr.Sources {
-		sources = append(sources, sm.Source)
+	groups := make([]string, 0)
+	for _, sm := range imr.Groups {
+		groups = append(groups, sm.Name)
 	}
 
-	return sources, nil
+	return groups, nil
 }
 
-// FindAllBySource - 지정한 Source에서 API Routing 설정 정보 반환
-func (imr *InMemoryRepository) FindAllBySource(source string) ([]*config.EndpointConfig, error) {
+// FindAllByGroup - 지정한 Group에서 API Routing 설정 정보 반환
+func (imr *InMemoryRepository) FindAllByGroup(group string) ([]*config.EndpointConfig, error) {
 	imr.RLock()
 	defer imr.RUnlock()
 
 	endpoints := make([]*config.EndpointConfig, 0)
-	sm := imr.getSource(source)
+	sm := imr.getGroup(group)
 	if nil != sm {
 		for _, v := range sm.Definitions {
 			endpoints = append(endpoints, v)
@@ -94,7 +94,7 @@ func (imr *InMemoryRepository) FindAll() ([]*DefinitionMap, error) {
 	imr.RLock()
 	defer imr.RUnlock()
 
-	return imr.Sources, nil
+	return imr.Groups, nil
 }
 
 // ===== [ Private Functions ] =====
@@ -102,5 +102,5 @@ func (imr *InMemoryRepository) FindAll() ([]*DefinitionMap, error) {
 
 // NewInMemoryRepository creates a in memory repository
 func NewInMemoryRepository() *InMemoryRepository {
-	return &InMemoryRepository{Sources: make([]*DefinitionMap, 0)}
+	return &InMemoryRepository{Groups: make([]*DefinitionMap, 0)}
 }

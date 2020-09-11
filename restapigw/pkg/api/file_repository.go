@@ -24,8 +24,8 @@ type (
 	// FileSystemRepository - 파일 시스템 기반 Repository 관리 정보 형식
 	FileSystemRepository struct {
 		*InMemoryRepository
-		watcher    *fsnotify.Watcher
-		sourcePath string
+		watcher *fsnotify.Watcher
+		path    string
 	}
 )
 
@@ -33,19 +33,19 @@ type (
 
 // Write - 변경된 리파지토리 내용을 대상 파일로 출력
 func (fsr *FileSystemRepository) Write(definitionMaps []*DefinitionMap) error {
-	fsr.Sources = definitionMaps
+	fsr.Groups = definitionMaps
 
-	for _, dm := range fsr.Sources {
-		filePath := path.Join(fsr.sourcePath, dm.Source)
+	for _, dm := range fsr.Groups {
+		filePath := path.Join(fsr.path, dm.Name)
 		if dm.State == REMOVED {
 			err := os.Remove(filePath)
 			if nil != err {
 				return err
 			}
-			// 삭제된 Source에 대한 Watcher 제거
+			// 삭제된 Group에 대한 Watcher 제거
 			_ = fsr.watcher.Remove(filePath)
 		} else if dm.State != NONE {
-			data, err := sourceDefinitions(dm)
+			data, err := groupDefinitions(dm)
 			if nil != err {
 				return err
 			}
@@ -54,7 +54,7 @@ func (fsr *FileSystemRepository) Write(definitionMaps []*DefinitionMap) error {
 				return err
 			}
 			if dm.State == ADDED {
-				// Source가 추가된 경우 Watcher 추가
+				// Group가 추가된 경우 Watcher 추가
 				_ = fsr.watcher.Add(filePath)
 			}
 		}
@@ -83,7 +83,7 @@ func (fsr *FileSystemRepository) Watch(ctx context.Context, configChan chan<- Re
 					configChan <- RepoChangedMessage{
 						Configurations: &Configuration{DefinitionMaps: []*DefinitionMap{
 							{
-								Source:      core.GetLastPart(event.Name, "/"),
+								Name:        core.GetLastPart(event.Name, "/"),
 								State:       CHANGED,
 								Definitions: parseEndpoint(body).Definitions,
 							},
@@ -95,7 +95,7 @@ func (fsr *FileSystemRepository) Watch(ctx context.Context, configChan chan<- Re
 					configChan <- RepoChangedMessage{
 						Configurations: &Configuration{DefinitionMaps: []*DefinitionMap{
 							{
-								Source:      core.GetLastPart(event.Name, "/"),
+								Name:        core.GetLastPart(event.Name, "/"),
 								State:       REMOVED,
 								Definitions: make([]*config.EndpointConfig, 0),
 							},
@@ -123,7 +123,7 @@ func (fsr *FileSystemRepository) Close() error {
 // NewFileSystemRepository - 파일 시스템 기반의 Repository 인스턴스 생성
 func NewFileSystemRepository(dir string) (*FileSystemRepository, error) {
 	log := logging.GetLogger()
-	repo := FileSystemRepository{InMemoryRepository: NewInMemoryRepository(), sourcePath: dir}
+	repo := FileSystemRepository{InMemoryRepository: NewInMemoryRepository(), path: dir}
 
 	// Grab json files from directory
 	files, err := ioutil.ReadDir(dir)

@@ -18,6 +18,14 @@ import (
 )
 
 // ===== [ Constants and Variables ] =====
+
+const (
+	// APIBasePath - Admin API 관리용 기본 Path
+	APIBasePath = "/apis"
+	// GroupBasePath - Group 관리용 기본 Path
+	GroupBasePath = APIBasePath + "/group/"
+)
+
 // ===== [ Types ] =====
 
 type (
@@ -63,18 +71,20 @@ func (s *Server) addInternalRoutes(ge *gin.Engine, guard jwt.Guard) {
 	s.logger.Debug("[ADMIN Server] Loading API Endpoints")
 
 	// APIs endpoints
-	groupAPI := ge.Group("/apis")
+	groupAPI := ge.Group(APIBasePath)
 	groupAPI.Use(ginAdapter.Wrap(jwt.NewMiddleware(guard).Handler))
 	{
-		// Definitions
-		groupAPI.GET("/", gin.WrapH(s.apiHandler.GetDefinitions()))      // Get definitions list
-		groupAPI.POST("/", gin.WrapH(s.apiHandler.AddDefinition()))      // Add definition
-		groupAPI.PUT("/", gin.WrapH(s.apiHandler.UpdateDefinition()))    // Update definition
-		groupAPI.DELETE("/", gin.WrapH(s.apiHandler.RemoveDefinition())) // Remove definition
-		// Sources
-		groupAPI.POST("/source", gin.WrapH(s.apiHandler.AddSource()))      // Add source
-		groupAPI.PUT("/source", gin.WrapH(s.apiHandler.ApplySources()))    // Apply Changes to persistence
-		groupAPI.DELETE("/source", gin.WrapH(s.apiHandler.RemoveSource())) // Remove soruce (all definitions in source)
+		// All group datas
+		groupAPI.GET("/", gin.WrapH(s.apiHandler.GetDefinitions())) // Get All Groups (with definitions)
+		groupAPI.PUT("/", gin.WrapH(s.apiHandler.ApplyGroups()))    // Apply Group changes to persistence
+		// Groups
+		groupAPI.POST("/group", gin.WrapH(s.apiHandler.AddGroup()))           // Add Group
+		groupAPI.GET("/group/:gid", gin.WrapH(s.apiHandler.GetGroup()))       // Get Group
+		groupAPI.DELETE("/group/:gid", gin.WrapH(s.apiHandler.RemoveGroup())) // Remove Group (all definitions in group)
+		// Definitions for group
+		groupAPI.POST("/group/:gid/definition", gin.WrapH(s.apiHandler.AddDefinition()))          // Add Definition
+		groupAPI.PUT("/group/:gid/definition", gin.WrapH(s.apiHandler.UpdateDefinition()))        // Update Definition
+		groupAPI.DELETE("/group/:gid/definition/:id", gin.WrapH(s.apiHandler.RemoveDefinition())) // Remove Definition
 	}
 
 	if s.profilingEnabled {
