@@ -6,22 +6,50 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"strings"
 
-	"github.com/cloud-barista/cb-apigw/restapigw/pkg/admin/response"
-	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/static"
+	"github.com/gin-gonic/gin"
 )
 
 // ===== [ Constants and Variables ] =====
 // ===== [ Types ] =====
 // ===== [ Implementations ] =====
 // ===== [ Private Functions ] =====
+
+// isWebPath - 전달된 경로가 Admin Web Path에 해당하는지 검증
+func isWebPath(path string) bool {
+	paths := []string{"/image", "/_nuxt", "/scripts"}
+	for _, s := range paths {
+		if strings.HasPrefix(path, s) {
+			return true
+		}
+	}
+	return false
+}
+
 // ===== [ Public Functions ] =====
 
-// Home handler is just a nice home page message
-func Home() http.HandlerFunc {
-	return func(rw http.ResponseWriter, req *http.Request) {
-		response.Write(rw, req, "Welcome to "+core.AppName+" - ADMIN Manager")
+// WebServe - Admin Web Serve
+func WebServe(urlPrefix string) gin.HandlerFunc {
+	staticHandler := http.StripPrefix("/", http.FileServer(static.Dir(false, "/web/dist")))
+
+	return func(c *gin.Context) {
+		_path := c.Request.URL.Path
+		if _path == "/" {
+			// 초기 페이지 반환
+			vueApp, err := static.FSString(false, "/web/dist/index.html")
+			if err != nil {
+				c.AbortWithError(-1, err)
+			}
+			//c.Writer.WriteString(vueApp)
+			c.Data(http.StatusOK, "text/html", []byte(vueApp))
+			c.Abort()
+		} else if isWebPath(_path) {
+			staticHandler.ServeHTTP(c.Writer, c.Request)
+			c.Abort()
+		}
 	}
 }
 

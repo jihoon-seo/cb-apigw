@@ -133,6 +133,7 @@ func (pc *PipeConfig) Engine() http.Handler {
 
 // RegisterAPIs - API Provider (Repository)에서 추출된 API 설정들을 Router로 등록
 func (pc *PipeConfig) RegisterAPIs(sConf *config.ServiceConfig, defs []*config.EndpointConfig) error {
+	pc.logger.Info("[API G/W] Loading API Endpoints")
 	// API 설정들에 대한 누락 항목들을 기본 값으로 설정
 	config.InitDefinitions(sConf, defs)
 	for _, def := range defs {
@@ -155,6 +156,7 @@ func (pc *PipeConfig) RegisterAPIs(sConf *config.ServiceConfig, defs []*config.E
 		}
 	}
 
+	pc.logger.Info("[API G/W] API Endpoints loaded")
 	return nil
 }
 

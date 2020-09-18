@@ -48,9 +48,13 @@ type (
 
 // addInternalPublicRoutes - ADMIN Server의 외부에 노출되는 Routes 설정
 func (s *Server) addInternalPublicRoutes(ge *gin.Engine) {
-	ge.GET("/", gin.WrapH(Home()))
-	ge.GET("/status", gin.WrapH(NewOverviewHandler(s.apiHandler.Configs, s.logger)))
-	ge.GET("/status/{name}", gin.WrapH(NewStatusHandler(s.apiHandler.Configs, s.logger)))
+	// Admin Web Serve를 위한 Middleware 구성
+	ge.Use(WebServe("/"))
+
+	// Status Endpoints
+	statusAPI := ge.Group("/status")
+	statusAPI.GET("/", gin.WrapH(NewOverviewHandler(s.apiHandler.Configs, s.logger)))
+	statusAPI.GET("/{name}", gin.WrapH(NewStatusHandler(s.apiHandler.Configs, s.logger)))
 	// TODO: Metrics 정보 설정은? Prometheus???
 }
 
@@ -139,11 +143,11 @@ func (s *Server) Start() error {
 
 	// Gin Router 생성
 	engine := gin.Default()
-
 	engine.RedirectTrailingSlash = true
 	engine.RedirectFixedPath = true
 	engine.HandleMethodNotAllowed = true
 
+	// No Route 처리
 	engine.NoRoute(func(c *gin.Context) {
 		c.JSON(404, gin.H{"code": "API_NOT_FOUND", "message": "API not found"})
 	})
@@ -186,6 +190,7 @@ func (s *Server) AddRoutes(ge *gin.Engine) {
 		}),
 	)
 
+	// Admin API Routes
 	s.addInternalPublicRoutes(ge)
 	s.addInternalAuthRoutes(ge, guard)
 	s.addInternalRoutes(ge, guard)

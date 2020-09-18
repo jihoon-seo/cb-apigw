@@ -98,6 +98,12 @@ cloudbaristaorg/cb-restapigw:v0.1-yyyymmdd
   # git clone https://github.com/cloud-barista/cb-apigw.git
   ```
 
+- **ADMIN Web 빌드를 위한 툴 다운로드**
+  이 툴은 Admin Web Application의 빌드된 산출물을 Go 소스 파일로 변환(embedding)하기 위한 것이다.
+  ```shell
+  # go get -u github.com/mjibson/esc
+  ```
+
 - **빌드**
   - Mac 환경
     ```shell

@@ -7,6 +7,7 @@ import (
 
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/admin/response"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/api"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core/adapters/gin"
 	"go.opencensus.io/trace"
@@ -144,17 +145,15 @@ func (ah *APIHandler) RemoveDefinition() http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		cm := &api.ConfigModel{}
 
-		err := core.JSONDecode(req.Body, cm)
-		if nil != err {
-			response.Errorf(rw, req, -1, err)
-			return
-		}
+		cm.Name = gin.URLParam(req, "gid")
+		cm.Definitions = make([]*config.EndpointConfig, 0)
+		cm.Definitions = append(cm.Definitions, &config.EndpointConfig{Name: gin.URLParam(req, "id")})
 
 		_, span := trace.StartSpan(req.Context(), "definition.Exists")
 		exists, err := ah.Configs.Exists(cm.Name, cm.Definitions[0])
 		span.End()
 
-		if nil != err {
+		if nil != err && err != api.ErrAPINameExists {
 			response.Errorf(rw, req, -1, err)
 			return
 		}
@@ -297,11 +296,10 @@ func (ah *APIHandler) RemoveGroup() http.HandlerFunc {
 // ApplyGroups - 관리 중인 Group들의 변경사항 적용 (Persistence)
 func (ah *APIHandler) ApplyGroups() http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
-		// Group 삭제
 		_, span := trace.StartSpan(req.Context(), "repo.ApplyGroups")
 		span.End()
 
-		// Group 출력 (Persistence)
+		// 리파지토리에 전체 변경내역 저장
 		ah.configurationChan <- api.ConfigChangedMessage{
 			Operation: api.ApplyGroupsOperation,
 		}

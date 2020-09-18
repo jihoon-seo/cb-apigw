@@ -33,6 +33,7 @@ require (
 	github.com/influxdata/influxdb v1.7.8
 	github.com/json-iterator/go v1.1.10
 	github.com/mattn/go-isatty v0.0.9 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a
 	github.com/rs/cors v1.7.0
 	github.com/sirupsen/logrus v1.6.0
@@ -42,10 +43,10 @@ require (
 	github.com/ugorji/go v1.1.7 // indirect
 	github.com/unrolled/secure v1.0.4
 	go.opencensus.io v0.22.1
-	golang.org/x/net v0.0.0-20200602114024-627f9648deb9 // indirect
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	golang.org/x/sys v0.0.0-20200622214017-ed371f2e16b4 // indirect
 	golang.org/x/text v0.3.3 // indirect
+	golang.org/x/tools v0.0.0-20200917050209-655488c8ae71 // indirect
 	google.golang.org/protobuf v1.24.0 // indirect
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect

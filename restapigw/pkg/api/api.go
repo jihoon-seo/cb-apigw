@@ -49,6 +49,8 @@ var (
 	ErrGroupExists = errors.NewWithCode(http.StatusConflict, "api group is already registered")
 	// ErrGroupNotExists - 리파지토리에 동일한 이름의 소스가 존재하지 않는 경우 오류
 	ErrGroupNotExists = errors.NewWithCode(http.StatusNotFound, "api group not found")
+	// ErrInvalidRequestData - 요청에서 데이터를 추출하지 못했을 경우 오류
+	ErrInvalidRequestData = errors.NewWithCode(http.StatusBadRequest, "invalid requested data")
 
 	// TODO: ETCD, Database 관련 오류들
 	// ErrDBContextNotSet is used when the database request context is not set
@@ -142,8 +144,6 @@ func (c *Configuration) Exists(name string, ec *config.EndpointConfig) (bool, er
 					return true, ErrAPIListenPathExists
 				}
 			}
-		} else {
-			return false, nil
 		}
 	}
 
