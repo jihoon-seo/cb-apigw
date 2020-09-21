@@ -78,7 +78,13 @@ export default {
   /*
    ** Global CSS
    */
-  css: ["@/utils/assets/scss/index.scss"],
+  css: [
+    "@/utils/assets/scss/index.scss",
+    // Vuetify - Roboto fonts
+    "@/utils/assets/fonts/css/roboto.css",
+    // Vueitfy - Material Design Icon
+    "@/utils/assets/fonts/css/materialdesignicons.min.css"
+  ],
   /*
    ** Plugins to load before mounting the App
    */
@@ -117,7 +123,11 @@ export default {
     //   analyzerPort: '8888',
     //   openAnalyzer: true
     // },
-    extractCSS: process.env.NODE_ENV !== 'development',
+
+    // CSS 연관으로 설정하면 Production 모드에서 제대로 동작하지 않는 문제 발생
+    //cssSourceMap: true,
+    //extractCSS: process.env.NODE_ENV !== 'development',
+
     transpile: ["vuetify/lib"],
     /*
      ** You can extend webpack config here
@@ -174,6 +184,7 @@ export default {
    ** https://github.com/nuxt-community/vuetify-module
    */
   vuetify: {
+    defaultAssets: false,
     customVariables: ["~/utils/assets/scss/variables.scss"],
     icons: {
       iconfont: "mdi"
