@@ -14,17 +14,6 @@
           <v-card-text>
             <v-row dense>
               <v-col dense class="text-right">
-                <!-- <cb-text
-                  ref="search"
-                  v-model="searchWord"
-                  class="search"
-                  outlined
-                  appendicon="mdi-magnify"
-                  :rules="[searchRule]"
-                  autofocus
-                  dense
-                  type="text"
-                /> -->
                 <cb-button
                   color="primary"
                   icon="mdi-refresh"
@@ -150,27 +139,6 @@
           <v-card-actions>
             <v-row>
               <v-col class="text-right">
-                <!-- <cb-button color="primary" icon="mdi-content-save-all">
-                  Primary
-                </cb-button>
-                <cb-button color="secondary" icon="mdi-content-save-all">
-                  Secondary
-                </cb-button>
-                <cb-button color="Accent" icon="mdi-content-save-all">
-                  Accent
-                </cb-button>
-                <cb-button color="success" icon="mdi-content-save-all">
-                  Sucess
-                </cb-button>
-                <cb-button color="info" icon="mdi-content-save-all">
-                  Info
-                </cb-button>
-                <cb-button color="warning" icon="mdi-content-save-all">
-                  Warning
-                </cb-button>
-                <cb-button color="error" icon="mdi-content-save-all">
-                  Error
-                </cb-button> -->
                 <cb-button
                   class="mr-2"
                   color="success"
@@ -199,7 +167,7 @@
 
 <script lang="ts">
 import { Component, Vue } from "nuxt-property-decorator";
-import { YamlDialog } from "@/views/components";
+import {YamlDialog} from '@/views/components';
 
 import Util from "@/utils";
 import { ApiDefinition, ApiGroup } from "@/models";
