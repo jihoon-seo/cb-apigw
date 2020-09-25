@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"path/filepath"
 	"time"
 
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
@@ -69,17 +70,16 @@ func parseEndpoint(apiDef []byte) GroupDefinitions {
 	// API 정의들 Unmarshalling
 	if err := yaml.Unmarshal(apiDef, &apiConfigs); nil != err {
 		// 오류 발생시 단일 Definition으로 다시 처리
-		apiConfigs.Definitions = append(apiConfigs.Definitions, NewDefinition())
+		apiConfigs.Definitions = append(apiConfigs.Definitions, config.NewDefinition())
 		if err := yaml.Unmarshal(apiDef, &apiConfigs.Definitions[0]); nil != err {
 			log.WithError(err).Error("Couldn't parsing api definitions")
 		}
 	}
 
-	// 로드된 Endpoint 정보 출력
-	for idx, ec := range apiConfigs.Definitions {
-		log.Debugf("Endpoint(%d) : %+v\n", idx, ec)
-		for bIdx, bc := range ec.Backend {
-			log.Debugf("Backend(%d) : %v\n", bIdx, bc)
+	// 로드된 Endpoint 정보 재 구성
+	for _, ec := range apiConfigs.Definitions {
+		if err := ec.InitializeDefaults(); nil != err {
+			log.WithError(err).Error("Couldn't initialize api definition:" + ec.Name)
 		}
 	}
 
@@ -105,9 +105,17 @@ func BuildRepository(dsn string, refreshTime time.Duration) (Repository, error) 
 	if nil != err {
 		return nil, errors.Wrap(err, "Error parsing the DSN")
 	}
-
 	if "" == dsnURL.Path {
 		return nil, errors.New("Path not found from DSN")
+	}
+
+	// File 모드인 경우는 상대경로 처리 검증
+	if dsnURL.Scheme == "file" && dsnURL.Host == "." {
+		path, err := filepath.Abs(dsnURL.Host + dsnURL.Path)
+		if nil != err {
+			return nil, err
+		}
+		dsnURL.Path = path
 	}
 
 	switch dsnURL.Scheme {

@@ -37,8 +37,8 @@ type (
 		logger     logging.Logger
 
 		Port             int `mapstructure:"port"`
-		Credentials      config.CredentialsConfig
-		TLS              config.TLSConfig
+		Credentials      *config.CredentialsConfig
+		TLS              *config.TLSConfig
 		profilingEnabled bool
 		profilingPublic  bool
 	}

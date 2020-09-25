@@ -63,8 +63,8 @@ func (ah *APIHandler) UpdateDefinition() http.HandlerFunc {
 			return
 		}
 
-		isValid, err := cm.Definitions[0].Validate()
-		if !isValid && nil != err {
+		err = cm.Definitions[0].Validate()
+		if nil != err {
 			response.Errorf(rw, req, -1, err)
 			return
 		}
@@ -105,8 +105,8 @@ func (ah *APIHandler) AddDefinition() http.HandlerFunc {
 			return
 		}
 
-		isValid, err := cm.Definitions[0].Validate()
-		if false == isValid && nil != err {
+		err = cm.Definitions[0].Validate()
+		if nil != err {
 			response.Errorf(rw, req, -1, err)
 			return
 		}
@@ -147,7 +147,10 @@ func (ah *APIHandler) RemoveDefinition() http.HandlerFunc {
 
 		cm.Name = gin.URLParam(req, "gid")
 		cm.Definitions = make([]*config.EndpointConfig, 0)
-		cm.Definitions = append(cm.Definitions, &config.EndpointConfig{Name: gin.URLParam(req, "id")})
+
+		def := config.NewDefinition()
+		def.Name = gin.URLParam(req, "id")
+		cm.Definitions = append(cm.Definitions, def)
 
 		_, span := trace.StartSpan(req.Context(), "definition.Exists")
 		exists, err := ah.Configs.Exists(cm.Name, cm.Definitions[0])

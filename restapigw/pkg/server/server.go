@@ -24,7 +24,7 @@ type (
 
 	// Server - API G/W 운영을 위한 서버 구조
 	Server struct {
-		serviceConfig      config.ServiceConfig
+		serviceConfig      *config.ServiceConfig
 		logger             logging.Logger
 		repoProvider       api.Repository
 		currConfigurations *api.Configuration
@@ -75,7 +75,7 @@ func (s *Server) applyChanges(conf *api.Configuration) {
 	// 신규 라우팅 엔진 생성
 	s.router.UpdateEngine(s.serviceConfig)
 	// 변경된 Routing 규칙 적용
-	s.router.RegisterAPIs(&s.serviceConfig, conf.GetAllDefinitions())
+	s.router.RegisterAPIs(s.serviceConfig, conf.GetAllDefinitions())
 
 	s.logger.Debug("[SERVER] Configuration refreshing complete")
 }
@@ -266,7 +266,7 @@ func (s *Server) StartWithContext(ctx context.Context) error {
 	}
 
 	// API Definition에 대한 Router 연계 처리
-	s.router.RegisterAPIs(&s.serviceConfig, s.currConfigurations.GetAllDefinitions())
+	s.router.RegisterAPIs(s.serviceConfig, s.currConfigurations.GetAllDefinitions())
 
 	s.logger.Info("[SERVER] Started")
 	return nil
@@ -302,7 +302,7 @@ func (s *Server) Wait() {
 // ===== [ Public Functions ] =====
 
 // WithServiceConfig - Service Configuration 설정
-func WithServiceConfig(sConf config.ServiceConfig) Option {
+func WithServiceConfig(sConf *config.ServiceConfig) Option {
 	return func(s *Server) {
 		s.serviceConfig = sConf
 	}

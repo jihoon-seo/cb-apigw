@@ -26,7 +26,7 @@ import (
 // ===== [ Private Functions ] =====
 
 // setupRepository - HTTP Server와 Admin Server 운영에 사용할 API Route 정보 리파지토리 구성
-func setupRepository(sConf config.ServiceConfig, log logging.Logger) (api.Repository, error) {
+func setupRepository(sConf *config.ServiceConfig, log logging.Logger) (api.Repository, error) {
 	// API Routing 정보를 관리하는 Repository 구성
 	repo, err := api.BuildRepository(sConf.Repository.DSN, sConf.Cluster.UpdateFrequency)
 	if nil != err {
@@ -39,7 +39,7 @@ func setupRepository(sConf config.ServiceConfig, log logging.Logger) (api.Reposi
 // ===== [ Public Functions ] =====
 
 // SetupAndRun - API Gateway 서비스를 위한 Router 및 Pipeline 구성과 구동
-func SetupAndRun(ctx context.Context, sConf config.ServiceConfig) error {
+func SetupAndRun(ctx context.Context, sConf *config.ServiceConfig) error {
 	// Sets up the Logger (CB-LOG)
 	logger := logging.NewLogger()
 

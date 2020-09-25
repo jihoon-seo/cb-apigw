@@ -22,7 +22,7 @@ import (
 // runFunc - 설정파일의 문법 검증 및 구성 값 출력 및 어플리케이션 구동
 func runFunc(ctx context.Context, cmd *cobra.Command, args []string) {
 	var (
-		sConf config.ServiceConfig
+		sConf *config.ServiceConfig
 		err   error
 	)
 

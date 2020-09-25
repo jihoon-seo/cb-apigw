@@ -17,7 +17,7 @@ import (
 // ===== [ Private Functions ] =====
 
 // setupGinRouter - Gin 기반으로 동작하는 Router 설정
-func setupGinRouter(ctx context.Context, sConf config.ServiceConfig, logger logging.Logger) router.Router {
+func setupGinRouter(ctx context.Context, sConf *config.ServiceConfig, logger logging.Logger) router.Router {
 	mc := ginMetrics.New(ctx, sConf.Middleware, logger, sConf.Debug)
 
 	// API G/W Server 구동
@@ -31,7 +31,7 @@ func setupGinRouter(ctx context.Context, sConf config.ServiceConfig, logger logg
 // ===== [ Public Functions ] =====
 
 // SetupRouter - API G/W 운영을 위한 Router 설정
-func SetupRouter(ctx context.Context, sConf config.ServiceConfig, logger logging.Logger) router.Router {
+func SetupRouter(ctx context.Context, sConf *config.ServiceConfig, logger logging.Logger) router.Router {
 	switch sConf.RouterEngine {
 	default:
 		return setupGinRouter(ctx, sConf, logger)

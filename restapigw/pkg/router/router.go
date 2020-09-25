@@ -52,7 +52,7 @@ type (
 	// Router - Router 운영에 필요한 인페이스
 	Router interface {
 		Engine() http.Handler
-		UpdateEngine(sConf config.ServiceConfig)
+		UpdateEngine(sConf *config.ServiceConfig)
 		RegisterAPIs(sConf *config.ServiceConfig, defs []*config.EndpointConfig) error
 	}
 

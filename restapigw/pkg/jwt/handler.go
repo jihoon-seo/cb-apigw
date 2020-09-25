@@ -33,7 +33,7 @@ type (
 // ===== [ Implementations ] =====
 
 // Login - JWT Token 기반으로 인증 처리
-func (h *Handler) Login(conf config.CredentialsConfig, logger logging.Logger) http.HandlerFunc {
+func (h *Handler) Login(cc *config.CredentialsConfig, logger logging.Logger) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		accessToken, err := extractAccessToken(req)
 
@@ -43,7 +43,7 @@ func (h *Handler) Login(conf config.CredentialsConfig, logger logging.Logger) ht
 
 		httpClient := getClient(accessToken)
 		factory := provider.Factory{}
-		p := factory.Build(req.URL.Query().Get("provider"), conf)
+		p := factory.Build(req.URL.Query().Get("provider"), cc)
 
 		verified, err := p.Verify(req, httpClient)
 
@@ -73,7 +73,7 @@ func (h *Handler) Login(conf config.CredentialsConfig, logger logging.Logger) ht
 }
 
 // Logout - JWT Token 기반으로 인증 해제 처리
-func (h *Handler) Logout(conf config.CredentialsConfig, logger logging.Logger) http.HandlerFunc {
+func (h *Handler) Logout(cc *config.CredentialsConfig, logger logging.Logger) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		accessToken, err := extractAccessToken(req)
 

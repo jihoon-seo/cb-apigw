@@ -32,25 +32,25 @@ func (imr *InMemoryRepository) getGroup(path string) *DefinitionMap {
 }
 
 // Add adds an api definition to the repository
-func (imr *InMemoryRepository) add(group string, ec *config.EndpointConfig) error {
+func (imr *InMemoryRepository) add(group string, eConf *config.EndpointConfig) error {
 	imr.Lock()
 	defer imr.Unlock()
 
 	log := logging.GetLogger()
 
-	isValid, err := ec.Validate()
-	if !isValid || nil != err {
+	err := eConf.Validate()
+	if nil != err {
 		log.WithError(err).Error("Validation errors")
 		return err
 	}
 
 	sm := imr.getGroup(group)
 	if nil != sm {
-		sm.Definitions = append(sm.Definitions, ec)
-		log.Debug(ec.Name + " definition added to " + group + " group")
+		sm.Definitions = append(sm.Definitions, eConf)
+		log.Debug(eConf.Name + " definition added to " + group + " group")
 	} else {
 		sm := &DefinitionMap{Name: group, State: NONE, Definitions: make([]*config.EndpointConfig, 0)}
-		sm.Definitions = append(sm.Definitions, ec)
+		sm.Definitions = append(sm.Definitions, eConf)
 		imr.Groups = append(imr.Groups, sm)
 	}
 	return nil

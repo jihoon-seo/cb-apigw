@@ -35,7 +35,7 @@ type (
 // ===== [ Implementations ] =====
 
 // createRouter - Gin 기반의 Router 생성
-func (pc *PipeConfig) createRouter(sConf config.ServiceConfig) http.Handler {
+func (pc *PipeConfig) createRouter(sConf *config.ServiceConfig) http.Handler {
 	if !sConf.Debug {
 		gin.SetMode(gin.ReleaseMode)
 	}
@@ -70,7 +70,7 @@ func (pc *PipeConfig) createRouter(sConf config.ServiceConfig) http.Handler {
 }
 
 // createEngine - Gin Router Engine 인스턴스 생성
-func (pc *PipeConfig) createEngine(sConf config.ServiceConfig) {
+func (pc *PipeConfig) createEngine(sConf *config.ServiceConfig) {
 	de := &router.DynamicRouter{}
 	de.SetHandler(pc.createRouter(sConf))
 
@@ -121,7 +121,7 @@ func (pc PipeConfig) registerAPI(method, path string, handler gin.HandlerFunc, t
 }
 
 // UpdateEngine - API 변경 적용을 위한 Gin Engine 재 생성
-func (pc *PipeConfig) UpdateEngine(sConf config.ServiceConfig) {
+func (pc *PipeConfig) UpdateEngine(sConf *config.ServiceConfig) {
 	gin := pc.createRouter(sConf)
 	pc.engine.SetHandler(gin)
 }
@@ -134,9 +134,14 @@ func (pc *PipeConfig) Engine() http.Handler {
 // RegisterAPIs - API Provider (Repository)에서 추출된 API 설정들을 Router로 등록
 func (pc *PipeConfig) RegisterAPIs(sConf *config.ServiceConfig, defs []*config.EndpointConfig) error {
 	pc.logger.Info("[API G/W] Loading API Endpoints")
-	// API 설정들에 대한 누락 항목들을 기본 값으로 설정
-	config.InitDefinitions(sConf, defs)
+
 	for _, def := range defs {
+		// 정보 재구성
+		err := def.AdjustValues(sConf)
+		if nil != err {
+			pc.logger.Error("can not adjust values for definition", err.Error())
+		}
+
 		// 활성화된 경우만 적용
 		if def.Active {
 			// Endpoint에 연결되어 동작할 수 있도록 ProxyFactory의 Call chain에 대한 인스턴스 생성 (ProxyStack)
@@ -186,7 +191,7 @@ func WithProxyFactory(pf proxy.Factory) Option {
 }
 
 // New - PipeConfig 인스턴스 생성
-func New(sConf config.ServiceConfig, opts ...Option) router.Router {
+func New(sConf *config.ServiceConfig, opts ...Option) router.Router {
 	pc := PipeConfig{}
 
 	for _, opt := range opts {

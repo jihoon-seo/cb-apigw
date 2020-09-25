@@ -15,8 +15,6 @@ import (
 const ()
 
 var (
-	// ErrNoHosts - Load Balancing 처리 대상 Host 가 지정되지 않은 경우 오류
-	ErrNoHosts = errors.New("no host available")
 	// ErrZeroWeight - Weight가 지정되지 않은 경우 오류
 	ErrZeroWeight = errors.New("invalid backend, weight 0 given")
 	// ErrCannotElectBackend - Weight 적용등의 방법으로 대상 Backend를 선출할 수 없는 경우 오류
@@ -125,7 +123,7 @@ func (b *balancer) hosts() ([]*config.HostConfig, error) {
 		return hosts, err
 	}
 	if 0 >= len(hosts) {
-		return hosts, ErrNoHosts
+		return hosts, config.ErrNoHosts
 	}
 	return hosts, nil
 }

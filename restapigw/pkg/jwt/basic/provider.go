@@ -25,7 +25,7 @@ type (
 // ===== [ Implementations ] =====
 
 // Build - Auth Provider 구성
-func (p *Provider) Build(conf config.CredentialsConfig) provider.Provider {
+func (p *Provider) Build(conf *config.CredentialsConfig) provider.Provider {
 	return &Provider{
 		Verifier: provider.NewVerifierBasket(NewPasswordVerifier(userConfigToTeam(conf.Basic.Users))),
 	}

@@ -306,6 +306,21 @@ func GetLastPart(source, seperater string) string {
 	return srcs[len(srcs)-1]
 }
 
+// ToJSON - 지정 정보를 JSON 문자열로 변환
+func ToJSON(data interface{}) string {
+	bytes, err := JSONMarshal(data)
+	if nil != err {
+		log.Println("error on convert to json")
+		return ""
+	}
+	return string(bytes)
+}
+
+// FromJSON - 지정한 JSON 문자열을 지정한 struct로 변환
+func FromJSON(data string, target interface{}) error {
+	return JSONUnmarshal([]byte(data), target)
+}
+
 // JSONDecode - 지정한 Source의 JSON 정보를 지정한 Target으로 설정
 func JSONDecode(source io.Reader, target interface{}) error {
 	json := jsoniter.ConfigCompatibleWithStandardLibrary

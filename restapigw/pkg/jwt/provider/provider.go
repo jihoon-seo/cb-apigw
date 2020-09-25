@@ -21,7 +21,7 @@ type (
 	// Provider - Auth Provider 인터페이스
 	Provider interface {
 		Verifier
-		Build(conf config.CredentialsConfig) Provider
+		Build(conf *config.CredentialsConfig) Provider
 		GetClaims(hc *http.Client) (jwt.MapClaims, error)
 	}
 
@@ -32,14 +32,14 @@ type (
 // ===== [ Implementations ] =====
 
 // Build - 지정한 정보를 기준으로 Auth 처리용 Provider 구성
-func (f *Factory) Build(providerName string, conf config.CredentialsConfig) Provider {
+func (f *Factory) Build(providerName string, cc *config.CredentialsConfig) Provider {
 	provider, ok := providers.Load(providerName)
 	if !ok {
 		provider, _ = providers.Load("basic")
 	}
 
 	p := provider.(Provider)
-	return p.Build(conf)
+	return p.Build(cc)
 }
 
 // ===== [ Private Functions ] =====

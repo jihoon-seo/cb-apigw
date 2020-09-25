@@ -28,14 +28,14 @@ type (
 // ===== [ Public Functions ] =====
 
 // NewGuard - 지정한 정보를 기준으로 인증 처리기 생성
-func NewGuard(cred config.CredentialsConfig) Guard {
+func NewGuard(cc *config.CredentialsConfig) Guard {
 	return Guard{
 		ParserConfig: ParserConfig{
-			SigningMethods: []SigningMethod{{Alg: cred.Algorithm, Key: cred.Secret}},
+			SigningMethods: []SigningMethod{{Alg: cc.Algorithm, Key: cc.Secret}},
 			TokenLookup:    "header:Authorization",
 		},
-		SigningMethod: SigningMethod{Alg: cred.Algorithm, Key: cred.Secret},
-		Timeout:       cred.TokenTimeout,
+		SigningMethod: SigningMethod{Alg: cc.Algorithm, Key: cc.Secret},
+		Timeout:       cc.TokenTimeout,
 		MaxRefresh:    time.Hour * 24,
 	}
 }

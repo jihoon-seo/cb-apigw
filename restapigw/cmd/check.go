@@ -20,10 +20,10 @@ import (
 
 // ===== [ Private Functions ] =====
 
-// cheeckAndLoad - 지정된 Command 와 args 를 기준으로 Configuration 파일 검증 및 로드
-func checkAndLoad(cmd *cobra.Command, args []string) (config.ServiceConfig, error) {
+// cheeckAndLoad - 지정된 Command 와 args 를 기준으로 시스템 설정파일 검증 및 로드
+func checkAndLoad(cmd *cobra.Command, args []string) (*config.ServiceConfig, error) {
 	var (
-		sConf config.ServiceConfig
+		sConf *config.ServiceConfig
 		err   error
 	)
 
@@ -34,46 +34,26 @@ func checkAndLoad(cmd *cobra.Command, args []string) (config.ServiceConfig, erro
 
 	cmd.Printf("[CHECK] Parsing configuration file: %s\n", configFile)
 	if sConf, err = parser.Parse(configFile); err != nil {
-		cmd.Println("[CHECK - ERROR] Parsing the configuration file.\n", err.Error())
 		return sConf, err
 	}
 
-	// Command line 에 지정된 '-d', '-p' 옵션을 설정에 적용 (우선권)
+	// Command line 에 지정된 '-d' 옵션 우선 적용
 	sConf.Debug = sConf.Debug || debug
+
+	// Command line 에 지정된 '-p' 옵션 우선 적용
 	if port != 0 {
 		sConf.Port = port
 	}
 
-	// TODO: Check Items and Prints
-	//err = checkAndPrintServiceConf(cmd, sConf)
+	// 서비스 설정 출력 (JSON)
+	cmd.Println("[CHECK - SYSTEM CONFIGURATION] \n", core.ToJSON(sConf))
+
+	// 서비스 설정 검증
+	if err = sConf.Validate(); nil != err {
+		return nil, err
+	}
 
 	return sConf, err
-}
-
-// checkAndPrintBackendConf - Backend 설정 정보를 검증하고 출력
-func checkAndPrintBackendConf(cmd *cobra.Command, eConf *config.EndpointConfig) error {
-	if 0 == len(eConf.Backend) {
-		return errors.New("[CHECK - ERROR] No backend configuration, must be at least one backend")
-	}
-
-	cmd.Printf("\t\tBackends (%d):\n", len(eConf.Backend))
-	for _, backend := range eConf.Backend {
-		if 0 == len(backend.Hosts) {
-			return errors.New("No backend host or global service host in configuration, must be specified host in backend or service")
-		}
-
-		cmd.Printf("\t\t\tHosts: %v, URL: %s, Method: %s\n", backend.Hosts, backend.URLPattern, backend.Method)
-		cmd.Printf("\t\t\t\tTimeout: %s, Target: %s, Mapping: %v, Blacklist: %v, Whitelist: %v, Group: %v\n",
-			backend.Timeout, backend.Target, backend.Mapping, backend.Blacklist, backend.Whitelist,
-			backend.Group)
-
-		cmd.Printf("\t\t\tMiddleware (%d):\n", len(backend.Middleware))
-		for k, v := range backend.Middleware {
-			cmd.Printf("\t\t\t\t%s: %v\n", k, v)
-		}
-	}
-
-	return nil
 }
 
 // checkFunc - 지정된 args 에서 설정과 관련된 정보를 로드/검증/출력 처리

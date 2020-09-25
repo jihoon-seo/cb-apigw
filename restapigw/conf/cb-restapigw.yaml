@@ -5,8 +5,6 @@ cache_ttl: 3600s
 timeout: 1m
 debug: true
 router_engine: gin
-host:
-  - "http://localhost:8100"
 middleware:
   mw-metrics:
     router_enabled: true
@@ -47,7 +45,7 @@ middleware:
     allow_credentials: true
 
 repository:
-  dsn: file:///Users/morris/Workspaces/etri/sources/2020/10/cb-apigw/restapigw/conf
+  dsn: file://./conf
   #dsn: cbstore://api/restapigw/conf
 
 cluster:
@@ -59,7 +57,7 @@ admin:
     algorithm: HS256
     secret: test
     basic:
-      users:
-        admin: "test@admin00"
+       users:
+         admin: "test@admin00"
   profiling_enabled: true
   profiling_public: true

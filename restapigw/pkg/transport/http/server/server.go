@@ -131,7 +131,7 @@ func DefaultToHTTPError(_ error) int {
 }
 
 // InitHTTPDefaultTransport - 설정 기준으로 단 한번 설정되는 HTTP 설정 초기화
-func InitHTTPDefaultTransport(sConf config.ServiceConfig) {
+func InitHTTPDefaultTransport(sConf *config.ServiceConfig) {
 	onceTransportConfig.Do(func() {
 		http.DefaultTransport = &http.Transport{
 			Proxy: http.ProxyFromEnvironment,
@@ -154,7 +154,7 @@ func InitHTTPDefaultTransport(sConf config.ServiceConfig) {
 }
 
 // RunServer - 지정된 Context와 설정 및 Handler 기반으로 동작하는 HTT Server 구동
-func RunServer(ctx context.Context, sConf config.ServiceConfig, handler http.Handler) error {
+func RunServer(ctx context.Context, sConf *config.ServiceConfig, handler http.Handler) error {
 	done := make(chan error)
 	s := NewServer(sConf, handler)
 
@@ -183,7 +183,7 @@ func RunServer(ctx context.Context, sConf config.ServiceConfig, handler http.Han
 }
 
 // NewServer - 지정한 설정과 http handler 기준으로 동작하는 http server 반환
-func NewServer(sConf config.ServiceConfig, handler http.Handler) *http.Server {
+func NewServer(sConf *config.ServiceConfig, handler http.Handler) *http.Server {
 	return &http.Server{
 		Addr:              fmt.Sprintf(":%d", sConf.Port),
 		Handler:           handler,

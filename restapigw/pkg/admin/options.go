@@ -41,14 +41,14 @@ func WithPort(port int) Option {
 }
 
 // WithCredentials - 서비스 사용을 위한 사용자 옵션 설정
-func WithCredentials(credential config.CredentialsConfig) Option {
+func WithCredentials(credential *config.CredentialsConfig) Option {
 	return func(s *Server) {
 		s.Credentials = credential
 	}
 }
 
 // WithTLS - TLS 옵션 설정
-func WithTLS(tls config.TLSConfig) Option {
+func WithTLS(tls *config.TLSConfig) Option {
 	return func(s *Server) {
 		s.TLS = tls
 	}

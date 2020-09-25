@@ -28,7 +28,7 @@ build-check: build-dev check
 
 check:
 	@echo "==> Check the configuration file"
-	./$(BINARY_NAME) --config $(CONF) check
+	./$(BINARY_NAME) --config $(CONF) check -d true -p 8080
 
 run:
 	@echo "==> Build project"

@@ -300,8 +300,3 @@ func (c *Configuration) ClearRemoved() {
 
 // ===== [ Private Functions ] =====
 // ===== [ Public Functions ] =====
-
-// NewDefinition - 기본 값으로 설정된 API Routing Endpoint 인스턴스 생성
-func NewDefinition() *config.EndpointConfig {
-	return &config.EndpointConfig{}
-}
