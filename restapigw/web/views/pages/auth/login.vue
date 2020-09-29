@@ -89,8 +89,8 @@ export default class LoginPage extends Vue {
     this.loading = true;
     this.$auth
       .loginWith("local", { data: this.loginModel })
-      .then(res => {
-        console.log(`LOGIN Response: ${JSON.stringify(res)}`);
+      .then(_ => {
+        // console.log(`LOGIN Response: ${JSON.stringify(res)}`);
       })
       .catch(err => {
         if (err.message.includes("401")) {

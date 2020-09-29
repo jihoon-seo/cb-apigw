@@ -662,10 +662,6 @@ func (eConf *EndpointConfig) InitializeDefaults() error {
 func (eConf *EndpointConfig) AdjustValues(sConf *ServiceConfig) error {
 	eConf.Endpoint = core.CleanPath(eConf.Endpoint)
 
-	if err := eConf.Validate(); nil != err {
-		return err
-	}
-
 	// Endpoint URL에 지정된 파라미터를 Input parameter로 설정
 	inputParams := core.ExtractPlaceHoldersFromURLTemplate(eConf.Endpoint, core.ParameterExtractPattern(sConf.DisableStrictREST))
 	inputSet := map[string]interface{}{}
@@ -693,6 +689,11 @@ func (eConf *EndpointConfig) AdjustValues(sConf *ServiceConfig) error {
 
 		// Backend 설정의 Middleware 설정 맵 관리
 		bConf.Middleware.sanitize()
+	}
+
+	// 최종 Endpoint 정보 검사
+	if err := eConf.Validate(); nil != err {
+		return err
 	}
 
 	return nil

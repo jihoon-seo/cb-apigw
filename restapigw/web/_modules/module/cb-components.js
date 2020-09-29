@@ -8,5 +8,5 @@ import Vue from 'vue'
   Vue.component('<%= name %>', <%= name %>)
 <% }) %>
 
-console.log(`[CB Components] Plugin called...`)
+// console.log(`[CB Components] Plugin called...`)
 /* tslint:enable */

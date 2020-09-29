@@ -69,19 +69,19 @@ func (s *Server) closeChannel() {
 }
 
 // applyChanges - 수신된 API 변경사항 반영
-func (s *Server) applyChanges(conf *api.Configuration) {
+func (s *Server) applyChanges() {
 	s.logger.Debug("[SERVER] Refreshing configuration")
 
 	// 신규 라우팅 엔진 생성
 	s.router.UpdateEngine(s.serviceConfig)
 	// 변경된 Routing 규칙 적용
-	s.router.RegisterAPIs(s.serviceConfig, conf.GetAllDefinitions())
+	s.router.RegisterAPIs(s.serviceConfig, s.currConfigurations.GetAllDefinitions())
 
 	s.logger.Debug("[SERVER] Configuration refreshing complete")
 }
 
-// applyGroups - 관리 중인 리포지토리 출력
-func (s *Server) applyGroups() error {
+// applyToRepository - 관리 중인 설정 변경내역을 리포지토리로 출력
+func (s *Server) applyToRepository() error {
 	err := s.repoProvider.Write(s.currConfigurations.DefinitionMaps)
 	if nil != err {
 		return err
@@ -109,12 +109,12 @@ func (s *Server) updateConfiguration(cm api.ConfigChangedMessage) error {
 	case api.RemovedGroupOperation:
 		return s.currConfigurations.RemoveGroup(cm.Name)
 	case api.ApplyGroupsOperation:
-		return s.applyGroups()
+		return s.applyToRepository()
 	}
 	return nil
 }
 
-// listenProviders - Server가 종료되는 시점까지 Repository 변경사항 처리
+// listenProviders - Server가 종료되는 시점까지 Repository에서 발생한 변경사항 처리
 func (s *Server) listenProviders(stop chan struct{}) {
 	for {
 		select {
@@ -129,10 +129,15 @@ func (s *Server) listenProviders(stop chan struct{}) {
 			for _, dm := range configMsg.Configurations.DefinitionMaps {
 				for i, cdm := range s.currConfigurations.DefinitionMaps {
 					if dm.Name == cdm.Name {
+						// Group이 삭제된 경우
 						if dm.State == api.REMOVED {
-							copy(s.currConfigurations.DefinitionMaps[1:], s.currConfigurations.DefinitionMaps[i+1:])
-							s.currConfigurations.DefinitionMaps = s.currConfigurations.DefinitionMaps[:len(s.currConfigurations.DefinitionMaps)-1]
+							s.logger.Debug("[SERVER] Removed definition group was found in the repository. [" + dm.Name + "]")
+							s.currConfigurations.DefinitionMaps = append(s.currConfigurations.DefinitionMaps[:i], s.currConfigurations.DefinitionMaps[i+1:]...)
+							if !hasChanges {
+								hasChanges = true
+							}
 						} else {
+							// 그외 변경된 경우 검증
 							if reflect.DeepEqual(cdm, dm) {
 								s.logger.Debug("[SERVER] Changed API Definition is same with current configurations. Skip changes [" + dm.Name + "]")
 								continue
@@ -149,7 +154,7 @@ func (s *Server) listenProviders(stop chan struct{}) {
 
 			if hasChanges {
 				s.logger.Debug("[SERVER] Configuration change detected by Repository")
-				s.applyChanges(s.currConfigurations)
+				s.applyChanges()
 			}
 		}
 	}
@@ -175,7 +180,7 @@ func (s *Server) startProvider(ctx context.Context) error {
 		return errors.Wrap(err, "[SERVER] Coluld not start Admin API Server")
 	}
 
-	// API 변경 대기
+	// API 변경 대기 (API를 통한 변경사항 처리)
 	go func() {
 		ch := make(chan api.ConfigChangedMessage)
 
@@ -197,7 +202,7 @@ func (s *Server) startProvider(ctx context.Context) error {
 				err := s.updateConfiguration(c)
 				if nil == err {
 					if c.Operation != api.ApplyGroupsOperation && (c.Operation != api.AddedGroupOperation || (c.Operation == api.AddedGroupOperation && len(c.Definitions) > 0)) {
-						s.applyChanges(s.currConfigurations)
+						s.applyChanges()
 					}
 				} else {
 					s.logger.WithError(err).Debug("can not apply configuration changes")

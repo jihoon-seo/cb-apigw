@@ -137,19 +137,6 @@ export default class AppToolbar extends Vue {
   private onThemeOptionChagned(e: any) {
     const value = e.target.textContent;
     this.$vuetify.theme.dark = value === "Dark";
-
-    console.log(
-      `Current Theme : ${JSON.stringify(this.$vuetify.theme.currentTheme)}`
-    );
-    //    this.touchAll();
-
-    // if (!this.$vuetify.theme.dark && value === "Dark") {
-    //   // this.$vuetify.theme.themes.dark.primary = this.$vuetify.theme.themes.light.primary;
-    //   this.$vuetify.theme.dark = true;
-    // } else if (this.$vuetify.theme.dark && value === "Light") {
-    //   // this.$vuetify.theme.themes.light.primary = this.$vuetify.theme.themes.dark.primary;
-    //   this.$vuetify.theme.dark = false;
-    // }
   }
 
   private async handleLogout() {

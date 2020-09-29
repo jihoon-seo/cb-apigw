@@ -5,6 +5,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
 	cbstore "github.com/cloud-barista/cb-store"
@@ -17,6 +18,7 @@ import (
 type (
 	// CbStoreRepository - CB-Store 기반 Repository 관리 정보 형식
 	CbStoreRepository struct {
+		sConf *config.ServiceConfig
 		*InMemoryRepository
 		store       icbs.Store
 		storeKey    string
@@ -94,9 +96,9 @@ func (csr *CbStoreRepository) Watch(ctx context.Context, configChan chan<- RepoC
 // ===== [ Public Functions ] =====
 
 // NewCbStoreRepository - CB-Store 기반의 Repository 인스턴스 생성
-func NewCbStoreRepository(key string, refreshTime time.Duration) (*CbStoreRepository, error) {
+func NewCbStoreRepository(sConf *config.ServiceConfig, key string, refreshTime time.Duration) (*CbStoreRepository, error) {
 	log := logging.GetLogger()
-	repo := CbStoreRepository{InMemoryRepository: NewInMemoryRepository(), store: cbstore.GetStore(), storeKey: key, refreshTime: refreshTime}
+	repo := CbStoreRepository{sConf: sConf, InMemoryRepository: NewInMemoryRepository(), store: cbstore.GetStore(), storeKey: key, refreshTime: refreshTime}
 
 	// TODO: Watching
 
@@ -109,7 +111,7 @@ func NewCbStoreRepository(key string, refreshTime time.Duration) (*CbStoreReposi
 			continue
 		}
 
-		definition := parseEndpoint([]byte(kv.Value))
+		definition := parseEndpoint(sConf, []byte(kv.Value))
 		for _, def := range definition.Definitions {
 			if err := repo.add(core.GetLastPart(kv.Key, "/"), def); nil != err {
 				log.WithField("endpoint", def.Endpoint).WithError(err).Error("Failed during add endpoint to the repository")

@@ -5,7 +5,7 @@ const chokidar = require("chokidar");
 const libRoot = resolve(__dirname, "..");
 
 module.exports = function(moduleOptions) {
-  console.log(`[CB Modules] Module started... LibRoot: ${libRoot}`);
+  // console.log(`[CB Modules] Module started... LibRoot: ${libRoot}`);
 
   const { options } = this.nuxt;
 
@@ -87,7 +87,7 @@ module.exports = function(moduleOptions) {
 
   // Hook on builder
   this.nuxt.hook("build:before", async builder => {
-    console.log("[CB Components] Nuxt building hook");
+    // console.log("[CB Components] Nuxt building hook");
 
     // Scan components once
     await scanGlobalComponents();

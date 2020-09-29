@@ -45,11 +45,11 @@ middleware:
     allow_credentials: true
 
 repository:
-  dsn: file://./conf
-  #dsn: cbstore://api/restapigw/conf
+  #dsn: file://./conf
+  dsn: cbstore://api/restapigw/conf
 
 cluster:
-  update_frequency: 10s
+  update_frequency: 30s
 
 admin:
   port: 8001

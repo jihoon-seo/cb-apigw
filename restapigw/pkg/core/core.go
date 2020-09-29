@@ -348,3 +348,9 @@ func GCD(x, y int) int {
 	}
 	return x
 }
+
+// RemoveSlice - 지정한 배열 구조에서 지정한 인덱스의 값을 삭제하고 반환
+func RemoveSlice(arr []interface{}, idx int) []interface{} {
+	arr[idx] = arr[len(arr)-1]
+	return arr[:len(arr)-1]
+}

@@ -23,6 +23,7 @@ type (
 
 	// FileSystemRepository - 파일 시스템 기반 Repository 관리 정보 형식
 	FileSystemRepository struct {
+		sConf *config.ServiceConfig
 		*InMemoryRepository
 		watcher *fsnotify.Watcher
 		path    string
@@ -85,7 +86,7 @@ func (fsr *FileSystemRepository) Watch(ctx context.Context, configChan chan<- Re
 							{
 								Name:        core.GetLastPart(event.Name, "/"),
 								State:       CHANGED,
-								Definitions: parseEndpoint(body).Definitions,
+								Definitions: parseEndpoint(fsr.sConf, body).Definitions,
 							},
 						}},
 					}
@@ -121,9 +122,9 @@ func (fsr *FileSystemRepository) Close() error {
 // ===== [ Public Functions ] =====
 
 // NewFileSystemRepository - 파일 시스템 기반의 Repository 인스턴스 생성
-func NewFileSystemRepository(dir string) (*FileSystemRepository, error) {
+func NewFileSystemRepository(sConf *config.ServiceConfig, dir string) (*FileSystemRepository, error) {
 	log := logging.GetLogger()
-	repo := FileSystemRepository{InMemoryRepository: NewInMemoryRepository(), path: dir}
+	repo := FileSystemRepository{sConf: sConf, InMemoryRepository: NewInMemoryRepository(), path: dir}
 
 	// Grab json files from directory
 	files, err := ioutil.ReadDir(dir)
@@ -156,7 +157,7 @@ func NewFileSystemRepository(dir string) (*FileSystemRepository, error) {
 				return nil, err
 			}
 
-			definition := parseEndpoint(appConfigBody)
+			definition := parseEndpoint(sConf, appConfigBody)
 			for _, v := range definition.Definitions {
 				if err = repo.add(fileName, v); nil != err {
 					log.WithField("endpoint", v.Endpoint).WithError(err).Error("Failed during add endpoint to the repository")

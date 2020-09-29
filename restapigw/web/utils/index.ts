@@ -52,7 +52,7 @@ class TimeParser {
 
     let result = null;
     const str = val.replace(/(\d),(\d)/g, "$1$2");
-    console.log(`Inputed value: ${val}, processed val : ${str}`);
+    // console.log(`Inputed value: ${val}, processed val : ${str}`);
     result = str.replace(this.duration, (_, n, units) => {
       switch (units) {
         case "s":

@@ -63,7 +63,7 @@ type (
 // ===== [ Private Functions ] =====
 
 // parseEndpoint - 지정된 정보를 Definition 정보로 전환
-func parseEndpoint(apiDef []byte) GroupDefinitions {
+func parseEndpoint(sConf *config.ServiceConfig, apiDef []byte) GroupDefinitions {
 	var apiConfigs GroupDefinitions
 	log := logging.GetLogger()
 
@@ -78,7 +78,7 @@ func parseEndpoint(apiDef []byte) GroupDefinitions {
 
 	// 로드된 Endpoint 정보 재 구성
 	for _, ec := range apiConfigs.Definitions {
-		if err := ec.InitializeDefaults(); nil != err {
+		if err := ec.AdjustValues(sConf); nil != err {
 			log.WithError(err).Error("Couldn't initialize api definition:" + ec.Name)
 		}
 	}
@@ -99,9 +99,9 @@ func groupDefinitions(dm *DefinitionMap) ([]byte, error) {
 // ===== [ Public Functions ] =====
 
 // BuildRepository - 시스템 설정에 정의된 DSN(Data Group Name) 기준으로 저장소 구성
-func BuildRepository(dsn string, refreshTime time.Duration) (Repository, error) {
+func BuildRepository(sConf *config.ServiceConfig, refreshTime time.Duration) (Repository, error) {
 	log := logging.GetLogger()
-	dsnURL, err := url.Parse(dsn)
+	dsnURL, err := url.Parse(sConf.Repository.DSN)
 	if nil != err {
 		return nil, errors.Wrap(err, "Error parsing the DSN")
 	}
@@ -125,7 +125,7 @@ func BuildRepository(dsn string, refreshTime time.Duration) (Repository, error) 
 		storeKey := dsnURL.Path
 
 		log.WithField("key", storeKey).Debug("Trying to load API configuration files")
-		repo, err := NewCbStoreRepository(storeKey, refreshTime)
+		repo, err := NewCbStoreRepository(sConf, storeKey, refreshTime)
 		if nil != err {
 			return nil, errors.Wrap(err, "could not create a CB-Store repository")
 		}
@@ -136,7 +136,7 @@ func BuildRepository(dsn string, refreshTime time.Duration) (Repository, error) 
 		apiPath := fmt.Sprintf("%s/apis", dsnURL.Path)
 
 		log.WithField("path", apiPath).Debug("Trying to load API configuration files")
-		repo, err := NewFileSystemRepository(apiPath)
+		repo, err := NewFileSystemRepository(sConf, apiPath)
 		if nil != err {
 			return nil, errors.Wrap(err, "could not create a file system repository")
 		}

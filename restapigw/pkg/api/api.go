@@ -236,8 +236,7 @@ func (c *Configuration) RemoveDefinition(name string, ec *config.EndpointConfig)
 			// remove definitions
 			for i, def := range dm.Definitions {
 				if def.Name == ec.Name {
-					copy(dm.Definitions[1:], dm.Definitions[i+1:])
-					dm.Definitions = dm.Definitions[:len(dm.Definitions)-1]
+					dm.Definitions = append(dm.Definitions[:i], dm.Definitions[i+1:]...)
 					if dm.State != ADDED {
 						dm.State = CHANGED
 					}
@@ -276,8 +275,7 @@ func (c *Configuration) RemoveGroup(name string) error {
 	for i, dm := range c.DefinitionMaps {
 		if dm.Name == name {
 			if dm.State == ADDED {
-				copy(c.DefinitionMaps[1:], c.DefinitionMaps[i+1:])
-				c.DefinitionMaps = c.DefinitionMaps[:len(c.DefinitionMaps)-1]
+				c.DefinitionMaps = append(c.DefinitionMaps[:i], c.DefinitionMaps[i+1:]...)
 				return nil
 			}
 
@@ -292,8 +290,7 @@ func (c *Configuration) RemoveGroup(name string) error {
 func (c *Configuration) ClearRemoved() {
 	for i, dm := range c.DefinitionMaps {
 		if dm.State == REMOVED {
-			copy(c.DefinitionMaps[1:], c.DefinitionMaps[i+1:])
-			c.DefinitionMaps = c.DefinitionMaps[:len(c.DefinitionMaps)-1]
+			c.DefinitionMaps = append(c.DefinitionMaps[:i], c.DefinitionMaps[i+1:]...)
 		}
 	}
 }

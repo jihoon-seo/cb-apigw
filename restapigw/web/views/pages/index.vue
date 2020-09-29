@@ -167,10 +167,10 @@
 
 <script lang="ts">
 import { Component, Vue } from "nuxt-property-decorator";
-import {YamlDialog} from '@/views/components';
+import { YamlDialog } from "@/views/components";
 
 import Util from "@/utils";
-import { ApiDefinition, ApiGroup } from "@/models";
+import { ApiDefinition, ApiGroup, BackendConfig } from "@/models";
 import { apiStore } from "@/store";
 import { search } from "@/utils/validation";
 
@@ -245,25 +245,35 @@ export default class IndexPage extends Vue {
     switch (item.type) {
       case "definition":
         if (item.action === "new") {
-          apiStore
-            .AddApiDefinition(item.item)
-            .then(() => {
-              this.$dialog.notify.info("API Definition이 추가되었습니다.");
-              this.$nextTick(() => {
-                this.apiGroups = apiStore.groups;
-              });
-            })
-            .catch((_: any) => {});
+          const error = (item.item as ApiGroup).Validate();
+          if (error !== "") {
+            this.$dialog.error({ title: "New Api Definition", text: error });
+          } else {
+            apiStore
+              .AddApiDefinition(item.item)
+              .then(() => {
+                this.$dialog.notify.info("API Definition이 추가되었습니다.");
+                this.$nextTick(() => {
+                  this.apiGroups = apiStore.groups;
+                });
+              })
+              .catch((_: any) => {});
+          }
         } else if (item.action === "update") {
-          apiStore
-            .UpdateApiDefinition(item.item)
-            .then(() => {
-              this.$dialog.notify.info("API Definition이 변경되었습니다.");
-              this.$nextTick(() => {
-                this.apiGroups = apiStore.groups;
-              });
-            })
-            .catch((_: any) => {});
+          const error = (item.item as ApiGroup).Validate();
+          if (error !== "") {
+            this.$dialog.error({ title: "Update Api Definition", text: error });
+          } else {
+            apiStore
+              .UpdateApiDefinition(item.item)
+              .then(() => {
+                this.$dialog.notify.info("API Definition이 변경되었습니다.");
+                this.$nextTick(() => {
+                  this.apiGroups = apiStore.groups;
+                });
+              })
+              .catch((_: any) => {});
+          }
         }
         this.yamlData.dialog = false;
         break;
@@ -347,7 +357,13 @@ export default class IndexPage extends Vue {
     const file = ev.target.files[0];
     const reader = new FileReader();
     reader.onload = e => {
-      const group = Util.deserializeYaml(e.target!.result as string);
+      // 파일 내용을 Model 구조로 재 구성
+      const group = this.rebuildGroup(
+        Util.deserializeYaml(e.target!.result as string)
+      );
+      group.name = file.name;
+
+      // 동일한 그룹 존재여부 검증
       if (this.apiGroups.filter(g => g.name === group.name).length > 0) {
         this.$dialog.warning({
           text:
@@ -355,15 +371,21 @@ export default class IndexPage extends Vue {
           title: "Load Group"
         });
       } else {
-        apiStore
-          .AddApiGroup(group)
-          .then(() => {
-            this.$dialog.notify.info("API GROUP이 등록되었습니다.");
-            this.$nextTick(() => {
-              this.apiGroups = apiStore.groups;
-            });
-          })
-          .catch(_ => {});
+        group.AdjustSendValues();
+        const error = group.Validate();
+        if (error !== "") {
+          this.$dialog.error({ title: "Load API Gorup", text: error });
+        } else {
+          apiStore
+            .AddApiGroup(group)
+            .then(() => {
+              this.$dialog.notify.info("API GROUP이 등록되었습니다.");
+              this.$nextTick(() => {
+                this.apiGroups = apiStore.groups;
+              });
+            })
+            .catch(_ => {});
+        }
       }
       // Input file 초기화
       (this.$refs.file as HTMLInputElement).value = "";
@@ -519,6 +541,19 @@ export default class IndexPage extends Vue {
             .catch(_ => {});
         }
       });
+  }
+
+  private rebuildGroup(obj: any): ApiGroup {
+    // 파일 내용을 Model 구조로 재 구성
+    const group = Object.assign(new ApiGroup(), obj);
+    group.definitions = group.definitions.map((d: any) => {
+      const def = Object.assign(new ApiDefinition(), d) as ApiDefinition;
+      def.backend = def.backend.map((b: any) =>
+        Object.assign(new BackendConfig(), b)
+      );
+      return def;
+    });
+    return group;
   }
 
   // ---------------------------------

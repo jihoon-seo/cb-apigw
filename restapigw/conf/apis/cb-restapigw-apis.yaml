@@ -26,7 +26,7 @@ definitions:
     timeout: 2s
     method: GET
     url_pattern: /shop/campaigns.json
-    encoding: ""
+    encoding: "json"
     group: ""
     blacklist: []
     whitelist:
@@ -46,7 +46,7 @@ definitions:
     timeout: 2s
     method: GET
     url_pattern: /shop/products.json
-    encoding: ""
+    encoding: "json"
     group: ""
     blacklist: []
     whitelist: []
@@ -99,7 +99,7 @@ definitions:
     timeout: 2s
     method: GET
     url_pattern: /hotels/1.json
-    encoding: ""
+    encoding: "json"
     group: ""
     blacklist: []
     whitelist:
@@ -117,7 +117,7 @@ definitions:
     timeout: 2s
     method: GET
     url_pattern: /destinations/{{.Resp0_destination_id}}.json
-    encoding: ""
+    encoding: "json"
     group: ""
     blacklist: []
     whitelist: []
@@ -151,7 +151,7 @@ definitions:
     timeout: 2s
     method: GET
     url_pattern: /user/1.json
-    encoding: ""
+    encoding: "json"
     group: user
     blacklist: []
     whitelist: []
@@ -170,7 +170,7 @@ definitions:
     timeout: 2s
     method: GET
     url_pattern: /
-    encoding: ""
+    encoding: "json"
     group: none
     blacklist: []
     whitelist: []
@@ -202,7 +202,7 @@ definitions:
     timeout: 2s
     method: GET
     url_pattern: /users/ccambo
-    encoding: ""
+    encoding: "json"
     group: github
     blacklist: []
     whitelist:
@@ -232,7 +232,7 @@ definitions:
     timeout: 2s
     method: GET
     url_pattern: /2.0/users/kpacha
-    encoding: ""
+    encoding: "json"
     group: bitbucket
     blacklist: []
     whitelist:
@@ -269,7 +269,7 @@ definitions:
     timeout: 2s
     method: GET
     url_pattern: /users/{{.User}}
-    encoding: ""
+    encoding: "json"
     group: ""
     blacklist: []
     whitelist: []
@@ -301,7 +301,7 @@ definitions:
     timeout: 3s
     method: GET
     url_pattern: /destinations/2.json
-    encoding: ""
+    encoding: "json"
     group: ""
     blacklist: []
     whitelist: []
@@ -334,10 +334,10 @@ definitions:
     url: ""
     timeout: 0
   backend:
-    timeout: 2s
+  - timeout: 2s
     method: GET
     url_pattern: /user/1.json
-    encoding: ""
+    encoding: "json"
     group: ""
     blacklist: []
     whitelist: []
@@ -369,7 +369,7 @@ definitions:
     timeout: 2s
     method: GET
     url_pattern: /*bypass
-    encoding: ""
+    encoding: "json"
     group: ""
     blacklist: []
     whitelist: []
@@ -401,7 +401,7 @@ definitions:
     timeout: 2s
     method: GET
     url_pattern: /*bypass
-    encoding: ""
+    encoding: "json"
     group: ""
     blacklist: []
     whitelist: []

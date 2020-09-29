@@ -28,7 +28,7 @@ import (
 // setupRepository - HTTP Server와 Admin Server 운영에 사용할 API Route 정보 리파지토리 구성
 func setupRepository(sConf *config.ServiceConfig, log logging.Logger) (api.Repository, error) {
 	// API Routing 정보를 관리하는 Repository 구성
-	repo, err := api.BuildRepository(sConf.Repository.DSN, sConf.Cluster.UpdateFrequency)
+	repo, err := api.BuildRepository(sConf, sConf.Cluster.UpdateFrequency)
 	if nil != err {
 		return nil, errors.Wrap(err, "could not build a repository for the database or file or CB-Store")
 	}
