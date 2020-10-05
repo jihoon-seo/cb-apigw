@@ -44,7 +44,7 @@ build-dev:
 	$(GOBUILD) -tags "$(TAGS)" -o $(BINARY_NAME) -v $(BUILD_PATH)
 
 .PHONY: build-linux
-build-linux:
+build-linux: static
 	@echo "==> Build (Linux-64) project"
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) -tags "$(TAGS)" -o $(BINARY_LINUX) -v $(BUILD_PATH)
 

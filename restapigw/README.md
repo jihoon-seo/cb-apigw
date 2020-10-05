@@ -33,42 +33,65 @@ cloudbaristaorg/cb-restapigw:v0.1-yyyymmdd
 
 ## [설치]
 
-설치는 Ubuntu Latest 버전을 기준으로 한다.
+설치는 Mac (Catalina) 또는 Ubuntu Latest 버전을 기준으로 한다.
 
 - **Git 설치**
-  ```shell
-  # apt update
-  # apt install git
-  ```
+  - Ubuntu 환경
+    ```shell
+    # apt update
+    # apt install git
+    ```
+  - Mac 환경
+    ```
+    $ brew install git
+    ```
 
-- **Go 설치 (v1.12 이상)**
-  - https://golang.org/dl 에서 최신 버전 확인 (현재 1.14.1)
+- **Go 설치 (v1.12 이상) - GO Module 사용**
+  - https://golang.org/dl 에서 최신 버전 확인 (현재 1.15.2)
   - 다운로드 및 설치
     ```shell
-    $ wget https://dl.google.com/go/go1.14.1.linux-amd64.tar.gz
-    $ tar -C /usr/local -xzf go1.13.4.linux-amd64.tar.gz
+    # wget이 없는 경우라면 설치
+    $ apt-get install wget
+
+    # 개발 툴 설치
+    $ apt-get install gcc make
+
+    # Go 설치 및 확인
+    $ wget https://dl.google.com/go/go1.15.2.linux-amd64.tar.gz
+    $ tar -C /usr/local -xzf go1.15.2.linux-amd64.tar.gz
     $ export PATH=$PATH:/usr/local/go/bin
+
     $ which go
     /usr/local/go/bin/go
+
     $ go version
-    go version go1.14.1 linux/amd64
+    go version go1.15.2 linux/amd64
+
+    $ export GO111MOUDLE="on"
     $ go env
-    GO111MODULE="on"
+    GO111MODULE=""
     GOARCH="amd64"
     GOBIN=""
     GOCACHE="/root/.cache/go-build"
+    GOENV="/root/.config/go/env"
     GOEXE=""
     GOFLAGS=""
     GOHOSTARCH="amd64"
     GOHOSTOS="linux"
+    GOINSECURE=""
+    GOMODCACHE="/root/go/pkg/mod"
+    GONOPROXY=""
+    GONOSUMDB=""
     GOOS="linux"
     GOPATH="/root/go"
-    GOPROXY=""
-    GORACE=""
+    GOPRIVATE=""
+    GOPROXY="https://proxy.golang.org,direct"
     GOROOT="/usr/local/go"
+    GOSUMDB="sum.golang.org"
     GOTMPDIR=""
     GOTOOLDIR="/usr/local/go/pkg/tool/linux_amd64"
     GCCGO="gccgo"
+    AR="ar"
     CC="gcc"
     CXX="g++"
     CGO_ENABLED="1"
@@ -79,7 +102,7 @@ cloudbaristaorg/cb-restapigw:v0.1-yyyymmdd
     CGO_FFLAGS="-g -O2"
     CGO_LDFLAGS="-g -O2"
     PKG_CONFIG="pkg-config"
-    GOGCCFLAGS="-fPIC -m64 -pthread -fmessage-length=0 -fdebug-prefix-map=/tmp/go-build341274058=/tmp/go-build -gno-record-gcc-switches"
+    GOGCCFLAGS="-fPIC -m64 -pthread -fno-caret-diagnostics -Qunused-arguments -fmessage-length=0 -fdebug-prefix-map=/tmp/go-build294181070=/tmp/go-build -gno-record-gcc-switches"
     ```
   - 환경 파일을 통해서 설정할 경우는 다음과 같이 처리한다.
     - .bashrc 파일 하단에 경로 관련 추가
@@ -113,6 +136,12 @@ cloudbaristaorg/cb-restapigw:v0.1-yyyymmdd
   - Linux 환경
     ```shell
     $ cd cb-apigw/restapigw
+
+    # 개발툴 (gcc, make) 를 설치한 경우
+    $ make build
+
+    # 설치하지 않은 경우
+    $ 
     $ go build -tags cb-restapigw -o cb-restapigw -v
     ```
 
