@@ -60,8 +60,8 @@ type (
 		Name string `mapstructure:"name"`
 		// 기본 처리 시간 (기본값: 2s)
 		Timeout time.Duration `mapstructure:"timeout" default:"2s"`
-		// 종료시 잔여 요청을 처리하기 위한 대기 시간 (기본 값: 0)
-		GraceTimeout int64 `mapstructure:"grace_timeout"`
+		// 종료시 잔여 요청을 처리하기 위한 대기 시간 (기본 값: 0s)
+		GraceTimeout time.Duration `mapstructure:"grace_timeout"`
 		// 디버그모드 여부 (기본값: false)
 		Debug bool `mapstructure:"debug"`
 		// GET 처리에 대한 캐시 TTL 기간 (기본값: 1h)
@@ -102,8 +102,6 @@ type (
 		ResponseHeaderTimeout time.Duration `mapstructure:"response_header_timeout"`
 		// 서버의 첫번째 Response Header 정보를 기다리는 시간 (기본값: 0, 0이면 no timeout)
 		ExpectContinueTimeout time.Duration `mapstructure:"expect_continue_timeout"`
-		// OutputEncoding - Endpoint의 Response 처리에 사용할 기본 Encoding (기본값: "json")
-		OutputEncoding string `mapstructure:"output_encoding" default:"json"`
 		// DisableStrictREST - REST 강제 규칙 비활성화 여부 (기본값: false)
 		DisableStrictREST bool `mapstructure:"disable_strict_rest"`
 		// RouterEngine - Route 처리에 사용할 Engine 지정 (기본값: gin)
@@ -121,7 +119,7 @@ type (
 	AdminConfig struct {
 		// Port - Admin Server 포트 (기본값: 8001)
 		Port int `mapstructure:"port" default:"8001"`
-		// Credentials - Admin Server를 사용할 사용자 설정
+		// Credentials - Admin Server (WEB)를 사용할 사용자 설정
 		Credentials *CredentialsConfig `mapstructure:"credentials"`
 		// TLS - Admin Server에서 사용할 TLS 설정
 		TLS *TLSConfig `mapstructure:"tls"`
@@ -133,13 +131,13 @@ type (
 
 	// RepositoryConfig - Routing 정보 관리 형식
 	RepositoryConfig struct {
-		// DSN - Repository 연결 문자열 (기본값: "file:///./conf", "cbstore://api/restapigw/conf" 설정 가능)
-		DSN string `mapstructure:"dsn" default:"file:///./conf"`
+		// DSN - Repository 연결 문자열 (기본값: "file://./conf", "cbstore://api/restapigw/conf" 설정 가능)
+		DSN string `mapstructure:"dsn" default:"file://./conf"`
 	}
 
 	// ClusterConfig - Cluster 환경 정보 관리 형식
 	ClusterConfig struct {
-		// UpdateFrequency - Repository Polling 주가 (기본값: 10s, file repository가 아닌 경우)
+		// UpdateFrequency - Repository Polling 주기 (기본값: 10s, file repository가 아닌 경우)
 		UpdateFrequency time.Duration `mapstructure:"update_frequency" default:"10s"`
 	}
 
@@ -178,7 +176,7 @@ type (
 		// CacheTTL - GET 처리에 대한 캐시 TTL 기간 (기본값: "1h")
 		CacheTTL time.Duration `yaml:"cache_ttl" json:"cache_ttl" default:"1h"`
 		// OutputEncoding - 반환결과 처리에 사용할 인코딩 (기본값: "json")
-		OutputEncoding string `yaml:"output_encoding" json:"output_encoding" default:"2s"`
+		OutputEncoding string `yaml:"output_encoding" json:"output_encoding" default:"json"`
 		// ExceptQueryStrings - Backend 에 전달되는 Query String에서 제외할 파라미터 Key 리스트
 		ExceptQueryStrings []string `yaml:"except_querystrings" json:"except_querystrings" default:"[]"`
 		// ExceptHeaders - Backend 에 전달되는 Header에서 제외할 파라미터 Key 리스트
@@ -216,16 +214,16 @@ type (
 		Mapping map[string]string `yaml:"mapping" json:"mapping"`
 		// IsCollection - Backend 결과가 컬랙션인지 여부 (기본값: false)
 		IsCollection bool `yaml:"is_collection" json:"is_collection" default:"false"`
-		// BWrapCollectionToJSON - ackend 결과가 컬랙션인 경우에 core.CollectionTag ("collection") 으로 JSON 포맷을 할 것인지 여부
+		// WrapCollectionToJSON - Backend 결과가 컬랙션인 경우에 core.CollectionTag ("collection") 으로 JSON 포맷을 할 것인지 여부
 		// (True 면 core.CollectionTag ("collection") 으로 JSON 전환, false면 Array 상태로 반환) (기본값: false)
 		WrapCollectionToJSON bool `yaml:"wrap_collection_to_json" json:"wrap_collection_to_json" default:"false"`
 		// Target - Backend 결과 중에서 특정한 필드만 처리할 경우의 필드명 (기본값: "")
 		Target string `yaml:"target" json:"target"`
 		// Middleware - Backend 에서 동작할 Middleware 설정
 		Middleware MWConfig `yaml:"middleware" json:"middleware"`
-		// HostSanitizationDisabled - HostSanitizationDisabled - host 정보의 정제작업 비활성화 여부 (기본값: false)
+		// HostSanitizationDisabled - host 정보의 정제작업 비활성화 여부 (기본값: false)
 		HostSanitizationDisabled bool `yaml:"disable_host_sanitize" json:"disable_host_sanitize" default:"false"`
-		// BalanceMode - BalanceMode - Backend Loadbalacing 모드 (기본값: "", "rr" - "roundrobin", "wrr" - "weighted roundrobin", "" - random)
+		// BalanceMode - Backend Loadbalacing 모드 (기본값: "", "rr" - "roundrobin", "wrr" - "weighted roundrobin", "" - random)
 		BalanceMode string `yaml:"lb_mode" json:"lb_mode" default:""`
 
 		// API 호출의 응답을 파싱하기 위한 디코더 (내부 사용)
@@ -274,7 +272,7 @@ type (
 		// URL - Health Checking URL (기본값: "")
 		URL string `mapstructure:"url" yaml:"url" json:"url" bson:"url"` // `mapstructure:"url" yaml:"url" json:"url" bson:"url" valid:"url"`
 		// Timeout - 검증 제한 시간 (기본값: 0, 제한없음)
-		Timeout int `mapstructure:"timeout" yaml:"timeout" json:"timeout" bson:"timeout"`
+		Timeout time.Duration `mapstructure:"timeout" yaml:"timeout" json:"timeout" bson:"timeout"`
 	}
 
 	// UnsupportedVersionError - 설정 초기화 과정에서 버전 검증을 통해 반환할 오류 구조

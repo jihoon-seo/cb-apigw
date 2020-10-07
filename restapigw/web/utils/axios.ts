@@ -48,7 +48,7 @@ export function initializeAxios(axiosInstance: NuxtAxiosInstance) {
     },
     error => {
       if (checkAuth(error.response)) {
-        showError(error);
+        showError(error.message);
         return Promise.reject(error.message);
       } else {
         return Promise.reject(error);

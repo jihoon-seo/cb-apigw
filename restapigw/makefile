@@ -22,8 +22,9 @@ clean:
 	@echo "==> Cleaning project"
 	rm -f $(BINARY_NAME)
 
-.PHONY: build-run run check
+.PHONY: build-run build-run-linux run check
 build-run: build-dev run
+build-run-linux: build-dev-linux run
 build-check: build-dev check
 
 check:
@@ -34,7 +35,7 @@ run:
 	@echo "==> Build project"
 	./$(BINARY_NAME) --config $(CONF) run
 
-.PHONY: build build-dev
+.PHONY: build build-dev build-dev-linux
 build: static
 	@echo "==> Build project"
 	$(GOBUILD) -tags "$(TAGS)" -o $(BINARY_NAME) -v $(BUILD_PATH)
@@ -43,10 +44,16 @@ build-dev:
 	@echo "==> Build project (Dev)"
 	$(GOBUILD) -tags "$(TAGS)" -o $(BINARY_NAME) -v $(BUILD_PATH)
 
-.PHONY: build-linux
+build-dev-linux:
+	@echo "==> Build (Linux-64) project (Dev)"
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) -tags "$(TAGS)" -o $(BINARY_NAME) -v $(BUILD_PATH)
+
+.PHONY: build-linux build-check-linux
 build-linux: static
 	@echo "==> Build (Linux-64) project"
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) -tags "$(TAGS)" -o $(BINARY_LINUX) -v $(BUILD_PATH)
+
+build-check-linux: build-dev-linux check
 
 .PHONY: install
 install:

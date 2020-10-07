@@ -2,12 +2,13 @@
 // import colors from "vuetify/lib/util/colors";
 
 const apigw = {
-  host: "0.0.0.0",
-  port: 4444,
+  title: "Cloud-Barista REST API G/W Admin", // 브라우저에 표시될 타이틀
+  host: "0.0.0.0", // 개발 검증용 (로컬 테스트 구동에만 사용 - Node 기반)
+  port: 4444, // 개발 검증용 (로컬 테스트 구동에만 사용 - Node 기반)
   api:
     process.env.NODE_ENV === "production"
-      ? "http://localhost:8001"
-      : "http://localhost:8001",
+      ? "http://localhost:8001" // 실제 동작하는 API G/W API URL 로 변경 <<- 이부분을 실제 값으로 변경해서 빌드
+      : "http://localhost:8001", // 개발 검증용 (로컬 테스트 구동)
   path: "/"
 };
 
@@ -34,8 +35,7 @@ export default {
    ** Headers of the page
    */
   head: {
-    titleTemplate: "%s - " + process.env.npm_package_name,
-    title: process.env.npm_package_name || "",
+    title: apigw.title || "REST API G/W Admin",
     meta: [
       { charset: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
@@ -115,8 +115,8 @@ export default {
     // 빌드 속도를 올리기위해 아래 3가지 옵션 추가했습니다. 3개다 아직 Experimental한 기능이므로 문제 발생시 주석처리 해주세요.
     parallel: true,
     cache: true,
-    devtools: process.env.NODE_ENV === 'development',
-    analyze: process.env.NODE_ENV === 'development',
+    devtools: process.env.NODE_ENV === "development",
+    analyze: process.env.NODE_ENV === "development",
     // analyze: {
     //   analyzerMode: 'server',
     //   analyzerHost: '0.0.0.0',
@@ -125,8 +125,8 @@ export default {
     // },
 
     // CSS 연관으로 설정하면 Production 모드에서 제대로 동작하지 않는 문제 발생
-    //cssSourceMap: true,
-    //extractCSS: process.env.NODE_ENV !== 'development',
+    // cssSourceMap: true,
+    // extractCSS: process.env.NODE_ENV !== 'development',
 
     transpile: ["vuetify/lib"],
     /*
@@ -136,7 +136,8 @@ export default {
       // Extend only webpack config for client-bundle
       // Run ESLint on save
       if (ctx.isDev && ctx.isClient) {
-        config.devtool = process.env.NODE_ENV === 'development' ? "#source-map" : "";
+        config.devtool =
+          process.env.NODE_ENV === "development" ? "#source-map" : "";
         config.module.rules.push({
           enforce: "pre",
           test: /\.(js|ts|vue)$/,

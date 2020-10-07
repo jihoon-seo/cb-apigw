@@ -234,10 +234,9 @@ func (s *Server) StartWithContext(ctx context.Context) error {
 		defer s.Close()
 
 		<-ctx.Done()
-		reqAcceptGraceTimeout := time.Duration(s.serviceConfig.GraceTimeout)
-		if 0 < reqAcceptGraceTimeout {
-			s.logger.Infof("[SERVER] Waiting %s for incoming requests to cease", reqAcceptGraceTimeout)
-			time.Sleep(reqAcceptGraceTimeout)
+		if 0 < s.serviceConfig.GraceTimeout {
+			s.logger.Infof("[SERVER] Waiting %s for incoming requests to cease", s.serviceConfig.GraceTimeout)
+			time.Sleep(s.serviceConfig.GraceTimeout)
 		}
 
 		s.logger.Info("[SERVER] Stopping server gracefully")
