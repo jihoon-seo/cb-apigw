@@ -177,7 +177,7 @@ export default {
     debug: isDev,
     timeout: 3000,
     retry: { retries: 0 }, // Axios Intercepts 에서 공통처리하는 메시지 박스에서 무한루프 오류 발생하므로 사용 금지.
-    baseURL: (apigw.api || process.env.BASE_URL) + apigw.path
+    baseURL: (apigw.api || process.env.API_BASE_URL) + apigw.path
     // credentials: true  // cookie 사용 인증인 경우만 처리 (CORS 관련 오류 발생하며 wildcard 사용 불가 오류)
   },
   /*

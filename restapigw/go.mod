@@ -3,8 +3,6 @@ module github.com/cloud-barista/cb-apigw/restapigw
 go 1.13
 
 replace (
-	github.com/cloud-barista/cb-log v0.1.1 => /Users/morris/Workspaces/etri/sources/2020/10/cb-log
-
 	// CB-STORE related (start)
 	github.com/cloud-barista/cb-store v0.1.1 => /Users/morris/Workspaces/etri/sources/2020/10/cb-store
 	// github.com/coreos/bbolt => go.etcd.io/bbolt v1.3.3
@@ -25,7 +23,7 @@ replace (
 
 require (
 	contrib.go.opencensus.io/exporter/jaeger v0.1.0
-	github.com/cloud-barista/cb-log v0.1.1
+	github.com/cloud-barista/cb-log v0.2.0-cappuccino.0.20201008023843-31002c0a088d
 	github.com/cloud-barista/cb-store v0.1.1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-contrib/sse v0.0.0-20170109093832-22d885f9ecc7 // indirect

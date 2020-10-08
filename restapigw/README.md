@@ -1517,6 +1517,39 @@ const apigw = {
       - 각 Backend 별 발생한 오류 메시지를 **"\n"** 구분자로 연결한 문자열 처리
       - 모두 정상이라면 **`(X-Cb-Restapigw-Messages)`** Header 정보가 존재하지 않는다.
 
+### Admin Web 사용법
+
+  > Admin Web은 빌드를 통해서 API G/W 바이너리에 포함되어 실행된다. Admin Api/Web의 접속 Port는 `시스템 설정 > Admin 설정` 부분을 참고하면 된다. (기본 값: 8001)
+
+  - **웹 실행**
+    - http://\<api g\/w domain\>:8001 로 접속하면 Admin Web 화면을 볼 수 있다. 
+    - 화면이 제대로 보이지 않는다면 빌드 오류나 설정 (admin 관련 설정들)을 확인해 보면 된다.
+    - `Network Error`가 발생한다면 [Admin API / Web 관련 검토](#admin-api--web-관련-검토) 부분에서 API URL 정보가 제대로 설정되지 않은 상태로 빌드가 된 것이므로 확인하고 다시 빌드를 해야 한다.
+  - **로그인**
+    - 시스템 설정의 admin에서 지정한 사용자 정보로 로그인 한다. 
+    - API 설정을 관리하기 위한 용도이므로 추가적인 사용자 및 인증/권한 관리를 하지는 않는다.
+  - **API 그룹 관리**
+    - 여러 API 들을 묶어서 관리할 수 있도록 그룹 개념을 사용한다. (파일 시스템이라면 파일 단위, CB-STORE 라면 Key 단위)
+    - 로그인하면 기본적인 샘플이 구성된 그룹이 하나 존재한다.
+    - 그룹 정보 바에서 조회/신규/삭제/Import/Export 기능이 제공된다.
+  - **선택 그룹내의 API 관리**
+    - 실제 동작을 의미하는 기존 Endpoint 단위의 설정이다.
+    - API 정보 바에서 조회/신규/보기/삭제 기능이 제공된다.
+  - **변경 적용**
+    - 클러스터에 다중으로 실행되고 있는 상태일 수 있으므로 `"그룹과 API" 변경 내용은 접속한 API G/W 메모리 내에서만 즉시 변경 반영`된다.
+    - 화면 하단의 `"Apply Changes" 버튼을 통해서 Repository에 반영을 해야 변경된 내용이 다른 API G/W 와 공유`된다.
+  - **Repository 변경 반영**
+    - `파일 시스템을 사용하는 단일 구동 환경에서는 해당 파일이 수정되면 즉시 변경이 반영`된다.
+    - `CB-Store를 사용하는 다중 구동 환경에서는 파일 개념이 아닌 Key-Value Store로 동작하기 때문에 주기적인 Polling 방식으로 변경 여부를 판단하고 반영`된다.
+
+  > 기본적인 Admin UI 는 다음과 같이 구성되어 있다.<br/>
+  > 
+  > <p align="center"><img src="./.images/adminweb_ui.png"></p>
+  > 
+  > 보기 및 신규/수정의 경우는 YAML Edit 기능을 제공하기 위해 Textarea를 가공한 컴포넌트를 사용한다.
+  >
+  > <p align="center"><img src="./.images/adminweb_yamleditor.png"></p>
+
 ### Docker Container 실행
 
 백그라운드 서비스들을 구동한 후에 API G/W를 Docker 기반으로 생성하여 실행한다.

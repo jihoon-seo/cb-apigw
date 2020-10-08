@@ -6,8 +6,6 @@ timeout: 1m
 debug: true
 router_engine: gin
 middleware:
-  mw-httpcache:
-    enabled: false
   mw-metrics:
     router_enabled: true
     proxy_enabled: true

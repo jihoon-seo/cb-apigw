@@ -8,8 +8,12 @@ WORKDIR /app
 ADD ./cmd ./cmd
 ADD ./conf ./conf
 ADD ./pkg ./pkg
+ADD ./web ./web
 ADD ./go.mod .
 ADD ./main.go .
+
+
+
 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags '-w -extldflags "-static"' -tags cb-restapigw -o cb-restapigw -v
 

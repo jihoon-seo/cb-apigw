@@ -140,7 +140,7 @@ func NewFileSystemRepository(sConf *config.ServiceConfig, dir string) (*FileSyst
 	repo.watcher = watcher
 
 	for _, f := range files {
-		if strings.HasSuffix(f.Name(), ".yaml") {
+		if strings.HasSuffix(f.Name(), ".yaml") || strings.HasSuffix(f.Name(), ".yml") {
 			fileName := f.Name()
 			filePath := filepath.Join(dir, fileName)
 			log.WithField("path", filePath)

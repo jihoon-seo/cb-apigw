@@ -1,0 +1,21 @@
+[CLOUD-BARISTA].[DEBUG]: 2020-10-08 11:39:56 repository.go:135, github.com/cloud-barista/cb-apigw/restapigw/pkg/api.BuildRepository() - File system based configuration choosen
+[CLOUD-BARISTA].[DEBUG]: 2020-10-08 11:39:56 repository.go:138, github.com/cloud-barista/cb-apigw/restapigw/pkg/api.BuildRepository() - Trying to load API configuration files
+[CLOUD-BARISTA].[DEBUG]: 2020-10-08 11:39:56 memory_repository.go:50, github.com/cloud-barista/cb-apigw/restapigw/pkg/api.(*InMemoryRepository).add() - Sequential Test definition added to cb-restapigw-apis.yaml group
+[CLOUD-BARISTA].[DEBUG]: 2020-10-08 11:39:56 memory_repository.go:50, github.com/cloud-barista/cb-apigw/restapigw/pkg/api.(*InMemoryRepository).add() - Fail Test definition added to cb-restapigw-apis.yaml group
+[CLOUD-BARISTA].[DEBUG]: 2020-10-08 11:39:56 memory_repository.go:50, github.com/cloud-barista/cb-apigw/restapigw/pkg/api.(*InMemoryRepository).add() - Public Test definition added to cb-restapigw-apis.yaml group
+[CLOUD-BARISTA].[DEBUG]: 2020-10-08 11:39:56 memory_repository.go:50, github.com/cloud-barista/cb-apigw/restapigw/pkg/api.(*InMemoryRepository).add() - External(Github) Test definition added to cb-restapigw-apis.yaml group
+[CLOUD-BARISTA].[DEBUG]: 2020-10-08 11:39:56 memory_repository.go:50, github.com/cloud-barista/cb-apigw/restapigw/pkg/api.(*InMemoryRepository).add() - Collection Test definition added to cb-restapigw-apis.yaml group
+[CLOUD-BARISTA].[DEBUG]: 2020-10-08 11:39:56 memory_repository.go:50, github.com/cloud-barista/cb-apigw/restapigw/pkg/api.(*InMemoryRepository).add() - Custom Test definition added to cb-restapigw-apis.yaml group
+[CLOUD-BARISTA].[DEBUG]: 2020-10-08 11:39:56 memory_repository.go:50, github.com/cloud-barista/cb-apigw/restapigw/pkg/api.(*InMemoryRepository).add() - Spider definition added to cb-restapigw-apis.yaml group
+[CLOUD-BARISTA].[DEBUG]: 2020-10-08 11:39:56 memory_repository.go:50, github.com/cloud-barista/cb-apigw/restapigw/pkg/api.(*InMemoryRepository).add() - Tumblebug definition added to cb-restapigw-apis.yaml group
+[CLOUD-BARISTA].[WARNING]: 2020-10-08 11:39:56 router.go:55, github.com/cloud-barista/cb-apigw/restapigw/pkg/router/gin.(*PipeConfig).createRouter() - no config present for the httpsecure middleware
+[CLOUD-BARISTA].[INFO]: 2020-10-08 11:39:56 admin.go:142, github.com/cloud-barista/cb-apigw/restapigw/pkg/admin.(*Server).Start() - [API SERVER] Admin API starting...
+[CLOUD-BARISTA].[INFO]: 2020-10-08 11:39:56 admin.go:136, github.com/cloud-barista/cb-apigw/restapigw/pkg/admin.(*Server).listenAndServe() - Certificate and certificate key where not found, defaulting to HTTP
+[CLOUD-BARISTA].[DEBUG]: 2020-10-08 11:39:56 admin.go:75, github.com/cloud-barista/cb-apigw/restapigw/pkg/admin.(*Server).addInternalRoutes() - [ADMIN Server] Loading API Endpoints
+[CLOUD-BARISTA].[INFO]: 2020-10-08 11:39:56 admin.go:162, github.com/cloud-barista/cb-apigw/restapigw/pkg/admin.(*Server).Start() - [API SERVER] Admin API started.
+[CLOUD-BARISTA].[INFO]: 2020-10-08 11:39:56 router.go:136, github.com/cloud-barista/cb-apigw/restapigw/pkg/router/gin.(*PipeConfig).RegisterAPIs() - [API G/W] Loading API Endpoints
+[CLOUD-BARISTA].[INFO]: 2020-10-08 11:39:56 router.go:164, github.com/cloud-barista/cb-apigw/restapigw/pkg/router/gin.(*PipeConfig).RegisterAPIs() - [API G/W] API Endpoints loaded
+[CLOUD-BARISTA].[INFO]: 2020-10-08 11:39:56 server.go:275, github.com/cloud-barista/cb-apigw/restapigw/pkg/server.(*Server).StartWithContext() - [SERVER] Started
+[CLOUD-BARISTA].[INFO]: 2020-10-08 11:46:02 server.go:242, github.com/cloud-barista/cb-apigw/restapigw/pkg/server.(*Server).StartWithContext.func1() - [SERVER] Stopping server gracefully
+[CLOUD-BARISTA].[INFO]: 2020-10-08 11:46:02 admin.go:176, github.com/cloud-barista/cb-apigw/restapigw/pkg/admin.(*Server).Stop() - [API G/W] Admin API stoped.
+[CLOUD-BARISTA].[INFO]: 2020-10-08 11:46:02 executor.go:64, github.com/cloud-barista/cb-apigw/restapigw/cmd.SetupAndRun() - [Server] Shutting down

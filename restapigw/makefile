@@ -15,7 +15,7 @@ export CBLOG_ROOT=$(CURDIR)
 export CBSTORE_ROOT=$(CURDIR)
 
 .PHONY: all clean build
-all: clean test build
+all: clean build
 
 .PHONY: clean
 clean:
