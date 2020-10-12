@@ -2,12 +2,11 @@ module github.com/cloud-barista/cb-apigw/restapigw
 
 go 1.13
 
-replace (
-	// CB-STORE related (start)
-	github.com/cloud-barista/cb-store v0.1.1 => /Users/morris/Workspaces/etri/sources/2020/10/cb-store
-	// github.com/coreos/bbolt => go.etcd.io/bbolt v1.3.3
-	// ETCD 환경이 없을때 Dial timeout 적용용
-	github.com/coreos/etcd v3.3.18+incompatible => github.com/coreos/etcd v2.3.8+incompatible
+// CB-STORE related (start)
+//github.com/cloud-barista/cb-store v0.1.1 => /Users/morris/Workspaces/etri/sources/2020/10/cb-store
+// github.com/coreos/bbolt => go.etcd.io/bbolt v1.3.3
+// ETCD 환경이 없을때 Dial timeout 적용용
+//github.com/coreos/etcd v3.3.18+incompatible => github.com/coreos/etcd v2.3.8+incompatible
 // github.com/coreos/go-systemd => github.com/coreos/go-systemd/v22 v22.0.0
 // // github.com/coreos/etcd v3.3.18+incompatible => github.com/coreos/etcd v2.3.8+incompatible
 // // CB-STORE related (end)
@@ -16,15 +15,13 @@ replace (
 // github.com/sirupsen/logrus v1.4.2 => github.com/sirupsen/logrus v1.6.0
 
 // github.com/ugorji/go v1.1.4 => github.com/ugorji/go/codec v0.0.0-20190204201341-e444a5086c43
-// github.com/xujiajun/nutsdb v0.5.0 => github.com/xujiajun/nutsdb v0.5.1-0.20200320023740-0cc84000d103
-// // etcd@v3.3.18+incompatible/clientv3/balancer/resolver/endpoint/endpoint.go undefined 오류 처리용
-// google.golang.org/grpc => google.golang.org/grpc v1.26.0
-)
+replace github.com/xujiajun/nutsdb v0.5.0 => github.com/xujiajun/nutsdb v0.5.1-0.20200320023740-0cc84000d103
 
 require (
 	contrib.go.opencensus.io/exporter/jaeger v0.1.0
 	github.com/cloud-barista/cb-log v0.2.0-cappuccino.0.20201008023843-31002c0a088d
 	github.com/cloud-barista/cb-store v0.1.1
+	github.com/coreos/etcd v3.3.18+incompatible // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-contrib/sse v0.0.0-20170109093832-22d885f9ecc7 // indirect
 	github.com/gin-gonic/gin v1.1.5-0.20170702092826-d459835d2b07
@@ -40,6 +37,8 @@ require (
 	github.com/spf13/viper v1.4.0
 	github.com/ugorji/go v1.1.7 // indirect
 	github.com/unrolled/secure v1.0.4
+	github.com/xujiajun/nutsdb v0.5.0 // indirect
+	go.etcd.io/etcd v2.3.8+incompatible // indirect
 	go.opencensus.io v0.22.1
 	golang.org/x/net v0.0.0-20200822124328-c89045814202 // indirect
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d

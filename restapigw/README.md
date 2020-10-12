@@ -1421,7 +1421,9 @@ $ export CBSTORE_ROOT=<실행되는 경로>
 
 ### Admin API / Web 관련 검토
 
-> Admin Web 은 Nuxt(Vue) + Axios 기반으로 동작하는 별도의 어플리케이션이지만, 배포 편의성을 위해서 API G/W 바이너리에 포함되어 빌드 되는 과정을 거친다. 따라서 빌드하기 전에 실행 관련 환경 설정을 해 주여야 한다.
+> Admin Web 은 Nuxt(Vue) + Axios 기반으로 동작하는 별도의 어플리케이션이지만, 배포 편의성을 위해서 API G/W 바이너리에 포함되어 빌드 되는 과정을 거친다. <br/>
+> 기본적으로는 동일한 Web 호출과 API 호출을 동일한 도메인 정보로 처리하기 때문에 별다른 변경이 필요없다. </br>
+> 그러나 Admin Web 만을 Nginx 등에서 배포할 경우는 API G/W Admin API URL를 설정해 주어야 한다.
 
 `./web/nuxt.config.ts` 파일은 Web 운영을 위한 정보를 구성하는 파일이다. 이 파일에서 아래와 같이 API G/W 가 수행되는 서버의 URL을 실제 값으로 설정해 주어야 한다.
 
@@ -1434,15 +1436,14 @@ const apigw = {
   port: 4444,                                   // 개발 검증용 (로컬 테스트 구동에만 사용 - Node 기반)
   api:
     process.env.NODE_ENV === "production"
-      ? "http://localhost:8001"                 // 실제 동작하는 API G/W API URL 로 변경 <<- 이부분을 실제 값으로 변경해서 빌드
+      ? "" // Admin Web을 분리해서 서비스할 경우는 실제 API G/W Admin API URL을 지정해야 한다. (현재는 API G/W에서 Admin Web/API 동일하게 제공)
       : "http://localhost:8001",                // 개발 검증용 (로컬 테스트 구동)
   path: "/"
 };
 ...
 ```
 
-<font color="red">상기의 예와 같이 Axios의 API 호출을 위한 URL을 실제 배포 및 운영될 URL로 변경하고 빌드를 실행해야 한다.</font>
-
+<font color="red">상기의 예와 같이 별도로 Admin Web을 서비스하는 경우라면 Axios의 API G/W Admin API 호출을 위한 URL을 실제 URL로 변경하고 빌드를 다시 해야 한다.</font>
 
 ### Background 서비스들 실행
 

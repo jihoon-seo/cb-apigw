@@ -7,7 +7,7 @@ const apigw = {
   port: 4444, // 개발 검증용 (로컬 테스트 구동에만 사용 - Node 기반)
   api:
     process.env.NODE_ENV === "production"
-      ? "http://localhost:8001" // 실제 동작하는 API G/W API URL 로 변경 <<- 이부분을 실제 값으로 변경해서 빌드
+      ? "" // Admin Web을 분리해서 서비스할 경우는 실제 API G/W Admin API URL을 지정해야 한다. (현재는 API G/W에서 Admin Web/API 동일하게 제공)
       : "http://localhost:8001", // 개발 검증용 (로컬 테스트 구동)
   path: "/"
 };
@@ -177,7 +177,7 @@ export default {
     debug: isDev,
     timeout: 3000,
     retry: { retries: 0 }, // Axios Intercepts 에서 공통처리하는 메시지 박스에서 무한루프 오류 발생하므로 사용 금지.
-    baseURL: (apigw.api || process.env.API_BASE_URL) + apigw.path
+    baseURL: (process.env.API_BASE_URL || apigw.api) + apigw.path
     // credentials: true  // cookie 사용 인증인 경우만 처리 (CORS 관련 오류 발생하며 wildcard 사용 불가 오류)
   },
   /*
