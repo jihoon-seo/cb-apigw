@@ -12,7 +12,7 @@ TAGS=$(BINARY_NAME)
 CONF=./conf/$(BINARY_NAME).yaml
 
 .PHONY: all clean build
-all: clean test build
+all: clean build
 
 .PHONY: clean
 clean:

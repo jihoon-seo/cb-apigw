@@ -33,5 +33,4 @@ restapigw/deploy/data/influxdb/data/
 restapigw/deploy/data/influxdb/data/data
 restapigw/deploy-etri/
 restapigw/tests
-restapigw/go.sum
 restapigw/cb-restapigw
