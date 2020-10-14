@@ -39,7 +39,7 @@ func ParseConfig(eConf *config.EndpointConfig) *Config {
 
 	buf := new(bytes.Buffer)
 	yaml.NewEncoder(buf).Encode(tmp)
-	if err := yaml.NewDecoder(buf).Decode(&conf); err != nil {
+	if err := yaml.NewDecoder(buf).Decode(&conf); nil != err {
 		return nil
 	}
 

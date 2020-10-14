@@ -38,9 +38,9 @@ type RateLimitMiddleware func(gin.HandlerFunc) gin.HandlerFunc
 func IPTokenExtractor(c *gin.Context) string {
 	//return strings.Split(c.ClientIP(), ":")[0]
 	ip := strings.Split(c.ClientIP(), ":")[0]
-	if ip == "" {
+	if "" == ip {
 		cIP, err := core.GetClientIPHelper(c.Request)
-		if err != nil {
+		if nil != err {
 			logger.Error(err)
 		}
 		return cIP
@@ -59,7 +59,7 @@ func NewTokenLimiter(te TokenExtractor, ls ratelimit.LimiterStore) RateLimitMidd
 		return func(c *gin.Context) {
 			tokenKey := te(c)
 			// TokenBucket 검증
-			if tokenKey == "" || !ls(tokenKey).Allow() {
+			if "" == tokenKey || !ls(tokenKey).Allow() {
 				c.AbortWithError(http.StatusTooManyRequests, ratelimit.ErrClientLimited)
 				return
 			}
@@ -98,16 +98,16 @@ func HandlerFactory(next ginRouter.HandlerFactory, logger logging.Logger) ginRou
 		handlerFunc := next(eConf, p)
 
 		conf := router.ParseConfig(eConf)
-		if conf != nil {
-			if conf.MaxRate <= 0 && conf.ClientMaxRate <= 0 {
+		if nil != conf {
+			if 0 >= conf.MaxRate && 0 >= conf.ClientMaxRate {
 				//TODO: Waring log
 				return handlerFunc
 			}
 
-			if conf.MaxRate > 0 {
+			if 0 < conf.MaxRate {
 				handlerFunc = NewEndpointRateLimiter(ratelimit.NewLimiterWithRate(float64(conf.MaxRate), conf.MaxRate))(handlerFunc)
 			}
-			if conf.ClientMaxRate > 0 {
+			if 0 < conf.ClientMaxRate {
 				switch strings.ToLower(conf.Strategy) {
 				case "ip":
 					handlerFunc = NewIPLimiter(float64(conf.ClientMaxRate), conf.ClientMaxRate)(handlerFunc)

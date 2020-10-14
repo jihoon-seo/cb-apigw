@@ -63,7 +63,7 @@ func requestPoints(hostname string, now time.Time, counters map[string]int64, lo
 		lastRequestCount[strings.Join(params, ".")] = int(count)
 
 		countersPoint, err := client.NewPoint("requests", tags, fields, now)
-		if err != nil {
+		if nil != err {
 			logger.Error("creating request counters point:", err.Error())
 			continue
 		}
@@ -100,7 +100,7 @@ func responsePoints(hostname string, now time.Time, counters map[string]int64, l
 		lastResponseCount[strings.Join(params, ".")] = int(count)
 
 		countersPoint, err := client.NewPoint("responses", tags, fields, now)
-		if err != nil {
+		if nil != err {
 			logger.Error("creating response counters point:", err.Error())
 			continue
 		}
@@ -121,7 +121,7 @@ func connectionPoints(hostname string, now time.Time, counters map[string]int64,
 		"total":   int(counters[prefix+"connected-total"]),
 	}
 	incoming, err := client.NewPoint("router", map[string]string{"host": hostname, "direction": "in"}, in, now)
-	if err != nil {
+	if nil != err {
 		logger.Error("creating incoming connection counters point:", err.Error())
 		return points
 	}
@@ -132,7 +132,7 @@ func connectionPoints(hostname string, now time.Time, counters map[string]int64,
 		"total":   int(counters[prefix+"disconnected-total"]),
 	}
 	outgoing, err := client.NewPoint("router", map[string]string{"host": hostname, "direction": "out"}, out, now)
-	if err != nil {
+	if nil != err {
 		logger.Error("creating outgoing connection counters point:", err.Error())
 		return points
 	}

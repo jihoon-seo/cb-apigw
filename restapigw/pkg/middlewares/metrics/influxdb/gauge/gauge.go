@@ -4,9 +4,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/influxdata/influxdb/client/v2"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
+	"github.com/influxdata/influxdb/client/v2"
 )
 
 // ===== [ Constants and Variables ] =====
@@ -30,7 +30,7 @@ func Points(hostname string, now time.Time, counters map[string]int64, logger lo
 		"gauge": int(counters[prefix+"connected-gauge"]),
 	}
 	incoming, err := client.NewPoint("router", map[string]string{"host": hostname, "direction": "in"}, in, now)
-	if err != nil {
+	if nil != err {
 		logger.Error("creating incoming connection counters point:", err.Error())
 		return points
 	}
@@ -40,7 +40,7 @@ func Points(hostname string, now time.Time, counters map[string]int64, logger lo
 		"guage": int(counters[prefix+"disconnected-gauge"]),
 	}
 	outgoing, err := client.NewPoint("router", map[string]string{"host": hostname, "direction": "out"}, out, now)
-	if err != nil {
+	if nil != err {
 		logger.Error("creating outgoing connection counters point:", err.Error())
 		return points
 	}
@@ -65,14 +65,14 @@ func Points(hostname string, now time.Time, counters map[string]int64, logger lo
 	}
 
 	debugPoint, err := client.NewPoint("debug", map[string]string{"host": hostname}, debug, now)
-	if err != nil {
+	if nil != err {
 		logger.Error("creating debug counters point:", err.Error())
 		return points
 	}
 	points[2] = debugPoint
 
 	runtimePoint, err := client.NewPoint("runtime", map[string]string{"host": hostname}, runtime, now)
-	if err != nil {
+	if nil != err {
 		logger.Error("creating runtime counters point:", err.Error())
 		return points
 	}

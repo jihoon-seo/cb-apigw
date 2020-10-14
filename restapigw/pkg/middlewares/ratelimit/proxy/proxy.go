@@ -45,7 +45,7 @@ func ParseConfig(mwConf config.MWConfig) *Config {
 
 	buf := new(bytes.Buffer)
 	yaml.NewEncoder(buf).Encode(tmp)
-	if err := yaml.NewDecoder(buf).Decode(conf); err != nil {
+	if err := yaml.NewDecoder(buf).Decode(conf); nil != err {
 		return nil
 	}
 
@@ -55,12 +55,12 @@ func ParseConfig(mwConf config.MWConfig) *Config {
 // NewBackendLimiter - Backend 호출에 대한 Rate Limit 기능을 제공하는 Middleware 생성
 func NewBackendLimiter(bConf *config.BackendConfig) proxy.CallChain {
 	conf := ParseConfig(bConf.Middleware)
-	if conf == nil || conf.MaxRate <= 0 {
+	if nil == conf || 0 >= conf.MaxRate {
 		return proxy.EmptyChain
 	}
 	backendLimiter := ratelimit.NewLimiterWithRate(conf.MaxRate, conf.Capacity)
 	return func(next ...proxy.Proxy) proxy.Proxy {
-		if len(next) > 1 {
+		if 1 < len(next) {
 			panic(proxy.ErrTooManyProxies)
 		}
 		return func(ctx context.Context, req *proxy.Request) (*proxy.Response, error) {

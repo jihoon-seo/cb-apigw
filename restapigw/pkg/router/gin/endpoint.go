@@ -101,7 +101,7 @@ func NewRequest(eConf *config.EndpointConfig) func(*gin.Context, []string) *prox
 		query := c.Request.URL.Query()
 
 		// Black list 적용
-		if exceptQueryStrings != nil {
+		if nil != exceptQueryStrings {
 			for i := range exceptQueryStrings {
 				delete(query, exceptQueryStrings[i])
 			}
@@ -128,7 +128,7 @@ func NewRequest(eConf *config.EndpointConfig) func(*gin.Context, []string) *prox
 // CustomErrorEndpointHandler - 지정한 Endpoint 설정과 수행할 Proxy 정보 및 오류 처리를 위한 Gin Framework handler 생성
 func CustomErrorEndpointHandler(eConf *config.EndpointConfig, proxy proxy.Proxy, errF router.ToHTTPError) gin.HandlerFunc {
 	cacheControlHeaderValue := fmt.Sprintf("public, max-age=%d", int(eConf.CacheTTL.Seconds()))
-	isCacheEnabled := eConf.CacheTTL.Seconds() != 0
+	isCacheEnabled := 0 != eConf.CacheTTL.Seconds()
 	requestGenerator := NewRequest(eConf)
 	render := getRender(eConf)
 
@@ -138,14 +138,14 @@ func CustomErrorEndpointHandler(eConf *config.EndpointConfig, proxy proxy.Proxy,
 		response, err := proxy(requestCtx, requestGenerator(c, eConf.ExceptQueryStrings))
 		select {
 		case <-requestCtx.Done():
-			if err == nil {
+			if nil == err {
 				err = router.ErrInternalError
 			}
 		default:
 		}
 
 		complete := router.HeaderIncompleteResponseValue
-		if response != nil && len(response.Data) > 0 {
+		if nil != response && 0 < len(response.Data) {
 			if response.IsComplete {
 				complete = router.HeaderCompleteResponseValue
 				if isCacheEnabled {
@@ -161,14 +161,14 @@ func CustomErrorEndpointHandler(eConf *config.EndpointConfig, proxy proxy.Proxy,
 		}
 		c.Header(router.CompleteResponseHeaderName, complete)
 
-		if err != nil {
+		if nil != err {
 			// Proxy 처리 중에 발생한 오류들을 Header로 설정
 			c.Header(router.MessageResponseHeaderName, err.Error())
 			logger.Errorf("Endpoint Error Processing: %s", err.Error())
 			c.Error(err)
 
 			// Response가 없는 경우의 상태 코드 설정
-			if response == nil {
+			if nil == response {
 				if t, ok := err.(responseError); ok {
 					c.Status(t.StatusCode())
 				} else if e, ok := err.(core.WrappedError); ok {
