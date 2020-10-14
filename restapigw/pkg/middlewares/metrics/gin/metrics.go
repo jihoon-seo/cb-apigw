@@ -47,7 +47,7 @@ func (rw *responseWriter) end() {
 
 // HandlerFactory - 전달된 HandlerFactory 수행 전에 필요한 Metric 관련 처리를 수행하는 HandlerFactory 구성
 func (c *Collector) HandlerFactory(hf ginRouter.HandlerFactory, log logging.Logger) ginRouter.HandlerFactory {
-	if c.Config == nil || !c.Config.RouterEnabled {
+	if nil == c.Config || !c.Config.RouterEnabled {
 		return hf
 	}
 

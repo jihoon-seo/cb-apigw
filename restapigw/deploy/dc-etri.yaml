@@ -43,6 +43,15 @@ services:
     ports:
       - "8100:8080"
 
+  # Fake API 2 (for loadbalance test)
+  fake_api:
+    image: jaxgeller/lwan
+    container_name: cb-restapigw-fake_api2
+    volumes:
+      - ./data/lwan:/lwan/wwwroot
+    ports:
+      - "8200:8080"
+
   # CB-SPIDER
   cb-spider:
     image: cloudbaristaorg/cb-spider:latest

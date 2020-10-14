@@ -115,6 +115,7 @@ func (fsr *FileSystemRepository) Watch(ctx context.Context, configChan chan<- Re
 
 // Close - 사용 중인 Repository 세션 종료
 func (fsr *FileSystemRepository) Close() error {
+	logging.GetLogger().Debug("[REPOSITORY] File Repository closed")
 	return fsr.watcher.Close()
 }
 

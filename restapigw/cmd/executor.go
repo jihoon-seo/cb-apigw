@@ -6,7 +6,6 @@ import (
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/api"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
-	"github.com/cloud-barista/cb-apigw/restapigw/pkg/errors"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/server"
 
@@ -30,7 +29,7 @@ func setupRepository(sConf *config.ServiceConfig, log logging.Logger) (api.Repos
 	// API Routing 정보를 관리하는 Repository 구성
 	repo, err := api.BuildRepository(sConf, sConf.Cluster.UpdateFrequency)
 	if nil != err {
-		return nil, errors.Wrap(err, "could not build a repository for the database or file or CB-Store")
+		return nil, err
 	}
 
 	return repo, nil
@@ -46,7 +45,8 @@ func SetupAndRun(ctx context.Context, sConf *config.ServiceConfig) error {
 	// API 운영을 위한 라우팅 리파지토리 구성
 	repo, err := setupRepository(sConf, *logger)
 	if nil != err {
-		return err
+		logger.WithError(err).Error("[SERVER] Terminate with Errors")
+		return nil
 	}
 	defer repo.Close()
 

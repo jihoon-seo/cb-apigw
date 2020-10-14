@@ -14,7 +14,7 @@ middleware:
     expose_metrics: false
     listen_address: 0.0.0.0:9000
     influxdb:
-      address: "http://cb-restapigw-influxdb:8086"
+      address: http://localhost:8086 #"http://cb-restapigw-influxdb:8086"
       database: cbrestapigw
       reporting_period: 11s
       buffer_size: 0
@@ -27,7 +27,7 @@ middleware:
       backend: true
     exporters:
       jaeger:
-        endpoint: http://cb-restapigw-jaeger:14268/api/traces
+        endpoint: http://localhost:14268/api/traces #http://cb-restapigw-jaeger:14268/api/traces
         service_name: cbrestapigw
   mw-cors:
     allow_origins:

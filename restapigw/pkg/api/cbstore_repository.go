@@ -62,7 +62,8 @@ func (csr *CbStoreRepository) Write(definitionMaps []*DefinitionMap) error {
 
 // Close - 사용 중인 Repository 세션 종료
 func (csr *CbStoreRepository) Close() error {
-	// TODO: Watcher Closing
+	csr.store.Close()
+	logging.GetLogger().Debug("[REPOSITORY] CB-STORE Repository closed")
 	return nil
 }
 
@@ -100,10 +101,11 @@ func NewCbStoreRepository(sConf *config.ServiceConfig, key string, refreshTime t
 	log := logging.GetLogger()
 	repo := CbStoreRepository{sConf: sConf, InMemoryRepository: NewInMemoryRepository(), store: cbstore.GetStore(), storeKey: key, refreshTime: refreshTime}
 
-	// TODO: Watching
-
 	// Grab configuration from CB-STORE
-	keyValues, _ := repo.store.GetList(key, true)
+	keyValues, err := repo.store.GetList(key, true)
+	if nil != err {
+		return nil, err
+	}
 
 	for _, kv := range keyValues {
 		// Skip Root
