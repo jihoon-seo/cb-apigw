@@ -97,20 +97,21 @@ func NewProxyCallChain(layer, name string, pm *ProxyMetrics) proxy.CallChain {
 			panic(proxy.ErrTooManyProxies)
 		}
 
-		return func(ctx context.Context, request *proxy.Request) (*proxy.Response, error) {
+		return func(ctx context.Context, req *proxy.Request) (*proxy.Response, error) {
 			// Bypass Backend URLPattern을 실제 URL Path로 변경
 			urlPath := name
-			if request.IsBypass || "pipe" == layer {
-				urlPath = request.Path
+			// Bypass 인 경우는 실제 호출 URL로 변경
+			if req.IsBypass {
+				urlPath = req.Path
 			}
 
 			// Metric 처리를 위한 Proxy 호출 정보 등록
 			registerProxyCallChainMetrics(layer, urlPath, pm)
 
-			logger.Debugf("[Backend Process Flow] Metrics > Proxy CallChain > %s layer > %s name", layer, name)
+			logger.Debugf("[Backend Process Flow] Metrics > Proxy CallChain > %s layer > %s", layer, name)
 
 			begin := time.Now()
-			resp, err := next[0](ctx, request)
+			resp, err := next[0](ctx, req)
 
 			// Metric 처리를 위한 호출 결과 정보 등록
 			go func(duration int64, resp *proxy.Response, err error) {

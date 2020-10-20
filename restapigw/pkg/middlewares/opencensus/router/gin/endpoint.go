@@ -92,7 +92,6 @@ func (h *handler) startStats(w gin.ResponseWriter, r *http.Request) (gin.Respons
 		ResponseWriter: w,
 	}
 	if nil == r.Body {
-		// TODO: Handle cases where ContentLength is not set.
 		track.reqSize = -1
 	} else if 0 < r.ContentLength {
 		track.reqSize = r.ContentLength

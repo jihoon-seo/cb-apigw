@@ -50,7 +50,7 @@ func latencyPoints(hostname string, now time.Time, histograms map[string]metrics
 
 		histogramPoint, err := client.NewPoint("requests", tags, newFields(histogram), now)
 		if nil != err {
-			logger.Error("creating histogram point:", err.Error())
+			logger.Error("[METRICS] InfluxDB > Creating histogram point:", err.Error())
 			continue
 		}
 		points = append(points, histogramPoint)
@@ -77,7 +77,7 @@ func routerPoints(hostname string, now time.Time, histograms map[string]metrics.
 
 		histogramPoint, err := client.NewPoint("router.response-"+params[1], tags, newFields(histogram), now)
 		if nil != err {
-			logger.Error("creating histogram point:", err.Error())
+			logger.Error("[METRICS] InfluxDB > Creating histogram point:", err.Error())
 			continue
 		}
 		points = append(points, histogramPoint)
@@ -97,7 +97,7 @@ func debugPoint(hostname string, now time.Time, histograms map[string]metrics.Hi
 
 	histogramPoint, err := client.NewPoint("service.debug.GCStats.Pause", tags, newFields(hd), now)
 	if nil != err {
-		logger.Error("creating histogram point:", err.Error())
+		logger.Error("[METRICS] InfluxDB > Creating histogram point:", err.Error())
 		return nil
 	}
 	return histogramPoint
@@ -115,7 +115,7 @@ func runtimePoint(hostname string, now time.Time, histograms map[string]metrics.
 
 	histogramPoint, err := client.NewPoint("service.runtime.MemStats.PauseNs", tags, newFields(hd), now)
 	if nil != err {
-		logger.Error("creating histogram point:", err.Error())
+		logger.Error("[METRICS] InfluxDB > Creating histogram point:", err.Error())
 		return nil
 	}
 	return histogramPoint

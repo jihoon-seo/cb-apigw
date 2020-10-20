@@ -92,11 +92,6 @@ func NewRequest(eConf *config.EndpointConfig) func(*gin.Context, []string) *prox
 			headers["X-Forwarded-Via"] = router.UserAgentHeaderValue
 		}
 
-		//map[Accept:[*/*] Accept-Encoding:[gzip, deflate, br] Cache-Control:[no-cache] Connection:[keep-alive] Postman-Token:[f031a2c9-0f23-4182-89d7-2f42666973e9] Testing:[header check] User-Agent:[PostmanRuntime/7.22.0] X-Forwarded-For:[::1] X-Forwarded-Via:[cb-restapigw version 0.1.0]]
-		//invalid character 'x' looking for beginning of value invalid character 'x' looking for beginning of value
-
-		logger.Debugf(">>> Passed Headers: %+v", headers)
-
 		// QueryString Check - All pass with blacklist
 		query := c.Request.URL.Query()
 
@@ -164,7 +159,7 @@ func CustomErrorEndpointHandler(eConf *config.EndpointConfig, proxy proxy.Proxy,
 		if nil != err {
 			// Proxy 처리 중에 발생한 오류들을 Header로 설정
 			c.Header(router.MessageResponseHeaderName, err.Error())
-			logger.Errorf("Endpoint Error Processing: %s", err.Error())
+			logger.Errorf("[API G/W] Router > Endpoint Error Processing: %s", err.Error())
 			c.Error(err)
 
 			// Response가 없는 경우의 상태 코드 설정

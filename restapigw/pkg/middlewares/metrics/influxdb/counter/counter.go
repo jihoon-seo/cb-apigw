@@ -64,7 +64,7 @@ func requestPoints(hostname string, now time.Time, counters map[string]int64, lo
 
 		countersPoint, err := client.NewPoint("requests", tags, fields, now)
 		if nil != err {
-			logger.Error("creating request counters point:", err.Error())
+			logger.Error("[METRICS] InfluxDB > Creating request counters point:", err.Error())
 			continue
 		}
 
@@ -101,7 +101,7 @@ func responsePoints(hostname string, now time.Time, counters map[string]int64, l
 
 		countersPoint, err := client.NewPoint("responses", tags, fields, now)
 		if nil != err {
-			logger.Error("creating response counters point:", err.Error())
+			logger.Error("[METRICS] InfluxDB > Creating response counters point:", err.Error())
 			continue
 		}
 		points = append(points, countersPoint)
@@ -122,7 +122,7 @@ func connectionPoints(hostname string, now time.Time, counters map[string]int64,
 	}
 	incoming, err := client.NewPoint("router", map[string]string{"host": hostname, "direction": "in"}, in, now)
 	if nil != err {
-		logger.Error("creating incoming connection counters point:", err.Error())
+		logger.Error("[METRICS] InfluxDB > Creating incoming connection counters point:", err.Error())
 		return points
 	}
 	points[0] = incoming
@@ -133,7 +133,7 @@ func connectionPoints(hostname string, now time.Time, counters map[string]int64,
 	}
 	outgoing, err := client.NewPoint("router", map[string]string{"host": hostname, "direction": "out"}, out, now)
 	if nil != err {
-		logger.Error("creating outgoing connection counters point:", err.Error())
+		logger.Error("[METRICS] InfluxDB > Creating outgoing connection counters point:", err.Error())
 		return points
 	}
 	points[1] = outgoing

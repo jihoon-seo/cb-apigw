@@ -45,7 +45,7 @@ func getTime() time.Time {
 // parseDuration - description
 func parseDuration(limitTime string) time.Duration {
 	duration, err := time.ParseDuration(limitTime)
-	if err != nil {
+	if nil != err {
 		return 0
 	}
 
@@ -55,7 +55,7 @@ func parseDuration(limitTime string) time.Duration {
 // checkDuration - description
 func checkDuration(checkTime time.Time, timestamp string, duration time.Duration) bool {
 	ts, err := time.Parse(time.UnixDate, timestamp)
-	if err != nil {
+	if nil != err {
 		return false
 	}
 
@@ -92,7 +92,7 @@ func getTokenData(token string) [][]byte {
 	log.Printf("received token: [%v]", token)
 
 	tokenBytes, err := hex.DecodeString(token)
-	if err != nil {
+	if nil != err {
 		return [][]byte{}
 	}
 
@@ -159,11 +159,11 @@ func loadConfig() {
 	task = config{}
 
 	// Reading
-	if err := viper.ReadInConfig(); err != nil {
+	if err := viper.ReadInConfig(); nil != err {
 		task = config{}
 	}
 	// Unmarshal to struct
-	if err := viper.Unmarshal(&task); err != nil {
+	if err := viper.Unmarshal(&task); nil != err {
 		task = config{}
 	}
 

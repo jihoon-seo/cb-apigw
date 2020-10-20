@@ -22,8 +22,9 @@ bench_res
 
 *DS_Store
 
-tasks.md
-restapigw/backups
+# Directories and Files
+restapigw/Tasks.md
+restapigw/backups/
 restapigw/.vscode/
 restapigw/deploy/deprecated/
 restapigw/deploy/data/grafana/data/grafana.db
@@ -32,5 +33,11 @@ restapigw/deploy/data/grafana/data/png/
 restapigw/deploy/data/influxdb/data/
 restapigw/deploy/data/influxdb/data/data
 restapigw/deploy-etri/
+restapigw/deploy/cb-spider/
+restapigw/deploy/cb-tumblebug/
+restapigw/deploy/data/cb-log/
+restapigw/deploy/data/cb-store/
+restapigw/deploy/data/etcd-volume/
 restapigw/tests
 restapigw/cb-restapigw
+restapigw/web/node_modules

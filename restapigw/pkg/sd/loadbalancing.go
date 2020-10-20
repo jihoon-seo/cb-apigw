@@ -68,18 +68,18 @@ func (rrb *roundRobinLB) Host() (string, error) {
 		return "", err
 	}
 	offset := (atomic.AddUint64(&rrb.counter, 1) - 1) % uint64(len(hosts))
-	logging.GetLogger().Debugf("[ROUNDROBIN LB] Elected host index: %02d, host: %s", offset, hosts[offset].Host)
+	logging.GetLogger().Debugf("[MIDDLEWARE] Roundrobin LB > Elected host index: %02d, host: %s", offset, hosts[offset].Host)
 	return hosts[offset].Host, nil
 }
 
 // Host - 연계된 Subscriber를 통해 대상 Host 반환
 func (rb *randomLB) Host() (string, error) {
 	hosts, err := rb.hosts()
-	if err != nil {
+	if nil != err {
 		return "", err
 	}
 	offset := int(rb.rand(uint32(len(hosts))))
-	logging.GetLogger().Debugf("[RANDOM LB] Elected host index: %02d, host: %s", offset, hosts[offset].Host)
+	logging.GetLogger().Debugf("[MIDDLEWARE] Random LB >  Elected host index: %02d, host: %s", offset, hosts[offset].Host)
 	return hosts[offset].Host, nil
 }
 
@@ -110,7 +110,7 @@ func (wb *weightLB) Host() (string, error) {
 		// 산출된 인덱스 기준으로 가중치 적용
 		weight := hosts[wb.lastIndex].Weight
 		if weight >= wb.currentWeight {
-			logging.GetLogger().Debugf("[WEIGHT LB] Elected host Index: %d, CurrentWeight: %d, GCD: %d, MaxWeight: %d, Host: %s\n", wb.lastIndex, wb.currentWeight, wb.gcd, wb.maxWeight, hosts[wb.lastIndex].Host)
+			logging.GetLogger().Debugf("[MIDDLEWARE] Weighted LB > Elected host Index: %d, CurrentWeight: %d, GCD: %d, MaxWeight: %d, Host: %s\n", wb.lastIndex, wb.currentWeight, wb.gcd, wb.maxWeight, hosts[wb.lastIndex].Host)
 			return hosts[wb.lastIndex].Host, nil
 		}
 	}

@@ -228,6 +228,7 @@ func Setup(ctx context.Context, sConf config.ServiceConfig, vs ...*view.View) er
 			return
 		}
 
+		// default all layers
 		enabledLayers = EnabledLayers{true, true, true}
 	})
 

@@ -8,13 +8,6 @@ import (
 
 // ===== [ Constants and Variables ] =====
 
-const (
-// // BracketsRouterPatternBuilder - 라우터 파라미터 구분으로 "{" 을 사용하는 경우 식별자
-// BracketsRouterPatternBuilder = iota
-// // ColonRouterPatternBuilder - 라우터 파라미터 구분으로 ":" 을 사용하는 경우 식별자
-// ColonRouterPatternBuilder
-)
-
 var (
 	// SimpleURLKeysPattern - 일반적 URL 패턴
 	SimpleURLKeysPattern = regexp.MustCompile(`\{([a-zA-Z\-_0-9]+)\}`)
@@ -24,28 +17,12 @@ var (
 	DebugPattern = "^[^/]|/__debug(/.*)?$"
 	// URLKeyPattern - URL 에 대한 파라미터 처리를 위한 패턴 "{...}"
 	URLKeyPattern = regexp.MustCompile(`/\{([a-zA-Z\-_0-9]+)\}`)
-	// RoutingPattern - 경로에 파라미터가 지정된 경우에 ":" 로 패턴 처리
-	// RoutingPattern = ColonRouterPatternBuilder
 
 	// HOSTPattern - Host URL 패턴
 	HOSTPattern = regexp.MustCompile(`(https?://)?([a-zA-Z0-9\._\-]+)(:[0-9]{2,6})?/?`)
-
-	// URLUtils - URL 관련 유틸리티 함수
-	//URLUtils = NewURIParser()
 )
 
 // ===== [ Types ] =====
-
-// // URIParser - URI 처리를 위한 인터페이스
-// type URIParser interface {
-// 	CleanHosts([]string) []string
-// 	CleanHost(string) string
-// 	CleanPath(string) string
-// 	GetParameteredPath(string, []string) string
-// }
-
-// // URI - URIParser 구현을 위한 데이터 관리 형식
-// type URI int
 
 // ===== [ Implementations ] =====
 

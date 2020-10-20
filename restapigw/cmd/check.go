@@ -33,7 +33,7 @@ func checkAndLoad(cmd *cobra.Command, args []string) (*config.ServiceConfig, err
 	}
 
 	cmd.Printf("[CHECK] Parsing configuration file: %s\n", configFile)
-	if sConf, err = parser.Parse(configFile); err != nil {
+	if sConf, err = parser.Parse(configFile); nil != err {
 		return sConf, err
 	}
 
@@ -62,7 +62,7 @@ func checkFunc(cmd *cobra.Command, args []string) {
 		err error
 	)
 
-	if _, err = checkAndLoad(cmd, args); err != nil {
+	if _, err = checkAndLoad(cmd, args); nil != err {
 		fmt.Printf("[CHECK - ERROR] %s \n", err)
 		os.Exit(1)
 		return

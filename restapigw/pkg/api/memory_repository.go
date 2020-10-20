@@ -40,14 +40,14 @@ func (imr *InMemoryRepository) add(group string, eConf *config.EndpointConfig) e
 
 	err := eConf.Validate()
 	if nil != err {
-		log.WithError(err).Error("Validation errors")
+		log.WithError(err).Error("[REPOSITORY] MEMORY > Validation errors")
 		return err
 	}
 
 	sm := imr.getGroup(group)
 	if nil != sm {
 		sm.Definitions = append(sm.Definitions, eConf)
-		log.Debug(eConf.Name + " definition added to " + group + " group")
+		log.Debug("[REPOSITORY] MEMORY > " + eConf.Name + " definition added to " + group + " group")
 	} else {
 		sm := &DefinitionMap{Name: group, State: NONE, Definitions: make([]*config.EndpointConfig, 0)}
 		sm.Definitions = append(sm.Definitions, eConf)

@@ -41,7 +41,7 @@ func IPTokenExtractor(c *gin.Context) string {
 	if "" == ip {
 		cIP, err := core.GetClientIPHelper(c.Request)
 		if nil != err {
-			logger.Error(err)
+			logger.WithError(err).Error("[RATELIMIT] Can not extract IP token")
 		}
 		return cIP
 	}
@@ -100,7 +100,7 @@ func HandlerFactory(next ginRouter.HandlerFactory, logger logging.Logger) ginRou
 		conf := router.ParseConfig(eConf)
 		if nil != conf {
 			if 0 >= conf.MaxRate && 0 >= conf.ClientMaxRate {
-				//TODO: Waring log
+				logger.Infof("[RATELIMIT] Ratelimit cannot be applied because both maxrate and clientmaxrate are zero or negative (MaxRate: %d, ClientMaxRate: %d)", conf.MaxRate, conf.ClientMaxRate)
 				return handlerFunc
 			}
 

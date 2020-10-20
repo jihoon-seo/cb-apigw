@@ -154,30 +154,30 @@ cb-restapigw -c ./conf/cb-restapigw.yaml
       | name | 서비스 식별 명 | O | '' |
       | port | 서비스에서 사용할 포트 | O | 8000 |
       | version | 설정 파일 버전 | O | '1' |
-      | timeout | 기본 처리 시간 | | 2s |
-      | grace_timeout | 종료시 잔여 요청을 처리하기 위한 대기 시간 | | 0 (즉시) |
+      | timeout | 기본 처리 제한 시간 | | 2s |
+      | grace_timeout | 종료시 잔여 요청을 처리하기 위한 대기 제한 시간 | | 0 (즉시) |
       | debug | 디버그모드 여부 || false |
       | cache_ttl | GET 처리에 대한 캐시 TTL 기간 || 1h |
-      | read_timeout | 전체 요청을 읽기 위한 최대 허용 시간 || 0 (제한없음) |
-      | write_timeout | 전체 응답을 출력하기 위한 최대 허용 시간 || 0 (제한없음) |
-      | idle_timeout | Keep-alive 활성 상태에서 다음 요청까지의 최대 대기 시간 || 0 (제한없음) |
-      | read_header_timeout | 요청헤더를 읽기 위한 최대 허용 시간 || 0 (제한없음) |
+      | read_timeout | 전체 요청을 읽기 위한 최대 제한 시간 || 0 (제한없음) |
+      | write_timeout | 전체 응답을 출력하기 위한 최대 제한 시간 || 0 (제한없음) |
+      | idle_timeout | Keep-alive 활성 상태에서 다음 요청까지의 최대 제한 시간 || 0 (제한없음) |
+      | read_header_timeout | 요청헤더를 읽기 위한 최대 제한 시간 || 0 (제한없음) |
       | max_idle_connections | 유휴연결(Keep-alive)들의 최대 유지 수 || 0 (제한없음) |
-      | max_idle_connections_per_host | 유휴연결(Keep-alive)들의 최대 유지 수 || 250 |
-      | idle_connection_timeout | 유휴연결(Keep-alive)의 최대 유효시간 || 0 이면 read_timeout 사용 (이것도 0이면 read_header_timeout 사용) |
-      | dialer_timeout | TCP 연결에 사용할 대기시간 || 0 (제한없음) |
+      | max_idle_connections_per_host | 유휴연결(Keep-alive)들의 호스트당 최대 유지 수 || 250 |
+      | idle_connection_timeout | 유휴연결(Keep-alive)의 최대 제한 시간 || 0 이면 read_timeout 사용 (이것도 0이면 read_header_timeout 사용) |
+      | dialer_timeout | TCP 연결에 사용할 대기 제한 시간 || 0 (제한없음) |
       | dialer_keep_alive | 활성연결의 유지 시간 || 0 지정시는 Keep-alive 비활성화 |
       | dialer_fallback_delay | DualStack 활성화 시에 실패한 연결을 재 처리하는데 필요한 대기 시간 || 0 (지연없음) |
       | disable_compression | 압축 비활성 여부 || false |
       | disable_keep_alives | 다른 요청에 TCP 연결을 재 사용하는 것의 비활성 여부 || false |
-      | response_header_timeout | Request 처리 후에 서버의 Response Header 정보를 기다리는 시간 || 0 (제한없음) |
-      | expect_continue_timeout | 서버의 첫번째 Response Header 정보를 기다리는 시간 || 0 (제한없음) |
+      | response_header_timeout | Request 처리 후에 서버의 Response Header 정보를 기다리는 제한 시간 || 0 (제한없음) |
+      | expect_continue_timeout | 서버의 첫번째 Response Header 정보를 기다리는 제한 시간 || 0 (제한없음) |
       | disable_strict_rest | REST 강제 규칙 비활성화 여부 | | false |
       | router_engine | Route 처리에 사용할 Engine 지정 | | 'gin' (현재 다른 엔진은 지원하지 않음) |
       | middleware | 서비스에서 사용할 미들웨어 설정 (아래 개별 설정 참고)| |  |
       | tls | 서비스 TLS 설정 (아래 개별 설정 참고) | |  |
-      | admin | 서비스 ADMIN API/Web 설정 (아래 개별 설정 참고) | |  |
-      | repository | API 설정 관리를 위한 Repository 설정 (아래 개별 설정 참고) | | |
+      | admin | 서비스 ADMIN API/Web 설정 (아래 개별 설정 참고) | O |  |
+      | repository | API 설정 관리를 위한 Repository 설정 (아래 개별 설정 참고) | O | |
       | cluster | 서비스가 클러스터내에 다중으로 동작할 때 설정 (아래 개별 설정 참고) | |  |
 
     - 미들웨어 설정
@@ -235,8 +235,8 @@ cb-restapigw -c ./conf/cb-restapigw.yaml
       | 설정 | 내용 | 필수 | 기본값 |
       |---|---|:-:|---|
       | port | 기본 포트 | O | 8443 |
-      | public_key | 공개 키 경로 | O | '' |
-      | private_key | 비밀 키 경로 | O | '' |
+      | public_key | 공개 키 파일 경로 | O | '' |
+      | private_key | 비밀 키 파일 경로 | O | '' |
       | redirect | TLS 리다이렉션 | | true |
       | disabled | TLS 비활성화 여부 | | false |
       | min_version | TLS 최소 버전 |  | VersionTLS12 |
@@ -327,14 +327,14 @@ cb-restapigw -c ./conf/cb-restapigw.yaml
       | endpoint | 클라이언트에 노출될 URL 패턴 | O | '' |
       | hosts | 전역으로 사용할 기본 Host 리스트 (아래 개별 설정 참고) |  | [] |
       | method | Endpoint에 대한 HTTP 메서드 (GET, POST, PUT, etc) |  | 'GET' |
-      | timeout | Endpoint 처리 시간 |  | 2s |
+      | timeout | Endpoint 처리 제한 시간 |  | 2s |
       | cache_ttl | GET 처리에 대한 캐시 TTL 기간 |  | 1h |
       | output_encoding | 반환결과 처리에 사용할 인코딩 |  | 'json' ('json', 'string', 'no-op' 사용 가능) |
       | except_querystrings | Backend 에 전달되는 Query String에서 제외할 파라미터 Key 리스트 |  | '[]' |
       | except_headers | Backend 에 전달되는 Header에서 제외할 파라미터 Key 리스트 |  | '[]' |
       | middleware | Endpoint 단위에서 적용할 Middleware 설정 (위 개별 설정 참고)| |  |
       | health_check | Health Check 설정 (아래 개별 설정 참고, 단 현재 버전에서는 지원하지 않음) | |  |
-      | backend | Endpoint에서 호출할 Backend API 서버 호출/응답 처리 설정 리스트 (아래 개별 설정 참고) | |  |
+      | backend | Endpoint에서 호출할 Backend API 서버 호출/응답 처리 설정 리스트 (아래 개별 설정 참고) | O |  |
 
     - Backend 설정
 
@@ -355,7 +355,7 @@ cb-restapigw -c ./conf/cb-restapigw.yaml
       | wrap_collection_to_json | Backend 결과가 컬랙션인 경우 "collection" 으로 묶어서 JSON 포맷을 만들 것인지 여부, 아니면 컬랙션인 상태로 반환 | | false |
       | target | Backend 결과 중에서 특정한 필드만 처리할 경우의 필드명 | | '' |
       | disable_host_sanitize | host 정보의 정제작업 비활성화 여부 | | false |
-      | lb_mode | Backend Loadbalacing 모드 (기본값: "", "rr" - "roundrobin", "wrr" - "weighted roundrobin", "" - random) | | '' |
+      | lb_mode | Backend Loadbalacing 모드 (기본값: "", "rr" - "roundrobin", "wrr" - "weighted roundrobin", "" - random) | O | '' |
       | middleware | Backend 단위에서 적용할 Middleware 설정 (위 개별 설정 참고)| |  |
 
     - Host 설정

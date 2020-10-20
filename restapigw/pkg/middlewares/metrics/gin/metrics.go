@@ -70,7 +70,7 @@ func (c *Collector) RunEndpoint(ctx context.Context, engine *gin.Engine, log log
 		// http.Server 종료 처리
 		<-ctx.Done()
 		// shutting down the stats handler
-		log.Info("[METRICS] shutting down the metrics handler.")
+		log.Info("[METRICS] shutting down the metrics stats handler.")
 		ctx, cancel := context.WithTimeout(ctx, time.Second)
 		server.Shutdown(ctx)
 		cancel()
@@ -136,7 +136,7 @@ func NewHTTPHandlerFactory(rm *metrics.RouterMetrics, hf ginRouter.HandlerFactor
 	}
 }
 
-// New - Gin 기반의 Metrics 처리를 위한 Collector 인스턴스 생성
+// New -  Metric Collector를 생성하고 Collection 처리를 위한 Endpoint Server 구동
 func New(ctx context.Context, mConf config.MWConfig, log logging.Logger, debugMode bool) *Collector {
 	mc := Collector{metrics.New(ctx, mConf, log)}
 

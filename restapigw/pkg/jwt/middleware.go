@@ -38,7 +38,7 @@ func (m *Middleware) Handler(h http.Handler) http.HandlerFunc {
 		parser := Parser{m.Guard.ParserConfig}
 		_, err := parser.ParseFromRequest(req)
 		if nil != err {
-			logging.GetLogger().WithError(err).Debug("failed to parse the token")
+			logging.GetLogger().WithError(err).Debug("[MIDDLEWARE] JWT > failed to parse the token")
 			render.JSON(rw, http.StatusUnauthorized, err.Error())
 			return
 		}

@@ -205,7 +205,7 @@ func (s *Server) startProvider(ctx context.Context) error {
 						s.applyChanges()
 					}
 				} else {
-					s.logger.WithError(err).Debug("can not apply configuration changes")
+					s.logger.WithError(err).Debug("[SERVER] Can not apply configuration changes")
 				}
 
 				// 변경된 내용을 Repository로 전달해서 반영
@@ -242,7 +242,7 @@ func (s *Server) StartWithContext(ctx context.Context) error {
 		s.logger.Info("[SERVER] Stopping server gracefully")
 	}()
 
-	// TODO: Router 구성
+	// Router 구성
 	s.router = s.createRouter(ctx)
 
 	// HTTP Server 구동
@@ -250,7 +250,7 @@ func (s *Server) StartWithContext(ctx context.Context) error {
 		httpServer.InitHTTPDefaultTransport(s.serviceConfig)
 
 		if err := httpServer.RunServer(ctx, s.serviceConfig, s.router.Engine()); nil != err {
-			s.logger.Error(err.Error())
+			s.logger.WithError(err).Error("[SERVER] Could not start HTTP Server")
 		}
 	}()
 
@@ -266,7 +266,7 @@ func (s *Server) StartWithContext(ctx context.Context) error {
 	// Admin Server 구동
 	s.currConfigurations = &api.Configuration{DefinitionMaps: definifionMaps}
 	if err := s.startProvider(ctx); nil != err {
-		s.logger.WithError(err).Fatal("Could not start api providers")
+		s.logger.WithError(err).Fatal("[SERVER] Could not start api providers")
 	}
 
 	// API Definition에 대한 Router 연계 처리

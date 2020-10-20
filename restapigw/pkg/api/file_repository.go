@@ -78,7 +78,7 @@ func (fsr *FileSystemRepository) Watch(ctx context.Context, configChan chan<- Re
 				if event.Op&fsnotify.Write == fsnotify.Write {
 					body, err := ioutil.ReadFile(event.Name)
 					if nil != err {
-						log.WithError(err).Error("Couldn't load the api defintion file")
+						log.WithError(err).Error("[REPOSITORY] FILE > Couldn't load the api defintion file")
 						continue
 					}
 					configChan <- RepoChangedMessage{
@@ -104,7 +104,7 @@ func (fsr *FileSystemRepository) Watch(ctx context.Context, configChan chan<- Re
 					}
 				}
 			case err := <-fsr.watcher.Errors:
-				log.WithError(err).Error("error received from file system notify")
+				log.WithError(err).Error("[REPOSITORY] FILE > Error received from file system notify")
 				return
 			case <-ctx.Done():
 				return
@@ -115,7 +115,7 @@ func (fsr *FileSystemRepository) Watch(ctx context.Context, configChan chan<- Re
 
 // Close - 사용 중인 Repository 세션 종료
 func (fsr *FileSystemRepository) Close() error {
-	logging.GetLogger().Debug("[REPOSITORY] File Repository closed")
+	logging.GetLogger().Debug("[REPOSITORY] FILE > Repository closed")
 	return fsr.watcher.Close()
 }
 
@@ -148,20 +148,20 @@ func NewFileSystemRepository(sConf *config.ServiceConfig, dir string) (*FileSyst
 
 			appConfigBody, err := ioutil.ReadFile(filePath)
 			if nil != err {
-				log.WithError(err).Error("Couldn't load the api definition file")
+				log.WithError(err).Error("[REPOSITORY] FILE > Couldn't load the api definition file")
 				return nil, err
 			}
 
 			err = repo.watcher.Add(filePath)
 			if nil != err {
-				log.WithError(err).Error("Couldn't load the api definition file")
+				log.WithError(err).Error("[REPOSITORY] FILE > Couldn't load the api definition file")
 				return nil, err
 			}
 
 			definition := parseEndpoint(sConf, appConfigBody)
 			for _, v := range definition.Definitions {
 				if err = repo.add(fileName, v); nil != err {
-					log.WithField("endpoint", v.Endpoint).WithError(err).Error("Failed during add endpoint to the repository")
+					log.WithField("endpoint", v.Endpoint).WithError(err).Error("[REPOSITORY] FILE > Failed during add endpoint to the repository")
 					return nil, err
 				}
 			}

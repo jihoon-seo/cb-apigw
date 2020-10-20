@@ -2,7 +2,6 @@ package metrics
 
 import (
 	"crypto/tls"
-	"strings"
 
 	gometrics "github.com/rcrowley/go-metrics"
 )
@@ -14,7 +13,6 @@ import (
 // RouterMetrics - Router에 대한 Metrics Collector 구조 정의
 type RouterMetrics struct {
 	ProxyMetrics
-	register          gometrics.Registry
 	connected         gometrics.Counter
 	disconnected      gometrics.Counter
 	connectedTotal    gometrics.Counter
@@ -61,16 +59,6 @@ func (rm *RouterMetrics) RegisterResponseWriterMetrics(name string) {
 	rm.Histogram("response", name, "time")
 }
 
-// Counter - Metric Counter가 없는 경우는 등록하고 대상 Counter 반환
-func (rm *RouterMetrics) Counter(labels ...string) gometrics.Counter {
-	return gometrics.GetOrRegisterCounter(strings.Join(labels, "."), rm.register)
-}
-
-// Histogram - Metric Histogram이 없는 경우는 등록하고 대상 Histogram 반환
-func (rm *RouterMetrics) Histogram(labels ...string) gometrics.Histogram {
-	return gometrics.GetOrRegisterHistogram(strings.Join(labels, "."), rm.register, defaultSample())
-}
-
 // ===== [ Private Functions ] =====
 
 // ===== [ Public Functions ] =====
@@ -79,6 +67,7 @@ func (rm *RouterMetrics) Histogram(labels ...string) gometrics.Histogram {
 func NewRouterMetrics(parentRegistry *gometrics.Registry) *RouterMetrics {
 	r := gometrics.NewPrefixedChildRegistry(*parentRegistry, "router.")
 
+	// Registry는 ProxyMetrics 와 공유
 	return &RouterMetrics{
 		ProxyMetrics:      ProxyMetrics{r},
 		connected:         gometrics.NewRegisteredCounter("connected", r),

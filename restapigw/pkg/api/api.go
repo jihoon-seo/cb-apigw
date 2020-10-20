@@ -51,10 +51,6 @@ var (
 	ErrGroupNotExists = errors.NewWithCode(http.StatusNotFound, "api group not found")
 	// ErrInvalidRequestData - 요청에서 데이터를 추출하지 못했을 경우 오류
 	ErrInvalidRequestData = errors.NewWithCode(http.StatusBadRequest, "invalid requested data")
-
-	// TODO: ETCD, Database 관련 오류들
-	// ErrDBContextNotSet is used when the database request context is not set
-	// ErrDBContextNotSet = errors.NewWithCode(http.StatusInternalServerError, "DB context was not set for this request")
 )
 
 // ===== [ Types ] =====

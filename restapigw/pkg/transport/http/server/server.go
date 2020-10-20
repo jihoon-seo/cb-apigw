@@ -197,7 +197,7 @@ func NewServer(sConf *config.ServiceConfig, handler http.Handler) *http.Server {
 
 // ParseTLSConfig - 서비스 설정에 지정된 TLS 설정을 기준으로 tls 모듈에 대한 설정 반환
 func ParseTLSConfig(tlsConf *config.TLSConfig) *tls.Config {
-	if tlsConf == nil {
+	if nil == tlsConf {
 		return nil
 	}
 	if tlsConf.IsDisabled {
