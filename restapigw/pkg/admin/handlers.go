@@ -40,7 +40,7 @@ func WebServe(urlPrefix string) gin.HandlerFunc {
 		if _path == "/" {
 			// 초기 페이지 반환
 			vueApp, err := static.FSString(false, "/web/dist/index.html")
-			if err != nil {
+			if nil != err {
 				c.AbortWithError(-1, err)
 			}
 			//c.Writer.WriteString(vueApp)
@@ -66,7 +66,7 @@ func RedirectHTTPS(port int) http.HandlerFunc {
 		if 0 < len(req.URL.RawQuery) {
 			target.RawQuery += "?" + req.URL.RawQuery
 		}
-		logging.GetLogger().Infof("redirect to: %s", target.String())
+		logging.GetLogger().Infof("[API SERVER] Redirect to: %s", target.String())
 		http.Redirect(w, req, target.String(), http.StatusTemporaryRedirect)
 	})
 }

@@ -27,8 +27,8 @@ var (
 
 // Config - Rate Limit 구성을 위한 Configuration 구조
 type Config struct {
-	MaxRate  float64 `yaml:"maxRate"`
-	Capacity int64   `yaml:"capacity"`
+	MaxRate  float64 `yaml:"max_rate"` // 초당 하용할 요청 수
+	Capacity int64   `yaml:"capacity"` // 초당 허용할 최대 요청 수
 }
 
 // ===== [ Implementations ] =====

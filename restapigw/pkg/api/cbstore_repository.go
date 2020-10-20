@@ -63,7 +63,7 @@ func (csr *CbStoreRepository) Write(definitionMaps []*DefinitionMap) error {
 // Close - 사용 중인 Repository 세션 종료
 func (csr *CbStoreRepository) Close() error {
 	csr.store.Close()
-	logging.GetLogger().Debug("[REPOSITORY] CB-STORE Repository closed")
+	logging.GetLogger().Debug("[REPOSITORY] CB-STORE > Repository closed")
 	return nil
 }
 
@@ -74,14 +74,14 @@ func (csr *CbStoreRepository) Watch(ctx context.Context, configChan chan<- RepoC
 
 	go func(refreshTicker *time.Ticker) {
 		defer refreshTicker.Stop()
-		log.Debug("Watching CB-Store repository...")
+		log.Debug("[REPOSITORY] CB-STORE > Watching CB-Store repository...")
 
 		for {
 			select {
 			case <-refreshTicker.C:
 				definitionMaps, err := csr.FindAll()
 				if nil != err {
-					log.WithError(err).Error("Failed to get API definitions on watch")
+					log.WithError(err).Error("[REPOSITORY] CB-STORE > Failed to get API definitions on watch")
 					continue
 				}
 
@@ -116,7 +116,7 @@ func NewCbStoreRepository(sConf *config.ServiceConfig, key string, refreshTime t
 		definition := parseEndpoint(sConf, []byte(kv.Value))
 		for _, def := range definition.Definitions {
 			if err := repo.add(core.GetLastPart(kv.Key, "/"), def); nil != err {
-				log.WithField("endpoint", def.Endpoint).WithError(err).Error("Failed during add endpoint to the repository")
+				log.WithField("endpoint", def.Endpoint).WithError(err).Error("[REPOSITORY] CB-STORE > Failed during add endpoint to the repository")
 				return nil, err
 			}
 		}

@@ -42,8 +42,6 @@ var (
 
 // ===== [ Types ] =====
 
-// TODO: Configuration 분리
-
 type (
 	// IConfig - 설정관리용 struct의 기본 메서드 제공 인터페이스
 	IConfig interface {
@@ -879,7 +877,7 @@ func cleanHosts(hcs []*HostConfig) {
 func NewDefinition() *EndpointConfig {
 	def := &EndpointConfig{}
 	if err := def.InitializeDefaults(); nil != err {
-		logging.GetLogger().WithError(err).Debug("Failed to initialize definition (Endpoint)")
+		logging.GetLogger().WithError(err).Debug("[CONFIG] Failed to initialize definition (Endpoint)")
 	}
 
 	return def

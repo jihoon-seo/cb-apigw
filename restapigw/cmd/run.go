@@ -26,7 +26,7 @@ func runFunc(ctx context.Context, cmd *cobra.Command, args []string) {
 		err   error
 	)
 
-	if sConf, err = checkAndLoad(cmd, args); err != nil {
+	if sConf, err = checkAndLoad(cmd, args); nil != err {
 		fmt.Printf("[RUN - ERROR] %s \n", err)
 		os.Exit(1)
 		return

@@ -72,14 +72,14 @@ func parseEndpoint(sConf *config.ServiceConfig, apiDef []byte) GroupDefinitions 
 		// 오류 발생시 단일 Definition으로 다시 처리
 		apiConfigs.Definitions = append(apiConfigs.Definitions, config.NewDefinition())
 		if err := yaml.Unmarshal(apiDef, &apiConfigs.Definitions[0]); nil != err {
-			log.WithError(err).Error("Couldn't parsing api definitions")
+			log.WithError(err).Error("[REPOSITORY] Couldn't parsing api definitions")
 		}
 	}
 
 	// 로드된 Endpoint 정보 재 구성
 	for _, ec := range apiConfigs.Definitions {
 		if err := ec.AdjustValues(sConf); nil != err {
-			log.WithError(err).Error("Couldn't initialize api definition:" + ec.Name)
+			log.WithError(err).Error("[REPOSITORY] Couldn't initialize api definition:" + ec.Name)
 		}
 	}
 
@@ -121,10 +121,10 @@ func BuildRepository(sConf *config.ServiceConfig, refreshTime time.Duration) (Re
 	switch dsnURL.Scheme {
 	// CB-STORE (NutsDB or ETCD) 사용
 	case cbStore:
-		log.Debug("CB-Store (NutsDB or ETCD) based configuration choosen")
+		log.Debug("[REPOSITORY] CB-Store (NutsDB or ETCD) based configuration choosen")
 		storeKey := dsnURL.Path
 
-		log.WithField("key", storeKey).Debug("Trying to load API configuration files")
+		log.WithField("key", storeKey).Debug("[REPOSITORY] Trying to load API configuration files")
 		repo, err := NewCbStoreRepository(sConf, storeKey, refreshTime)
 		if nil != err {
 			return nil, errors.Wrap(err, "could not create a CB-Store repository")
@@ -132,10 +132,10 @@ func BuildRepository(sConf *config.ServiceConfig, refreshTime time.Duration) (Re
 		return repo, nil
 	// File(Memoery) 사용
 	case file:
-		log.Debug("File system based configuration choosen")
+		log.Debug("[REPOSITORY] File system based configuration choosen")
 		apiPath := fmt.Sprintf("%s/apis", dsnURL.Path)
 
-		log.WithField("path", apiPath).Debug("Trying to load API configuration files")
+		log.WithField("path", apiPath).Debug("[REPOSITORY] Trying to load API configuration files")
 		repo, err := NewFileSystemRepository(sConf, apiPath)
 		if nil != err {
 			return nil, errors.Wrap(err, "could not create a file system repository")

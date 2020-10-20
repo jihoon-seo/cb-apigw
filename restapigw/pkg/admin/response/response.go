@@ -41,11 +41,10 @@ func getFields(req *http.Request) logging.Fields {
 
 // Errorf - 오류 발생 시 반환 처리
 func Errorf(rw http.ResponseWriter, req *http.Request, code int, err error) {
-	// TODO: 다국어 처리 (Message by code)
 	msg := err.Error()
 
 	log := logging.GetLogger()
-	log.SetFields(getFields(req)).WithError(err).Debug("Processed Code: " + strconv.Itoa(code) + ", Message: " + msg)
+	log.SetFields(getFields(req)).WithError(err).Debug("[API SERVER] Processed Code: " + strconv.Itoa(code) + ", Message: " + msg)
 
 	returnData := ReturnData{
 		Error:   true,

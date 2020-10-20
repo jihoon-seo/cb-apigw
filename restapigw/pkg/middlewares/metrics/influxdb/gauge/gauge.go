@@ -31,7 +31,7 @@ func Points(hostname string, now time.Time, counters map[string]int64, logger lo
 	}
 	incoming, err := client.NewPoint("router", map[string]string{"host": hostname, "direction": "in"}, in, now)
 	if nil != err {
-		logger.Error("creating incoming connection counters point:", err.Error())
+		logger.Error("[METRICS] InfluxDB > Creating incoming connection counters point:", err.Error())
 		return points
 	}
 	points[0] = incoming
@@ -41,7 +41,7 @@ func Points(hostname string, now time.Time, counters map[string]int64, logger lo
 	}
 	outgoing, err := client.NewPoint("router", map[string]string{"host": hostname, "direction": "out"}, out, now)
 	if nil != err {
-		logger.Error("creating outgoing connection counters point:", err.Error())
+		logger.Error("[METRICS] InfluxDB > creating outgoing connection counters point:", err.Error())
 		return points
 	}
 	points[1] = outgoing
@@ -61,19 +61,19 @@ func Points(hostname string, now time.Time, counters map[string]int64, logger lo
 			runtime[key[len(prefixS+"runtime."):]] = int(v)
 			continue
 		}
-		logger.Warn("unknown gauge key:", key)
+		logger.Warn("[METRICS] InfluxDB > Unknown gauge key:", key)
 	}
 
 	debugPoint, err := client.NewPoint("debug", map[string]string{"host": hostname}, debug, now)
 	if nil != err {
-		logger.Error("creating debug counters point:", err.Error())
+		logger.Error("[METRICS] InfluxDB > Creating debug counters point:", err.Error())
 		return points
 	}
 	points[2] = debugPoint
 
 	runtimePoint, err := client.NewPoint("runtime", map[string]string{"host": hostname}, runtime, now)
 	if nil != err {
-		logger.Error("creating runtime counters point:", err.Error())
+		logger.Error("[METRICS] InfluxDB > Creating runtime counters point:", err.Error())
 		return points
 	}
 	points[3] = runtimePoint

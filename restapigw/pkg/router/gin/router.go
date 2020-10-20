@@ -80,7 +80,7 @@ func (pc *PipeConfig) createEngine(sConf *config.ServiceConfig) {
 // registerAPIGroup - Bypass인 경우는 Group 단위로 Gin Engine에 Endpoint Handler 등록
 func (pc PipeConfig) registerAPIGroup(path string, handler gin.HandlerFunc, totBackends int) {
 	if 1 < totBackends {
-		pc.logger.Error("Bypass endpoint must have a single backend! Ignoring", path)
+		pc.logger.Errorf("[API G/W] Router > Bypass endpoint must have a single backend! Ignoring -> %s", path)
 		return
 	}
 
@@ -98,7 +98,7 @@ func (pc PipeConfig) registerAPIGroup(path string, handler gin.HandlerFunc, totB
 func (pc PipeConfig) registerAPI(method, path string, handler gin.HandlerFunc, totBackends int) {
 	method = strings.ToTitle(method)
 	if method != http.MethodGet && 1 < totBackends {
-		pc.logger.Error(method, "endpoints must have a single backend! Ignoring -> ", path)
+		pc.logger.Errorf("[API G/W] Router > Method: %s, endpoints must have a single backend! Ignoring -> %s", method, path)
 		return
 	}
 
@@ -116,7 +116,7 @@ func (pc PipeConfig) registerAPI(method, path string, handler gin.HandlerFunc, t
 	case http.MethodDelete:
 		engine.DELETE(path, handler)
 	default:
-		pc.logger.Error("Unsupported method", method)
+		pc.logger.Errorf("[API G/W] Router > Unsupported method -> %s", method)
 	}
 }
 
@@ -139,7 +139,7 @@ func (pc *PipeConfig) RegisterAPIs(sConf *config.ServiceConfig, defs []*config.E
 		// 정보 재구성
 		err := def.AdjustValues(sConf)
 		if nil != err {
-			pc.logger.Error("can not adjust values for definition", err.Error())
+			pc.logger.WithError(err).Error("[API G/W] Router > Can not adjust values for definition")
 		}
 
 		// 활성화된 경우만 적용
@@ -147,7 +147,7 @@ func (pc *PipeConfig) RegisterAPIs(sConf *config.ServiceConfig, defs []*config.E
 			// Endpoint에 연결되어 동작할 수 있도록 ProxyFactory의 Call chain에 대한 인스턴스 생성 (ProxyStack)
 			proxyStack, err := pc.proxyFactory.New(def)
 			if nil != err {
-				pc.logger.Error("calling the ProxyFactory", err.Error())
+				pc.logger.WithError(err).Error("[API G/W] Router > Can not calling the ProxyFactory")
 				continue
 			}
 

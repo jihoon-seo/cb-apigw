@@ -152,9 +152,6 @@ func RecoveryHandler(rw http.ResponseWriter, req *http.Request, err interface{})
 }
 
 // Wrap - Stack Trace 정보들을 추가 설정한 오류 구성
-// Wrap returns an error annotating err with a stack trace
-// at the point Wrap is called, and the supplied message.
-// If err is nil, Wrap returns nil.
 func Wrap(err error, message string) error {
 	if nil == err {
 		return nil
@@ -169,9 +166,7 @@ func Wrap(err error, message string) error {
 	}
 }
 
-// Wrapf returns an error annotating err with a stack trace
-// at the point Wrapf is call, and the format specifier.
-// If err is nil, Wrapf returns nil.
+// Wrapf - Format 정보를 기준으로 Stack Trace 정보들을 추가 설정한 오류 구성
 func Wrapf(err error, format string, args ...interface{}) error {
 	if nil == err {
 		return nil
@@ -186,8 +181,7 @@ func Wrapf(err error, format string, args ...interface{}) error {
 	}
 }
 
-// WithStack annotates err with a stack trace at the point WithStack was called.
-// If err is nil, WithStack returns nil.
+// WithStack - 오류검증을 위한 Stack Trace 정보 추가
 func WithStack(err error) error {
 	if nil == err {
 		return nil
@@ -198,8 +192,7 @@ func WithStack(err error) error {
 	}
 }
 
-// WithMessage annotates err with a new message.
-// If err is nil, WithMessage returns nil.
+// WithMessage - 오류에 지정한 메시지 정보 추가
 func WithMessage(err error, message string) error {
 	if nil == err {
 		return nil
@@ -210,17 +203,7 @@ func WithMessage(err error, message string) error {
 	}
 }
 
-// Cause returns the underlying cause of the error, if possible.
-// An error value has a cause if it implements the following
-// interface:
-//
-//     type causer interface {
-//            Cause() error
-//     }
-//
-// If the error does not implement Cause, the original error will
-// be returned. If the error is nil, nil will be returned without further
-// investigation.
+// Cause - 오류 발생 기반 정보 추출
 func Cause(err error) error {
 	type causer interface {
 		Cause() error
@@ -236,9 +219,7 @@ func Cause(err error) error {
 	return err
 }
 
-// Errorf formats according to a format specifier and returns the string
-// as a value that satisfies error.
-// Errorf also records the stack trace at the point it was called.
+// Errorf - 지정한 포맷과 값을 기준으로 Stack Trace 정보 추가
 func Errorf(format string, args ...interface{}) error {
 	return &fundamental{
 		msg:   fmt.Sprintf(format, args...),

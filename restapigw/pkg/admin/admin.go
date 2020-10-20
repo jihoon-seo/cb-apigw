@@ -55,7 +55,6 @@ func (s *Server) addInternalPublicRoutes(ge *gin.Engine) {
 	statusAPI := ge.Group("/status")
 	statusAPI.GET("/", gin.WrapH(NewOverviewHandler(s.apiHandler.Configs, s.logger)))
 	statusAPI.GET("/{name}", gin.WrapH(NewStatusHandler(s.apiHandler.Configs, s.logger)))
-	// TODO: Metrics 정보 설정은? Prometheus???
 }
 
 // addInternalAUthRoutes - ADMIN Server의 Auth 처리용 Routes 설정
@@ -124,16 +123,16 @@ func (s *Server) listenAndServe(h http.Handler) error {
 		addressTLS := fmt.Sprintf(":%v", s.TLS.Port)
 		if s.TLS.Redirect {
 			go func() {
-				s.logger.WithField("address", address).Info("Listening HTTP redirects to HTTPS")
+				s.logger.WithField("address", address).Info("[API SERVER] Listening HTTP redirects to HTTPS")
 				s.logger.Fatal(http.ListenAndServe(address, RedirectHTTPS(s.TLS.Port)))
 			}()
 		}
 
-		s.logger.WithField("address", addressTLS).Info("LIstening HTTPS")
+		s.logger.WithField("address", addressTLS).Info("[API SERVER] LIstening HTTPS")
 		return http.ListenAndServeTLS(addressTLS, s.TLS.PublicKey, s.TLS.PrivateKey, h)
 	}
 
-	s.logger.WithField("address", address).Info("Certificate and certificate key where not found, defaulting to HTTP")
+	s.logger.WithField("address", address).Info("[API SERVER] Certificate and certificate key where not found, defaulting to HTTP")
 	return http.ListenAndServe(address, h)
 }
 
@@ -156,8 +155,6 @@ func (s *Server) Start() error {
 	go s.listenAndServe(engine)
 
 	s.AddRoutes(engine)
-
-	// TODO: Plugin setup signal
 
 	s.logger.Info("[API SERVER] Admin API started.")
 	return nil

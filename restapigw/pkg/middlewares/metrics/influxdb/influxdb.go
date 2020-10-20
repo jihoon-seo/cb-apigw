@@ -48,7 +48,7 @@ type clientWrapper struct {
 func (cw clientWrapper) keepUpdated(ctx context.Context, ticker <-chan time.Time) {
 	hostname, err := os.Hostname()
 	if nil != err {
-		cw.logger.Error("influxdb resolving the local hostname:", err.Error())
+		cw.logger.Error("[METRICS] InfluxDB > influxdb resolving the local hostname:", err.Error())
 	}
 
 	for {
@@ -84,7 +84,7 @@ func (cw clientWrapper) keepUpdated(ctx context.Context, ticker <-chan time.Time
 		}
 
 		if err := cw.influxClient.Write(bp); nil != err {
-			cw.logger.Error("writing to influx:", err.Error())
+			cw.logger.Error("[METRICS] InfluxDB > Writing to influx:", err.Error())
 			cw.buff.Add(bp)
 			continue
 		}
@@ -102,7 +102,7 @@ func (cw clientWrapper) keepUpdated(ctx context.Context, ticker <-chan time.Time
 		retryBatch.AddPoints(pts)
 
 		if err := cw.influxClient.Write(retryBatch); nil != err {
-			cw.logger.Error("writting to influx:", err.Error())
+			cw.logger.Error("[METRICS] InfluxDB > Writting to influx:", err.Error())
 			cw.buff.Add(bpPending...)
 			continue
 		}
@@ -136,7 +136,7 @@ func SetupAndRun(ctx context.Context, idbConf Config, collectFunc func() interfa
 	go func() {
 		_, _, err := influxClient.Ping(time.Second)
 		if nil != err {
-			logger.Error("unable to ping the influxdb server:", err.Error())
+			logger.Error("[METRICS] InfluxDB > unable to ping the influxdb server:", err.Error())
 			return
 		}
 	}()

@@ -56,57 +56,57 @@ func setField(fv reflect.Value, defaultValue string) error {
 				fv.Set(reflect.ValueOf(val).Convert(fv.Type()))
 			}
 		case reflect.Int:
-			if val, err := strconv.ParseInt(defaultValue, 0, strconv.IntSize); err == nil {
+			if val, err := strconv.ParseInt(defaultValue, 0, strconv.IntSize); nil == err {
 				fv.Set(reflect.ValueOf(int(val)).Convert(fv.Type()))
 			}
 		case reflect.Int8:
-			if val, err := strconv.ParseInt(defaultValue, 0, 8); err == nil {
+			if val, err := strconv.ParseInt(defaultValue, 0, 8); nil == err {
 				fv.Set(reflect.ValueOf(int8(val)).Convert(fv.Type()))
 			}
 		case reflect.Int16:
-			if val, err := strconv.ParseInt(defaultValue, 0, 16); err == nil {
+			if val, err := strconv.ParseInt(defaultValue, 0, 16); nil == err {
 				fv.Set(reflect.ValueOf(int16(val)).Convert(fv.Type()))
 			}
 		case reflect.Int32:
-			if val, err := strconv.ParseInt(defaultValue, 0, 32); err == nil {
+			if val, err := strconv.ParseInt(defaultValue, 0, 32); nil == err {
 				fv.Set(reflect.ValueOf(int32(val)).Convert(fv.Type()))
 			}
 		case reflect.Int64:
-			if val, err := time.ParseDuration(defaultValue); err == nil {
+			if val, err := time.ParseDuration(defaultValue); nil == err {
 				fv.Set(reflect.ValueOf(val).Convert(fv.Type()))
-			} else if val, err := strconv.ParseInt(defaultValue, 0, 64); err == nil {
+			} else if val, err := strconv.ParseInt(defaultValue, 0, 64); nil == err {
 				fv.Set(reflect.ValueOf(val).Convert(fv.Type()))
 			}
 		case reflect.Uint:
-			if val, err := strconv.ParseUint(defaultValue, 0, strconv.IntSize); err == nil {
+			if val, err := strconv.ParseUint(defaultValue, 0, strconv.IntSize); nil == err {
 				fv.Set(reflect.ValueOf(uint(val)).Convert(fv.Type()))
 			}
 		case reflect.Uint8:
-			if val, err := strconv.ParseUint(defaultValue, 0, 8); err == nil {
+			if val, err := strconv.ParseUint(defaultValue, 0, 8); nil == err {
 				fv.Set(reflect.ValueOf(uint8(val)).Convert(fv.Type()))
 			}
 		case reflect.Uint16:
-			if val, err := strconv.ParseUint(defaultValue, 0, 16); err == nil {
+			if val, err := strconv.ParseUint(defaultValue, 0, 16); nil == err {
 				fv.Set(reflect.ValueOf(uint16(val)).Convert(fv.Type()))
 			}
 		case reflect.Uint32:
-			if val, err := strconv.ParseUint(defaultValue, 0, 32); err == nil {
+			if val, err := strconv.ParseUint(defaultValue, 0, 32); nil == err {
 				fv.Set(reflect.ValueOf(uint32(val)).Convert(fv.Type()))
 			}
 		case reflect.Uint64:
-			if val, err := strconv.ParseUint(defaultValue, 0, 64); err == nil {
+			if val, err := strconv.ParseUint(defaultValue, 0, 64); nil == err {
 				fv.Set(reflect.ValueOf(val).Convert(fv.Type()))
 			}
 		case reflect.Uintptr:
-			if val, err := strconv.ParseUint(defaultValue, 0, strconv.IntSize); err == nil {
+			if val, err := strconv.ParseUint(defaultValue, 0, strconv.IntSize); nil == err {
 				fv.Set(reflect.ValueOf(uintptr(val)).Convert(fv.Type()))
 			}
 		case reflect.Float32:
-			if val, err := strconv.ParseFloat(defaultValue, 32); err == nil {
+			if val, err := strconv.ParseFloat(defaultValue, 32); nil == err {
 				fv.Set(reflect.ValueOf(float32(val)).Convert(fv.Type()))
 			}
 		case reflect.Float64:
-			if val, err := strconv.ParseFloat(defaultValue, 64); err == nil {
+			if val, err := strconv.ParseFloat(defaultValue, 64); nil == err {
 				fv.Set(reflect.ValueOf(val).Convert(fv.Type()))
 			}
 		case reflect.String:
@@ -116,7 +116,7 @@ func setField(fv reflect.Value, defaultValue string) error {
 			ref := reflect.New(fv.Type())
 			ref.Elem().Set(reflect.MakeSlice(fv.Type(), 0, 0))
 			if defaultValue != "" && defaultValue != "[]" {
-				if err := json.Unmarshal([]byte(defaultValue), ref.Interface()); err != nil {
+				if err := json.Unmarshal([]byte(defaultValue), ref.Interface()); nil != err {
 					return err
 				}
 			}
@@ -125,14 +125,14 @@ func setField(fv reflect.Value, defaultValue string) error {
 			ref := reflect.New(fv.Type())
 			ref.Elem().Set(reflect.MakeMap(fv.Type()))
 			if defaultValue != "" && defaultValue != "{}" {
-				if err := json.Unmarshal([]byte(defaultValue), ref.Interface()); err != nil {
+				if err := json.Unmarshal([]byte(defaultValue), ref.Interface()); nil != err {
 					return err
 				}
 			}
 			fv.Set(ref.Elem().Convert(fv.Type()))
 		case reflect.Struct:
 			if defaultValue != "" && defaultValue != "{}" {
-				if err := json.Unmarshal([]byte(defaultValue), fv.Addr().Interface()); err != nil {
+				if err := json.Unmarshal([]byte(defaultValue), fv.Addr().Interface()); nil != err {
 					return err
 				}
 			}
@@ -146,12 +146,12 @@ func setField(fv reflect.Value, defaultValue string) error {
 		setField(fv.Elem(), defaultValue)
 		callSetter(fv.Interface())
 	case reflect.Struct:
-		if err := Set(fv.Addr().Interface()); err != nil {
+		if err := Set(fv.Addr().Interface()); nil != err {
 			return err
 		}
 	case reflect.Slice:
 		for j := 0; j < fv.Len(); j++ {
-			if err := setField(fv.Index(j), defaultValue); err != nil {
+			if err := setField(fv.Index(j), defaultValue); nil != err {
 				return err
 			}
 		}

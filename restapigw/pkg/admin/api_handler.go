@@ -69,8 +69,6 @@ func (ah *APIHandler) UpdateDefinition() http.HandlerFunc {
 			return
 		}
 
-		// TODO: Plugin Validation
-
 		// 동일한 경로가 다른 Definition 이름으로 등록되어있는 경우 검증 (전체 대상)
 		_, span = trace.StartSpan(req.Context(), "repo.FindByListenPath")
 		existingDef := ah.Configs.FindByListenPath(cm.Definitions[0].Endpoint)
@@ -110,8 +108,6 @@ func (ah *APIHandler) AddDefinition() http.HandlerFunc {
 			response.Errorf(rw, req, -1, err)
 			return
 		}
-
-		// TODO: Plugin Validation
 
 		// 기존 정보가 존재하는지 검증 (Name 및 Endpoint Path, ...)
 		_, span := trace.StartSpan(req.Context(), "definition.Exists")
