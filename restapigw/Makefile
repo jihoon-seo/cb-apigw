@@ -62,7 +62,7 @@ install:
 
 .PHONY: static clean-client client 
 static: client
-	esc -o ${PWD}/pkg/static/static.go -pkg static web/dist
+	esc -o ${PWD}/pkg/static/static.go -ignore "DS_Store|.nojekyll|README.md" -pkg static web/dist
 
 clean-client:
 	rm -rf ${PWD}/web/.nuxt ${PWD}/web/dist

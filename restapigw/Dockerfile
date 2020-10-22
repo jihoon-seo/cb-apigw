@@ -42,7 +42,7 @@ COPY ./main.go .
 COPY --from=client_builder /app/dist ./web/dist 
 
 # Admin web embedding to go source
-RUN esc -o ./pkg/static/static.go -pkg static ./web/dist
+RUN esc -o ./pkg/static/static.go -ignore "DS_Store|.nojekyll|README.md" -pkg static ./web/dist
 
 # build go binary
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags '-w -extldflags "-static"' -tags cb-restapigw -o cb-restapigw -v
@@ -73,7 +73,7 @@ EXPOSE 8000 8001
 # docker build -t cb-restapigw .
 
 # Run Container
-# docker run -it --rm --name cb-restapigw -p 8000:8000 --network deploy_default cb-restapigw
+# docker run -it --rm --name cb-restapigw -p 8000:8000 -p 8001:8001 --network deploy_default cb-restapigw
 
 # Delete stopped container
 # docker rm cb-restapigw
