@@ -1,6 +1,6 @@
 module github.com/cloud-barista/cb-apigw/restapigw
 
-go 1.13
+go 1.15
 
 // CB-STORE 관련
 replace (
@@ -11,31 +11,42 @@ replace (
 )
 
 require (
-	contrib.go.opencensus.io/exporter/jaeger v0.1.0
+	contrib.go.opencensus.io/exporter/jaeger v0.2.1
 	github.com/cloud-barista/cb-log v0.2.0-cappuccino.0.20201008023843-31002c0a088d
 	github.com/cloud-barista/cb-store v0.2.0-cappuccino.0.20201014054737-e2310432d256
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
-	github.com/gin-contrib/sse v0.0.0-20170109093832-22d885f9ecc7 // indirect
-	github.com/gin-gonic/gin v1.1.5-0.20170702092826-d459835d2b07
+	github.com/fsnotify/fsnotify v1.4.9
+	github.com/gin-gonic/gin v1.6.3
+	github.com/go-playground/validator/v10 v10.4.1 // indirect
+	github.com/golang/protobuf v1.4.3 // indirect
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79
-	github.com/influxdata/influxdb v1.7.8
+	github.com/influxdata/influxdb v1.8.3
 	github.com/json-iterator/go v1.1.10
-	github.com/mattn/go-isatty v0.0.9 // indirect
-	github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a
+	github.com/magiconair/properties v1.8.4 // indirect
+	github.com/mitchellh/mapstructure v1.3.3 // indirect
+	github.com/pelletier/go-toml v1.8.1 // indirect
+	github.com/rcrowley/go-metrics v0.0.0-20200313005456-10cdbea86bc0
 	github.com/rs/cors v1.7.0
-	github.com/sirupsen/logrus v1.6.0
-	github.com/spf13/cobra v0.0.6
-	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/spf13/viper v1.4.0
-	github.com/ugorji/go v1.1.7 // indirect
-	github.com/unrolled/secure v1.0.4
-	go.opencensus.io v0.22.4
-	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
-	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208 // indirect
-	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
-	gopkg.in/fsnotify.v1 v1.4.7
-	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
-	gopkg.in/go-playground/validator.v8 v8.18.2 // indirect
-	gopkg.in/yaml.v2 v2.3.0
+	github.com/sirupsen/logrus v1.7.0
+	github.com/spf13/afero v1.4.1 // indirect
+	github.com/spf13/cast v1.3.1 // indirect
+	github.com/spf13/cobra v1.1.1
+	github.com/spf13/jwalterweatherman v1.1.0 // indirect
+	github.com/spf13/viper v1.7.1
+	github.com/ugorji/go v1.1.13 // indirect
+	github.com/unrolled/secure v1.0.8
+	go.opencensus.io v0.22.5
+	go.uber.org/multierr v1.6.0 // indirect
+	golang.org/x/crypto v0.0.0-20201016220609-9e8e0b390897 // indirect
+	golang.org/x/net v0.0.0-20201021035429-f5854403a974 // indirect
+	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43
+	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9 // indirect
+	golang.org/x/sys v0.0.0-20201020230747-6e5568b54d1a // indirect
+	google.golang.org/api v0.33.0 // indirect
+	google.golang.org/appengine v1.6.7 // indirect
+	google.golang.org/genproto v0.0.0-20201021134325-0d71844de594 // indirect
+	google.golang.org/grpc v1.33.1 // indirect
+	gopkg.in/ini.v1 v1.62.0 // indirect
+	gopkg.in/yaml.v2 v2.3.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
 )

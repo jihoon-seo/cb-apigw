@@ -8,7 +8,7 @@ import (
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/transport/http/client"
 	"github.com/gregjones/httpcache"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 // ===== [ Constants and Variables ] =====

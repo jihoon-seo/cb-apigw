@@ -9,7 +9,7 @@ import (
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
 	"github.com/rcrowley/go-metrics"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 // ===== [ Constants and Variables ] =====

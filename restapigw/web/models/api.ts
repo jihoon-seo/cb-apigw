@@ -79,12 +79,13 @@ export class ApiDefinition {
   except_querystrings: Array<string> = []; // 벡엔드로 전달하지 않을 Query String 리스트
   except_headers: Array<string> = []; // 벡엔드로 전달하지 않을 Header 리스트
   middleware?: any = {};
-  // health_check?: HealthCheckConfig = undefined; // 헬스 검증용 설정
+  health_check: HealthCheckConfig = new HealthCheckConfig(); // 헬스 검증용 설정
   backend: Array<BackendConfig> = []; // 백엔드 설정
 
   public AdjustSendValues() {
     this.timeout = Util.timeParser.ToDuration(this.timeout);
     this.cache_ttl = Util.timeParser.ToDuration(this.cache_ttl);
+    this.health_check.AdjustSendValues();
     this.backend.forEach(b => b.AdjustSendValues(this));
     if (this.output_encoding === "") this.output_encoding = "json";
   }
@@ -92,6 +93,7 @@ export class ApiDefinition {
     this.timeout = Util.timeParser.FromDuration(this.timeout, "s");
     this.cache_ttl = Util.timeParser.FromDuration(this.cache_ttl);
     this.backend.forEach(b => b.AdjustReceiveValues(this));
+    this.health_check.AdjustReceiveValues();
   }
   public Validate(): string {
     if (this.name === "") return "API Definition 이름을 지정하셔야 합니다.";
@@ -139,6 +141,7 @@ export function deserializeGroupFromJSON(
   const group: ApiGroup = Object.assign(new ApiGroup(), val);
   group.definitions = group.definitions.map(d => {
     const def: ApiDefinition = Object.assign(new ApiDefinition(), d);
+    def.health_check = Object.assign(new HealthCheckConfig(), def.health_check);
     def.backend = def.backend.map(b => Object.assign(new BackendConfig(), b));
     return def;
   });
@@ -153,6 +156,7 @@ export function deserializeDefinitionFromJSON(
   isReceived: boolean = false
 ) {
   const def: ApiDefinition = Object.assign(new ApiDefinition(), val);
+  def.health_check = Object.assign(new HealthCheckConfig(), def.health_check);
   def.backend = def.backend.map(b => Object.assign(new BackendConfig(), b));
   if (isReceived) def.AdjustReceiveValues();
   else def.AdjustSendValues();

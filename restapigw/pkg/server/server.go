@@ -31,15 +31,15 @@ type (
 		adminServer        *admin.Server
 		router             router.Router
 
-		configChan chan api.RepoChangedMessage
-		stopChan   chan struct{}
+		repoChan chan api.RepoChangedMessage
+		stopChan chan struct{}
 	}
 )
 
 // ===== [ Implementations ] =====
 
-// isConfigChanClosed - Configuration Changed Channel 종료 여부 검증
-func (s *Server) isConfigChanClosed(ch <-chan api.RepoChangedMessage) bool {
+// isRepoChanClosed - Repository Changed Channel 종료 여부 검증
+func (s *Server) isRepoChanClosed(ch <-chan api.RepoChangedMessage) bool {
 	select {
 	case <-ch:
 		return true
@@ -60,16 +60,16 @@ func (s *Server) isStopChanClosed(ch <-chan struct{}) bool {
 
 // closeChannel - 설정 변경과 종료에 대한 채널 종료
 func (s *Server) closeChannel() {
-	if !s.isConfigChanClosed(s.configChan) {
-		close(s.configChan)
+	if !s.isRepoChanClosed(s.repoChan) {
+		close(s.repoChan)
 	}
 	if !s.isStopChanClosed(s.stopChan) {
 		close(s.stopChan)
 	}
 }
 
-// applyChanges - 수신된 API 변경사항 반영
-func (s *Server) applyChanges() {
+// rebuildRouter - 수신된 API 변경사항 반영
+func (s *Server) rebuildRouter() {
 	s.logger.Debug("[SERVER] Refreshing configuration")
 
 	// 신규 라우팅 엔진 생성
@@ -120,7 +120,7 @@ func (s *Server) listenProviders(stop chan struct{}) {
 		select {
 		case <-stop:
 			return
-		case configMsg, ok := <-s.configChan:
+		case configMsg, ok := <-s.repoChan:
 			if !ok {
 				return
 			}
@@ -154,7 +154,7 @@ func (s *Server) listenProviders(stop chan struct{}) {
 
 			if hasChanges {
 				s.logger.Debug("[SERVER] Configuration change detected by Repository")
-				s.applyChanges()
+				s.rebuildRouter()
 			}
 		}
 	}
@@ -202,7 +202,7 @@ func (s *Server) startProvider(ctx context.Context) error {
 				err := s.updateConfiguration(c)
 				if nil == err {
 					if c.Operation != api.ApplyGroupsOperation && (c.Operation != api.AddedGroupOperation || (c.Operation == api.AddedGroupOperation && len(c.Definitions) > 0)) {
-						s.applyChanges()
+						s.rebuildRouter()
 					}
 				} else {
 					s.logger.WithError(err).Debug("[SERVER] Can not apply configuration changes")
@@ -221,7 +221,7 @@ func (s *Server) startProvider(ctx context.Context) error {
 
 	// Repository에 Watcher가 구현된 경우 실행
 	if watcher, ok := s.repoProvider.(api.Watcher); ok {
-		watcher.Watch(ctx, s.configChan)
+		watcher.Watch(ctx, s.repoChan)
 	}
 
 	return nil
@@ -329,8 +329,8 @@ func WithRepository(repo api.Repository) Option {
 // New - API G/W 운영을 위한 Server 인스턴스 생성
 func New(opts ...Option) *Server {
 	s := Server{
-		configChan: make(chan api.RepoChangedMessage, 100),
-		stopChan:   make(chan struct{}, 1),
+		repoChan: make(chan api.RepoChangedMessage, 100),
+		stopChan: make(chan struct{}, 1),
 	}
 
 	for _, opt := range opts {

@@ -12,7 +12,7 @@ import (
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/errors"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 // ===== [ Constants and Variables ] =====
@@ -63,27 +63,22 @@ type (
 // ===== [ Private Functions ] =====
 
 // parseEndpoint - 지정된 정보를 Definition 정보로 전환
-func parseEndpoint(sConf *config.ServiceConfig, apiDef []byte) GroupDefinitions {
-	var apiConfigs GroupDefinitions
-	log := logging.GetLogger()
+func parseEndpoint(sConf *config.ServiceConfig, apiDef []byte) (*GroupDefinitions, error) {
+	var apiConfigs *GroupDefinitions
 
 	// API 정의들 Unmarshalling
 	if err := yaml.Unmarshal(apiDef, &apiConfigs); nil != err {
-		// 오류 발생시 단일 Definition으로 다시 처리
-		apiConfigs.Definitions = append(apiConfigs.Definitions, config.NewDefinition())
-		if err := yaml.Unmarshal(apiDef, &apiConfigs.Definitions[0]); nil != err {
-			log.WithError(err).Error("[REPOSITORY] Couldn't parsing api definitions")
-		}
+		return nil, err
 	}
 
 	// 로드된 Endpoint 정보 재 구성
 	for _, ec := range apiConfigs.Definitions {
 		if err := ec.AdjustValues(sConf); nil != err {
-			log.WithError(err).Error("[REPOSITORY] Couldn't initialize api definition:" + ec.Name)
+			return nil, errors.Wrapf(err, "couldn't initialize api definition: '%s'", ec.Name)
 		}
 	}
 
-	return apiConfigs
+	return apiConfigs, nil
 }
 
 // groupDefinitions - 출력을 위한 Group Definition 구조 반환
