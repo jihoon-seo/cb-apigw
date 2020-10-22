@@ -73,7 +73,7 @@ EXPOSE 8000 8001
 # docker build -t cb-restapigw .
 
 # Run Container
-# docker run -it --rm --name cb-restapigw -p 8000:8000 --network deploy_default cb-restapigw
+# docker run -it --rm --name cb-restapigw -p 8000:8000 -p 8001:8001 --network deploy_default cb-restapigw
 
 # Delete stopped container
 # docker rm cb-restapigw
