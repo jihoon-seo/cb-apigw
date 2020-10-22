@@ -13,7 +13,8 @@ import (
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/errors"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
-	"gopkg.in/fsnotify.v1"
+
+	"github.com/fsnotify/fsnotify"
 )
 
 // ===== [ Constants and Variables ] =====
@@ -67,7 +68,7 @@ func (fsr *FileSystemRepository) Write(definitionMaps []*DefinitionMap) error {
 }
 
 // Watch - 파일 리파지토리의 대상 파일 변경 감시 및 처리
-func (fsr *FileSystemRepository) Watch(ctx context.Context, configChan chan<- RepoChangedMessage) {
+func (fsr *FileSystemRepository) Watch(ctx context.Context, repoChan chan<- RepoChangedMessage) {
 	go func() {
 		log := logging.GetLogger()
 
@@ -78,22 +79,27 @@ func (fsr *FileSystemRepository) Watch(ctx context.Context, configChan chan<- Re
 				if event.Op&fsnotify.Write == fsnotify.Write {
 					body, err := ioutil.ReadFile(event.Name)
 					if nil != err {
-						log.WithError(err).Error("[REPOSITORY] FILE > Couldn't load the api defintion file")
+						log.WithError(err).Errorf("[REPOSITORY] FILE > Couldn't load the api defintion file: '%s'", event.Name)
 						continue
 					}
-					configChan <- RepoChangedMessage{
+					apiDef, err := parseEndpoint(fsr.sConf, body)
+					if nil != err {
+						log.WithError(err).Errorf("[REPOSITORY] FILE > Couldn't parsing api definition: '%s'", event.Name)
+					}
+
+					repoChan <- RepoChangedMessage{
 						Configurations: &Configuration{DefinitionMaps: []*DefinitionMap{
 							{
 								Name:        core.GetLastPart(event.Name, "/"),
 								State:       CHANGED,
-								Definitions: parseEndpoint(fsr.sConf, body).Definitions,
+								Definitions: apiDef.Definitions,
 							},
 						}},
 					}
 				}
 				// 삭제 및 이름 변경된 경우
 				if event.Op&fsnotify.Remove == fsnotify.Remove || event.Op&fsnotify.Rename == fsnotify.Rename {
-					configChan <- RepoChangedMessage{
+					repoChan <- RepoChangedMessage{
 						Configurations: &Configuration{DefinitionMaps: []*DefinitionMap{
 							{
 								Name:        core.GetLastPart(event.Name, "/"),
@@ -158,8 +164,12 @@ func NewFileSystemRepository(sConf *config.ServiceConfig, dir string) (*FileSyst
 				return nil, err
 			}
 
-			definition := parseEndpoint(sConf, appConfigBody)
-			for _, v := range definition.Definitions {
+			apiDef, err := parseEndpoint(sConf, appConfigBody)
+			if nil != err {
+				return nil, err
+			}
+
+			for _, v := range apiDef.Definitions {
 				if err = repo.add(fileName, v); nil != err {
 					log.WithField("endpoint", v.Endpoint).WithError(err).Error("[REPOSITORY] FILE > Failed during add endpoint to the repository")
 					return nil, err

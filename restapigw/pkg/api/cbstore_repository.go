@@ -68,7 +68,7 @@ func (csr *CbStoreRepository) Close() error {
 }
 
 // Watch - CB-STORE 리파지토리의 변경 감시 및 처리 (Timer Reading)
-func (csr *CbStoreRepository) Watch(ctx context.Context, configChan chan<- RepoChangedMessage) {
+func (csr *CbStoreRepository) Watch(ctx context.Context, repoChan chan<- RepoChangedMessage) {
 	log := logging.GetLogger()
 	ticker := time.NewTicker(csr.refreshTime)
 
@@ -85,7 +85,7 @@ func (csr *CbStoreRepository) Watch(ctx context.Context, configChan chan<- RepoC
 					continue
 				}
 
-				configChan <- RepoChangedMessage{Configurations: &Configuration{DefinitionMaps: definitionMaps}}
+				repoChan <- RepoChangedMessage{Configurations: &Configuration{DefinitionMaps: definitionMaps}}
 			case <-ctx.Done():
 				return
 			}
@@ -113,8 +113,13 @@ func NewCbStoreRepository(sConf *config.ServiceConfig, key string, refreshTime t
 			continue
 		}
 
-		definition := parseEndpoint(sConf, []byte(kv.Value))
-		for _, def := range definition.Definitions {
+		apiDef, err := parseEndpoint(sConf, []byte(kv.Value))
+		if nil != err {
+			log.WithError(err).Error("[REPOSITORY] CB-STORE > Failed during parsing definitions")
+			return nil, err
+		}
+
+		for _, def := range apiDef.Definitions {
 			if err := repo.add(core.GetLastPart(kv.Key, "/"), def); nil != err {
 				log.WithField("endpoint", def.Endpoint).WithError(err).Error("[REPOSITORY] CB-STORE > Failed during add endpoint to the repository")
 				return nil, err
