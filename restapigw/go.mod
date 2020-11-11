@@ -13,7 +13,7 @@ replace (
 require (
 	contrib.go.opencensus.io/exporter/jaeger v0.2.1
 	github.com/cloud-barista/cb-log v0.2.0-cappuccino.0.20201008023843-31002c0a088d
-	github.com/cloud-barista/cb-store v0.2.0-cappuccino.0.20201014054737-e2310432d256
+	github.com/cloud-barista/cb-store v0.2.0-cappuccino.0.20201111072717-b0bb715e2694
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/gin-gonic/gin v1.6.3
