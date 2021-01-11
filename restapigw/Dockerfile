@@ -45,7 +45,8 @@ COPY --from=client_builder /app/dist ./web/dist
 RUN esc -o ./pkg/static/static.go -ignore "DS_Store|.nojekyll|README.md" -pkg static ./web/dist
 
 # build go binary
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags '-w -extldflags "-static"' -tags cb-restapigw -o cb-restapigw -v
+# CGO_ENABLED=0 GOOS=linux GOARCH=amd64 
+RUN go build -ldflags '-w -extldflags "-static"' -tags cb-restapigw -o cb-restapigw -v
 
 #############################################################
 ## Stage 3 - Applicaiton Setup
