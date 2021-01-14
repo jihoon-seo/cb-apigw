@@ -3,7 +3,7 @@
 #############################################################
 
 # FROM mhart/alpine-node:12 AS client_builder
-FROM node:10-alpine AS client_builder
+FROM node:10 AS client_builder
 
 WORKDIR /app
 
@@ -52,7 +52,7 @@ RUN go build -ldflags '-w -extldflags "-static"' -tags cb-restapigw -o cb-restap
 ## Stage 3 - Applicaiton Setup
 #############################################################
 
-FROM ubuntu:latest
+FROM ubuntu:latest AS prod
 
 # use bash
 RUN rm /bin/sh && ln -s /bin/bash /bin/sh
