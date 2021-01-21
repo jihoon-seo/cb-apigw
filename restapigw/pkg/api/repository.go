@@ -48,7 +48,7 @@ type (
 		Write([]*DefinitionMap) error
 	}
 
-	// Watcher - Repository에서 API Defintion 변경 여부 감시용
+	// Watcher - Repository에서 API Definition 변경 여부 감시용
 	Watcher interface {
 		Watch(ctx context.Context, configurationChan chan<- RepoChangedMessage)
 	}
@@ -116,7 +116,7 @@ func BuildRepository(sConf *config.ServiceConfig, refreshTime time.Duration) (Re
 	switch dsnURL.Scheme {
 	// CB-STORE (NutsDB or ETCD) 사용
 	case cbStore:
-		log.Debug("[REPOSITORY] CB-Store (NutsDB or ETCD) based configuration choosen")
+		log.Debug("[REPOSITORY] CB-Store (NutsDB or ETCD) based configuration chosen")
 		storeKey := dsnURL.Path
 
 		log.WithField("key", storeKey).Debug("[REPOSITORY] Trying to load API configuration files")
@@ -127,7 +127,7 @@ func BuildRepository(sConf *config.ServiceConfig, refreshTime time.Duration) (Re
 		return repo, nil
 	// File(Memoery) 사용
 	case file:
-		log.Debug("[REPOSITORY] File system based configuration choosen")
+		log.Debug("[REPOSITORY] File system based configuration chosen")
 		apiPath := fmt.Sprintf("%s/apis", dsnURL.Path)
 
 		log.WithField("path", apiPath).Debug("[REPOSITORY] Trying to load API configuration files")

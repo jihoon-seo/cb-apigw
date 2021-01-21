@@ -37,7 +37,7 @@ func Points(hostname string, now time.Time, counters map[string]int64, logger lo
 	points[0] = incoming
 
 	out := map[string]interface{}{
-		"guage": int(counters[prefix+"disconnected-gauge"]),
+		"gauge": int(counters[prefix+"disconnected-gauge"]),
 	}
 	outgoing, err := client.NewPoint("router", map[string]string{"host": hostname, "direction": "out"}, out, now)
 	if nil != err {
