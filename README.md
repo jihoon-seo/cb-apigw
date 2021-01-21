@@ -303,7 +303,7 @@ Configuration 설정은 `YAML` 포맷을 사용한다.
     - Client 단위 호출 허용 수를 초과하는 경우는 특정 사용자의 호출이 실패한 것이므로 <font color="red">`429 - Too many requests 오류`</font> 상태를 반환한다.
 
 - Backend 레벨
-  - **HTTPCACHE (Backend Reponse cache)**
+  - **HTTPCACHE (Backend Response cache)**
     ```yaml
     middleware:
       mw-httpcache: 

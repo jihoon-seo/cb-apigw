@@ -21,8 +21,8 @@ export class HealthCheckConfig {
 }
 
 export class BackendConfig {
-  hosts: Array<HostConfig> = []; // 백엔드 서비스 도메인 리스트 (Defintion에서 전역으로 설정한 경우는 생략 가능)
-  timeout: any = "3s"; // 처리 제한 시간 (Defintion에서 전역으로 설정한 경우는 생략 가능)
+  hosts: Array<HostConfig> = []; // 백엔드 서비스 도메인 리스트 (Definition에서 전역으로 설정한 경우는 생략 가능)
+  timeout: any = "3s"; // 처리 제한 시간 (Definition에서 전역으로 설정한 경우는 생략 가능)
   method: string = "GET"; // 호출 메서드 (Definition에서 전역으로 설정한 경우는 생략 가능)
   url_pattern: string = ""; // 서비스 URL (Domain 제외)
   encoding: string = "json"; // 데이터 인코딩 (xml, json : Definition에서 전역으로 설정한 경우는 생략 가능)
