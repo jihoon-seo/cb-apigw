@@ -1,4 +1,6 @@
 # cb-apigw
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fcloud-barista%2Fcb-apigw.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fcloud-barista%2Fcb-apigw?ref=badge_shield)
+
 cb-apigw is the API Gateway for Cloud-Barista. There are two API Gateway types: REST and gRPC API Gateways.
 
 - API Gateway for REST API is cb-restapigw (released an initial version)
@@ -961,3 +963,7 @@ API G/W 실행 테스트를 위한 백그라운드 서비스들은 `Deploy` 폴�
    docker run --network deploy_default -p 8000:8000 cb-restapigw
    ```
    * 상기 명령어의 `--network deploy_default` 는 Background 서비스가 docker-compose로 동작하면서 구성된 Docker Bridge Network의 이름이다. 별도 옵션을 주지 않았기 때문에 folder 명을 기준으로 생성된 이름을 가진다.
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fcloud-barista%2Fcb-apigw.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fcloud-barista%2Fcb-apigw?ref=badge_large)
