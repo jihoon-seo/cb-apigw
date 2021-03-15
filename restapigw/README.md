@@ -16,7 +16,7 @@ CB-RESTAPIGW는 PoC (Proof of Concepts) 수준의 RESTful API Gateway 기능을 
 - CB-RESTAPIGW 컨테이너 실행
 
 ```
-docker run -p 8000:8000 --name cb-restapigw \
+docker run -p 8000:8000 -p 8001:8001 --name cb-restapigw \
 -v /root/go/src/github.com/cloud-barista/cb-apigw/restapigw/conf:/app/conf \
 cloudbaristaorg/cb-restapigw:v0.1-yyyymmdd
 ```
@@ -501,7 +501,7 @@ cb-restapigw -c ./conf/cb-restapigw.yaml
     - Client 단위 호출 허용 수를 초과하는 경우는 특정 사용자의 호출이 실패한 것이므로 <font color="red">`429 - Too many requests 오류`</font> 상태를 반환한다.
 
 - Backend 레벨
-  - **HTTPCACHE (Backend Reponse cache)**
+  - **HTTPCACHE (Backend Response cache)**
     ```yaml
     middleware:
       mw-httpcache: 
@@ -1562,6 +1562,6 @@ const apigw = {
 
 2. Docker Contaienr 실행
    ```shell
-   docker run --network deploy_default -p 8000:8000 cb-restapigw
+   docker run --network deploy_default -p 8000:8000 -p 8001:8001 cb-restapigw
    ```
    * 상기 명령어의 `--network deploy_default` 는 Background 서비스가 docker-compose로 동작하면서 구성된 Docker Bridge Network의 이름이다. 별도 옵션을 주지 않았기 때문에 folder 명을 기준으로 생성된 이름을 가진다.

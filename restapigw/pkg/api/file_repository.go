@@ -79,7 +79,7 @@ func (fsr *FileSystemRepository) Watch(ctx context.Context, repoChan chan<- Repo
 				if event.Op&fsnotify.Write == fsnotify.Write {
 					body, err := ioutil.ReadFile(event.Name)
 					if nil != err {
-						log.WithError(err).Errorf("[REPOSITORY] FILE > Couldn't load the api defintion file: '%s'", event.Name)
+						log.WithError(err).Errorf("[REPOSITORY] FILE > Couldn't load the api definition file: '%s'", event.Name)
 						continue
 					}
 					apiDef, err := parseEndpoint(fsr.sConf, body)

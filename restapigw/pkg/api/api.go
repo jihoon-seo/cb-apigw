@@ -200,7 +200,7 @@ func (c *Configuration) FindByListenPath(listenPath string) *config.EndpointConf
 	return nil
 }
 
-// AddDefinition - 지정한 정보를 기준으로 관리 중인 API Defintion 추가
+// AddDefinition - 지정한 정보를 기준으로 관리 중인 API Definition 추가
 func (c *Configuration) AddDefinition(name string, ec *config.EndpointConfig) error {
 	for _, dm := range c.DefinitionMaps {
 		if dm.Name == name {
@@ -250,7 +250,7 @@ func (c *Configuration) RemoveDefinition(name string, ec *config.EndpointConfig)
 			}
 		}
 	}
-	return errors.New("No defintion to remove in group path [" + name + "]")
+	return errors.New("No definition to remove in group path [" + name + "]")
 }
 
 // GetGroup - 지정한 Group 정보 반환
@@ -291,7 +291,7 @@ func (c *Configuration) RemoveGroup(name string) error {
 	return errors.New("No group to remove in groups [" + name + "]")
 }
 
-// ClearRemoved - 현재 관리 중인 API Defintion Soruce들 중에서 삭제된 내용을 제거
+// ClearRemoved - 현재 관리 중인 API Definition Soruce들 중에서 삭제된 내용을 제거
 func (c *Configuration) ClearRemoved() {
 	for i, dm := range c.DefinitionMaps {
 		if dm.State == REMOVED {

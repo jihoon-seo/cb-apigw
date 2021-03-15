@@ -74,8 +74,8 @@ github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e/go.mod h1:nSuG5e5P
 github.com/chzyer/test v0.0.0-20180213035817-a1ea475d72b1/go.mod h1:Q3SI9o4m/ZMnBNeIyt5eFwwo7qiLfzFZmjNmxjkiQlU=
 github.com/cloud-barista/cb-log v0.2.0-cappuccino.0.20201008023843-31002c0a088d h1:bBjxqjGTvf63aZKpLQpvxMETYlAUIKk38UVI47JXPCk=
 github.com/cloud-barista/cb-log v0.2.0-cappuccino.0.20201008023843-31002c0a088d/go.mod h1:C0KNV97sw8IoLSlNuSiCGDQIuS/wXJaZWV/6MOwc20c=
-github.com/cloud-barista/cb-store v0.2.0-cappuccino.0.20201014054737-e2310432d256 h1:bYpH4mANpGUYLIktB58IMMLfszD0Zwb+ELP8PCnG4fM=
-github.com/cloud-barista/cb-store v0.2.0-cappuccino.0.20201014054737-e2310432d256/go.mod h1:tcMkva0951xAwoMcTqn9nXttnzk3ytHlJLs4MyH7p84=
+github.com/cloud-barista/cb-store v0.2.0-cappuccino.0.20201111072717-b0bb715e2694 h1:T0hjZR4xPYZzjAygIR4pz3dNAjC/xhUldJYqkpBRjX8=
+github.com/cloud-barista/cb-store v0.2.0-cappuccino.0.20201111072717-b0bb715e2694/go.mod h1:tcMkva0951xAwoMcTqn9nXttnzk3ytHlJLs4MyH7p84=
 github.com/coreos/etcd v3.3.13+incompatible/go.mod h1:uF7uidLiAD3TWHmW31ZFd/JWoc32PjwdhPthX9715RE=
 github.com/coreos/etcd v3.3.18+incompatible h1:Zz1aXgDrFFi1nadh58tA9ktt06cmPTwNNP3dXwIq1lE=
 github.com/coreos/etcd v3.3.18+incompatible/go.mod h1:uF7uidLiAD3TWHmW31ZFd/JWoc32PjwdhPthX9715RE=

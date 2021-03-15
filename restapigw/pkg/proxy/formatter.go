@@ -30,7 +30,7 @@ type flatmapOp struct {
 	Args [][]string `yarml:"args"`
 }
 
-// propertyFilter - Reponse Filtering에 사용할 함수 정의
+// propertyFilter - Response Filtering에 사용할 함수 정의
 type propertyFilter func(*Response)
 
 // entityFormatter - PropertyFilter를 이용해서 Response를 Format처리하기 위한 설정 구조 정의
