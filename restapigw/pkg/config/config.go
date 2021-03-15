@@ -263,7 +263,7 @@ type (
 	}
 
 	// MWConfig - Middleware 설정을 저장하기 위한 맵 구조 (개별 Middlewares에서 설정 Parsing 적용)
-	MWConfig map[string]interface{}
+	MWConfig core.StringInterfaceMap
 
 	// HealthCheck - Health Check 구조
 	HealthCheck struct {

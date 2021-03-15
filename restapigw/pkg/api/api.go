@@ -44,7 +44,7 @@ var (
 	// ErrAPINameExists - 레파지토리에 동일한 이름의 API 정의가 존재하는 경우 오류
 	ErrAPINameExists = errors.NewWithCode(http.StatusConflict, "api name is already registered")
 	// ErrAPIListenPathExists - 레파지토리에 동일한 수신 경로의 API 정의가 존재하는 경우 오류
-	ErrAPIListenPathExists = errors.NewWithCode(http.StatusConflict, "api listen path is already registered")
+	ErrAPIListenPathExists = errors.NewWithCode(http.StatusConflict, "api listen path (Endpoint) is already registered")
 	// ErrGroupExists - 리파지토리에 동일한 이름의 소스가 존재하는 경우 오류
 	ErrGroupExists = errors.NewWithCode(http.StatusConflict, "api group is already registered")
 	// ErrGroupNotExists - 리파지토리에 동일한 이름의 소스가 존재하지 않는 경우 오류
@@ -132,10 +132,19 @@ func (c *Configuration) Exists(name string, ec *config.EndpointConfig) (bool, er
 	for _, dm := range c.DefinitionMaps {
 		if dm.Name == name {
 			for _, def := range dm.Definitions {
+				// 동일 그룹에 동일한 이름이 존재하는지 검증
 				if def.Name == ec.Name {
 					return true, ErrAPINameExists
 				}
 
+				// 동일 그룹에 Endpoint가 존재하는지 검증
+				if def.Endpoint == ec.Endpoint {
+					return true, ErrAPIListenPathExists
+				}
+			}
+		} else {
+			// 다른 그룹에 Endpoint가 존재하는지 검증
+			for _, def := range dm.Definitions {
 				if def.Endpoint == ec.Endpoint {
 					return true, ErrAPIListenPathExists
 				}

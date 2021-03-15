@@ -173,7 +173,7 @@ func getResponseCombiner() ResponseCombiner {
 // shouldRunSequentialMerger - 지정된 설정 정보를 기준으로 Merging이 순차 처리가 되어야할지 검증
 func shouldRunSequentialMerger(eConf *config.EndpointConfig) bool {
 	if v, ok := eConf.Middleware[MWNamespace]; ok {
-		if e, ok := v.(map[string]interface{}); ok {
+		if e, ok := v.(config.MWConfig); ok {
 			if v, ok := e[sequentialKey]; ok {
 				c, ok := v.(bool)
 				return ok && c
