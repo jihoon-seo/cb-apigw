@@ -12,9 +12,12 @@ WORKDIR /app
 ADD go.mod .
 ADD main.go .
 
-# build the binary
-RUN CGO_ENABLED=0 go build -o ./hmac_server -v ./...
-RUN chmod +x ./hmac_server
+# download dependencies
+RUN go get github.com/labstack/echo/v4 && \
+  go get github.com/spf13/viper && \
+  # build the binary
+  CGO_ENABLED=0 go build -o ./hmac_server -v ./... && \
+  chmod +x ./hmac_server
 
 ##############################################################
 ## Stage 2 - Applicaiton Setup

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"github.com/spf13/viper"
 )
 
@@ -129,7 +129,7 @@ func validateToken() echo.HandlerFunc {
 		c.Bind(&newTask)
 
 		var tokenData = getTokenData(newTask.Token)
-		if 0 == len(tokenData[0]) {
+		if len(tokenData[0]) == 0 {
 			newTask.Message = "Token data not founded."
 		}
 
@@ -140,7 +140,7 @@ func validateToken() echo.HandlerFunc {
 		newTask.Duration = tokenInfo[1]
 		newTask.AccessKey = tokenInfo[2]
 		newToken := makeToken(newTask)
-		if bytes.Compare(newToken, tokenData[0]) != 0 {
+		if !bytes.Equal(newToken, tokenData[0]) {
 			newTask.Message = "Invalid token."
 		} else if !checkDuration(currTime, newTask.Timestamp, parseDuration(newTask.Duration)) {
 			newTask.Message = "Time limit excceeded."
