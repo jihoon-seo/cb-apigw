@@ -97,9 +97,7 @@ func (c *Configuration) GetAllDefinitions() []*config.EndpointConfig {
 	defs := make([]*config.EndpointConfig, 0)
 	for _, dm := range c.DefinitionMaps {
 		if dm.State != REMOVED {
-			for _, def := range dm.Definitions {
-				defs = append(defs, def)
-			}
+			defs = append(defs, dm.Definitions...)
 		}
 	}
 	return defs

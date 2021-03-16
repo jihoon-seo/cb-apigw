@@ -82,9 +82,7 @@ func (imr *InMemoryRepository) FindAllByGroup(group string) ([]*config.EndpointC
 	endpoints := make([]*config.EndpointConfig, 0)
 	sm := imr.getGroup(group)
 	if nil != sm {
-		for _, v := range sm.Definitions {
-			endpoints = append(endpoints, v)
-		}
+		endpoints = append(endpoints, sm.Definitions...)
 	}
 	return endpoints, nil
 }
