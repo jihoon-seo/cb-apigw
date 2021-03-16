@@ -227,14 +227,14 @@ func blacklistFilterSub(vMap interface{}, blacklist []string) map[string]interfa
 // newFlatmapFormatter - 지정된 BackendConfig 기준으로 Flatmap을 활용하는 Formatter 생성
 func newFlatmapFormatter(bConf *config.BackendConfig) EntityFormatter {
 	if v, ok := bConf.Middleware[MWNamespace]; ok {
-		if e, ok := v.(map[string]interface{}); ok {
+		if e, ok := v.(config.MWConfig); ok {
 			if vs, ok := e[flatmapFilter].([]interface{}); ok {
 				if 0 == len(vs) {
 					return nil
 				}
 				ops := []flatmapOp{}
 				for _, v := range vs {
-					m, ok := v.(map[interface{}]interface{})
+					m, ok := v.(config.MWConfig)
 					if !ok {
 						continue
 					}

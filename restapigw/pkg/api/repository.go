@@ -22,9 +22,7 @@ const (
 	cbStore = "cbstore"
 )
 
-var (
-	parser = config.MakeParser()
-)
+var ()
 
 // ===== [ Types ] =====
 type (
@@ -100,7 +98,7 @@ func BuildRepository(sConf *config.ServiceConfig, refreshTime time.Duration) (Re
 	if nil != err {
 		return nil, errors.Wrap(err, "Error parsing the DSN")
 	}
-	if "" == dsnURL.Path {
+	if dsnURL.Path == "" {
 		return nil, errors.New("Path not found from DSN")
 	}
 

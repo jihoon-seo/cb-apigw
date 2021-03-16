@@ -54,6 +54,9 @@ type (
 		message       string
 		originalError error
 	}
+
+	// StringInterfaceMap - 문자열 인자를 가기는 interface{} Map 형식
+	StringInterfaceMap map[string]interface{}
 )
 
 // ===== [ Implementations ] =====

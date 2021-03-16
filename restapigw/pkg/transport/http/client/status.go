@@ -82,7 +82,7 @@ func NoOpHTTPStatusHandler(_ context.Context, resp *http.Response) (*http.Respon
 // 그렇지 않는 경우는 DefaultHTTPStatusHandler 사용
 func GetHTTPStatusHandler(bConf *config.BackendConfig) HTTPStatusHandler {
 	if e, ok := bConf.Middleware[MWNamespace]; ok {
-		if m, ok := e.(map[string]interface{}); ok {
+		if m, ok := e.(config.MWConfig); ok {
 			if v, ok := m["return_error_details"]; ok {
 				if b, ok := v.(string); ok && "" != b {
 					return DetailedHTTPStatusHandler(DefaultHTTPStatusHandler, b)

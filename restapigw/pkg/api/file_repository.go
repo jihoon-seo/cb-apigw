@@ -79,12 +79,13 @@ func (fsr *FileSystemRepository) Watch(ctx context.Context, repoChan chan<- Repo
 				if event.Op&fsnotify.Write == fsnotify.Write {
 					body, err := ioutil.ReadFile(event.Name)
 					if nil != err {
-						log.WithError(err).Errorf("[REPOSITORY] FILE > Couldn't load the api definition file: '%s'", event.Name)
+						log.WithError(err).Errorf("[REPOSITORY] FILE > Couldn't load the api definition file: '%s'. Ignored!!", event.Name)
 						continue
 					}
 					apiDef, err := parseEndpoint(fsr.sConf, body)
 					if nil != err {
-						log.WithError(err).Errorf("[REPOSITORY] FILE > Couldn't parsing api definition: '%s'", event.Name)
+						log.WithError(err).Errorf("[REPOSITORY] FILE > Couldn't parsing api definition: '%s'. Ignored!!", event.Name)
+						continue
 					}
 
 					repoChan <- RepoChangedMessage{
@@ -110,8 +111,8 @@ func (fsr *FileSystemRepository) Watch(ctx context.Context, repoChan chan<- Repo
 					}
 				}
 			case err := <-fsr.watcher.Errors:
-				log.WithError(err).Error("[REPOSITORY] FILE > Error received from file system notify")
-				return
+				log.WithError(err).Error("[REPOSITORY] FILE > Error received from file system notify. Ignored!!")
+				continue
 			case <-ctx.Done():
 				return
 			}
@@ -166,6 +167,7 @@ func NewFileSystemRepository(sConf *config.ServiceConfig, dir string) (*FileSyst
 
 			apiDef, err := parseEndpoint(sConf, appConfigBody)
 			if nil != err {
+				log.Errorf("[REPOSITORY] FILE > Couldn't parsing the api definition file (%s)", filePath)
 				return nil, err
 			}
 
