@@ -167,6 +167,7 @@ func NewFileSystemRepository(sConf *config.ServiceConfig, dir string) (*FileSyst
 
 			apiDef, err := parseEndpoint(sConf, appConfigBody)
 			if nil != err {
+				log.Errorf("[REPOSITORY] FILE > Couldn't parsing the api definition file (%s)", filePath)
 				return nil, err
 			}
 

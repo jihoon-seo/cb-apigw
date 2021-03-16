@@ -8,7 +8,7 @@ definitions:
       - host: http://localhost:8200
         weight: 0
     method: GET
-    timeout: 100
+    timeout: 2s
     cache_ttl: 1h0m0s
     output_encoding: json
     except_querystrings: []
