@@ -149,36 +149,37 @@ cb-restapigw -c ./conf/cb-restapigw.yaml
 
   - 서비스 설정
     - 기본 설정
-      | 설정 | 내용 | 필수 | 기본값 |
-      |---|---|:-:|---|
-      | name | 서비스 식별 명 | O | '' |
-      | port | 서비스에서 사용할 포트 | O | 8000 |
-      | version | 설정 파일 버전 | O | '1' |
-      | timeout | 기본 처리 제한 시간 | | 2s |
-      | grace_timeout | 종료시 잔여 요청을 처리하기 위한 대기 제한 시간 | | 0 (즉시) |
-      | debug | 디버그모드 여부 || false |
-      | cache_ttl | GET 처리에 대한 캐시 TTL 기간 || 1h |
-      | read_timeout | 전체 요청을 읽기 위한 최대 제한 시간 || 0 (제한없음) |
-      | write_timeout | 전체 응답을 출력하기 위한 최대 제한 시간 || 0 (제한없음) |
-      | idle_timeout | Keep-alive 활성 상태에서 다음 요청까지의 최대 제한 시간 || 0 (제한없음) |
-      | read_header_timeout | 요청헤더를 읽기 위한 최대 제한 시간 || 0 (제한없음) |
-      | max_idle_connections | 유휴연결(Keep-alive)들의 최대 유지 수 || 0 (제한없음) |
-      | max_idle_connections_per_host | 유휴연결(Keep-alive)들의 호스트당 최대 유지 수 || 250 |
-      | idle_connection_timeout | 유휴연결(Keep-alive)의 최대 제한 시간 || 0 이면 read_timeout 사용 (이것도 0이면 read_header_timeout 사용) |
-      | dialer_timeout | TCP 연결에 사용할 대기 제한 시간 || 0 (제한없음) |
-      | dialer_keep_alive | 활성연결의 유지 시간 || 0 지정시는 Keep-alive 비활성화 |
-      | dialer_fallback_delay | DualStack 활성화 시에 실패한 연결을 재 처리하는데 필요한 대기 시간 || 0 (지연없음) |
-      | disable_compression | 압축 비활성 여부 || false |
-      | disable_keep_alives | 다른 요청에 TCP 연결을 재 사용하는 것의 비활성 여부 || false |
-      | response_header_timeout | Request 처리 후에 서버의 Response Header 정보를 기다리는 제한 시간 || 0 (제한없음) |
-      | expect_continue_timeout | 서버의 첫번째 Response Header 정보를 기다리는 제한 시간 || 0 (제한없음) |
-      | disable_strict_rest | REST 강제 규칙 비활성화 여부 | | false |
-      | router_engine | Route 처리에 사용할 Engine 지정 | | 'gin' (현재 다른 엔진은 지원하지 않음) |
-      | middleware | 서비스에서 사용할 미들웨어 설정 (아래 개별 설정 참고)| |  |
-      | tls | 서비스 TLS 설정 (아래 개별 설정 참고) | |  |
-      | admin | 서비스 ADMIN API/Web 설정 (아래 개별 설정 참고) | O |  |
-      | repository | API 설정 관리를 위한 Repository 설정 (아래 개별 설정 참고) | O | |
-      | cluster | 서비스가 클러스터내에 다중으로 동작할 때 설정 (아래 개별 설정 참고) | |  |
+      | 설정                          | 내용                                                                | 필수  | 기본값                                                           |
+      | ----------------------------- | ------------------------------------------------------------------- | :---: | ---------------------------------------------------------------- |
+      | name                          | 서비스 식별 명                                                      |   O   | ''                                                               |
+      | port                          | 서비스에서 사용할 포트                                              |   O   | 8000                                                             |
+      | version                       | 설정 파일 버전                                                      |   O   | '1'                                                              |
+      | timeout                       | 기본 처리 제한 시간 (Endpoint설정에 미 지정시 사용)                 |       | 2s                                                               |
+      | grace_timeout                 | 종료시 잔여 요청을 처리하기 위한 대기 제한 시간                     |       | 0 (즉시)                                                         |
+      | debug                         | 디버그모드 여부                                                     |       | false                                                            |
+      | output_encoding               | 반환결과 처리에 사용할 인코딩 (Endpoint설정에 미 지정시 사용)       |       | 'json' ('json', 'string', 'no-op' 사용 가능)                     |
+      | cache_ttl                     | GET 처리에 대한 캐시 TTL 기간 (Endpoint설정에 미 지정시 사용)       |       | 1h                                                               |
+      | read_timeout                  | 전체 요청을 읽기 위한 최대 제한 시간                                |       | 0 (제한없음)                                                     |
+      | write_timeout                 | 전체 응답을 출력하기 위한 최대 제한 시간                            |       | 0 (제한없음)                                                     |
+      | idle_timeout                  | Keep-alive 활성 상태에서 다음 요청까지의 최대 제한 시간             |       | 0 (제한없음)                                                     |
+      | read_header_timeout           | 요청헤더를 읽기 위한 최대 제한 시간                                 |       | 0 (제한없음)                                                     |
+      | max_idle_connections          | 유휴연결(Keep-alive)들의 최대 유지 수                               |       | 0 (제한없음)                                                     |
+      | max_idle_connections_per_host | 유휴연결(Keep-alive)들의 호스트당 최대 유지 수                      |       | 250                                                              |
+      | idle_connection_timeout       | 유휴연결(Keep-alive)의 최대 제한 시간                               |       | 0 이면 read_timeout 사용 (이것도 0이면 read_header_timeout 사용) |
+      | dialer_timeout                | TCP 연결에 사용할 대기 제한 시간                                    |       | 0 (제한없음)                                                     |
+      | dialer_keep_alive             | 활성연결의 유지 시간                                                |       | 0 지정시는 Keep-alive 비활성화                                   |
+      | dialer_fallback_delay         | DualStack 활성화 시에 실패한 연결을 재 처리하는데 필요한 대기 시간  |       | 0 (지연없음)                                                     |
+      | disable_compression           | 압축 비활성 여부                                                    |       | false                                                            |
+      | disable_keep_alives           | 다른 요청에 TCP 연결을 재 사용하는 것의 비활성 여부                 |       | false                                                            |
+      | response_header_timeout       | Request 처리 후에 서버의 Response Header 정보를 기다리는 제한 시간  |       | 0 (제한없음)                                                     |
+      | expect_continue_timeout       | 서버의 첫번째 Response Header 정보를 기다리는 제한 시간             |       | 0 (제한없음)                                                     |
+      | disable_strict_rest           | REST 강제 규칙 비활성화 여부                                        |       | false                                                            |
+      | router_engine                 | Route 처리에 사용할 Engine 지정                                     |       | 'gin' (현재 다른 엔진은 지원하지 않음)                           |
+      | middleware                    | 서비스에서 사용할 미들웨어 설정 (아래 개별 설정 참고)               |       |                                                                  |
+      | tls                           | 서비스 TLS 설정 (아래 개별 설정 참고)                               |       |                                                                  |
+      | admin                         | 서비스 ADMIN API/Web 설정 (아래 개별 설정 참고)                     |   O   |                                                                  |
+      | repository                    | API 설정 관리를 위한 Repository 설정 (아래 개별 설정 참고)          |   O   |                                                                  |
+      | cluster                       | 서비스가 클러스터내에 다중으로 동작할 때 설정 (아래 개별 설정 참고) |       |                                                                  |
 
     - 미들웨어 설정
 
@@ -232,49 +233,49 @@ cb-restapigw -c ./conf/cb-restapigw.yaml
 
       > 서비스에 TSL (이전 SSL 방식) 를 적용하는 경우
 
-      | 설정 | 내용 | 필수 | 기본값 |
-      |---|---|:-:|---|
-      | port | 기본 포트 | O | 8443 |
-      | public_key | 공개 키 파일 경로 | O | '' |
-      | private_key | 비밀 키 파일 경로 | O | '' |
-      | redirect | TLS 리다이렉션 | | true |
-      | disabled | TLS 비활성화 여부 | | false |
-      | min_version | TLS 최소 버전 |  | VersionTLS12 |
-      | max_version | TLS 최대 버전 |  | VersionTLS12 |
-      | curve_preferences | Curve 설정들의 리스트 |  | 모두 사용 (use 23 for CurveP256, 24 for CurveP384 or 25 for CurveP521) |
-      | prefer_server_cipher_suites | 서버에서 사용을 강제하는 Cipher Suite 리스트 |  | false |
-      | cipher_suites | Chiper Suite 리스트 |  | defaultCipherSuites 리스트 사용 |
+      | 설정                        | 내용                                         | 필수  | 기본값                                                                 |
+      | --------------------------- | -------------------------------------------- | :---: | ---------------------------------------------------------------------- |
+      | port                        | 기본 포트                                    |   O   | 8443                                                                   |
+      | public_key                  | 공개 키 파일 경로                            |   O   | ''                                                                     |
+      | private_key                 | 비밀 키 파일 경로                            |   O   | ''                                                                     |
+      | redirect                    | TLS 리다이렉션                               |       | true                                                                   |
+      | disabled                    | TLS 비활성화 여부                            |       | false                                                                  |
+      | min_version                 | TLS 최소 버전                                |       | VersionTLS12                                                           |
+      | max_version                 | TLS 최대 버전                                |       | VersionTLS12                                                           |
+      | curve_preferences           | Curve 설정들의 리스트                        |       | 모두 사용 (use 23 for CurveP256, 24 for CurveP384 or 25 for CurveP521) |
+      | prefer_server_cipher_suites | 서버에서 사용을 강제하는 Cipher Suite 리스트 |       | false                                                                  |
+      | cipher_suites               | Chiper Suite 리스트                          |       | defaultCipherSuites 리스트 사용                                        |
 
     - Admin 설정
 
       > Admin API/Web 사용을 위한 설정
 
-      | 설정 | 내용 | 필수 | 기본값 |
-      |---|---|:-:|---|
-      | port | Admin Server 포트 | O | 8001 |
-      | credentials | Admin Server (WEB)를 사용할 사용자 설정 (아래 개별 설정 참고) | O |  |
-      | tls | Admin Server TLS 설정 (위의 개별 설정 참고) |  |  |
-      | profiling_enabled | Admin Server Profile 처리 여부 |  | false |
-      | profiling_public | Admin Server Profile 정보 노출 여부 |  | false |
+      | 설정              | 내용                                                          | 필수  | 기본값 |
+      | ----------------- | ------------------------------------------------------------- | :---: | ------ |
+      | port              | Admin Server 포트                                             |   O   | 8001   |
+      | credentials       | Admin Server (WEB)를 사용할 사용자 설정 (아래 개별 설정 참고) |   O   |        |
+      | tls               | Admin Server TLS 설정 (위의 개별 설정 참고)                   |       |        |
+      | profiling_enabled | Admin Server Profile 처리 여부                                |       | false  |
+      | profiling_public  | Admin Server Profile 정보 노출 여부                           |       | false  |
 
     - Credentials 설정
 
       > Admin Web 액세스를 위한 정보 설정
 
-      | 설정 | 내용 | 필수 | 기본값 |
-      |---|---|:-:|---|
-      | algorithm | JWT 인증 알고리즘 | O | 'HS256' |
-      | secret | JWT 인증 비밀 키 | O | 'testSecret' |
-      | token_timeout | JWT 인증 유효기간 | O | '3h' |
-      | basic | Admin 사용자 기본 인증 정보 (아래 개별 설정 참고) | O |  |
+      | 설정          | 내용                                              | 필수  | 기본값       |
+      | ------------- | ------------------------------------------------- | :---: | ------------ |
+      | algorithm     | JWT 인증 알고리즘                                 |   O   | 'HS256'      |
+      | secret        | JWT 인증 비밀 키                                  |   O   | 'testSecret' |
+      | token_timeout | JWT 인증 유효기간                                 |   O   | '3h'         |
+      | basic         | Admin 사용자 기본 인증 정보 (아래 개별 설정 참고) |   O   |              |
 
     - BasicAuth 설정
 
       > Admin Web에 액세스할 사용자 정보 설정
 
-      | 설정 | 내용 | 필수 | 기본값 |
-      |---|---|:-:|---|
-      | users | 사용자 정보 Map | O |  |
+      | 설정  | 내용            | 필수  | 기본값 |
+      | ----- | --------------- | :---: | ------ |
+      | users | 사용자 정보 Map |   O   |        |
 
       Admin Web에 액세스할 사용자 정보를 Map 형식으로 아래와 같이 지정하면 된다. (ID:PW 형식)
 
@@ -290,18 +291,18 @@ cb-restapigw -c ./conf/cb-restapigw.yaml
       > API 설정을 관리하기 위한 Repository 설정<br/>
       > *현재는 FILE / CB-STORE (NutsDB or ETCD) 만 제공한다*
 
-      | 설정 | 내용 | 필수 | 기본값 |
-      |---|---|:-:|---|
-      | dsn | Repository 연결 문자열 | O | 'file://./conf' ('cbstore://api/restapigw/conf' 설정 가능) |
+      | 설정 | 내용                   | 필수  | 기본값                                                     |
+      | ---- | ---------------------- | :---: | ---------------------------------------------------------- |
+      | dsn  | Repository 연결 문자열 |   O   | 'file://./conf' ('cbstore://api/restapigw/conf' 설정 가능) |
 
     - Cluster 설정
 
       > Cluster에서 API G/W 가 다중으로 동작할 경우에 Repository 공유를 위한 설정<br/>
       > *다중 실행인 경우는 CB-STORE를 사용하는 경우만 해당되며, 파일 기반 Repository인 경우는 적용되지 않는다*
 
-      | 설정 | 내용 | 필수 | 기본값 |
-      |---|---|:-:|---|
-      | update_frequency | Repository Polling 주기 | O | '10s' |     
+      | 설정             | 내용                    | 필수  | 기본값 |
+      | ---------------- | ----------------------- | :---: | ------ |
+      | update_frequency | Repository Polling 주기 |   O   | '10s'  |
 
 
 ### <u>API 서비스 설정 (각 API 호출 용)</u>
@@ -320,61 +321,61 @@ cb-restapigw -c ./conf/cb-restapigw.yaml
 
       > 외부에 노출할 서비스 API 정보 설정
       
-      | 설정 | 내용 | 필수 | 기본값 |
-      |---|---|:-:|---|
-      | name | 설정 식별 명 | O | '' |
-      | active | 설정 활성화 여부 | O | true |
-      | endpoint | 클라이언트에 노출될 URL 패턴 | O | '' |
-      | hosts | 전역으로 사용할 기본 Host 리스트 (아래 개별 설정 참고) |  | [] |
-      | method | Endpoint에 대한 HTTP 메서드 (GET, POST, PUT, etc) |  | 'GET' |
-      | timeout | Endpoint 처리 제한 시간 |  | 2s |
-      | cache_ttl | GET 처리에 대한 캐시 TTL 기간 |  | 1h |
-      | output_encoding | 반환결과 처리에 사용할 인코딩 |  | 'json' ('json', 'string', 'no-op' 사용 가능) |
-      | except_querystrings | Backend 에 전달되는 Query String에서 제외할 파라미터 Key 리스트 |  | '[]' |
-      | except_headers | Backend 에 전달되는 Header에서 제외할 파라미터 Key 리스트 |  | '[]' |
-      | middleware | Endpoint 단위에서 적용할 Middleware 설정 (위 개별 설정 참고)| |  |
-      | health_check | Health Check 설정 (아래 개별 설정 참고, 단 현재 버전에서는 지원하지 않음) | |  |
-      | backend | Endpoint에서 호출할 Backend API 서버 호출/응답 처리 설정 리스트 (아래 개별 설정 참고) | O |  |
+      | 설정                | 내용                                                                                  | 필수  | 기본값                                       |
+      | ------------------- | ------------------------------------------------------------------------------------- | :---: | -------------------------------------------- |
+      | name                | 설정 식별 명                                                                          |   O   | ''                                           |
+      | active              | 설정 활성화 여부                                                                      |   O   | true                                         |
+      | endpoint            | 클라이언트에 노출될 URL 패턴                                                          |   O   | ''                                           |
+      | hosts               | 전역으로 사용할 기본 Host 리스트 (아래 개별 설정 참고)                                |       | []                                           |
+      | method              | Endpoint에 대한 HTTP 메서드 (GET, POST, PUT, etc)                                     |       | 'GET'                                        |
+      | timeout             | Endpoint 처리 제한 시간 (지정하지 않으면 Service의 timeout 정보 사용)                 |       | 2s                                           |
+      | cache_ttl           | GET 처리에 대한 캐시 TTL 기간 (지정하지 않으면 Service의 timeout 정보 사용)           |       | 1h                                           |
+      | output_encoding     | 반환결과 처리에 사용할 인코딩 (지정하지 않으면 Service의 timeout 정보 사용)           |       | 'json' ('json', 'string', 'no-op' 사용 가능) |
+      | except_querystrings | Backend 에 전달되는 Query String에서 제외할 파라미터 Key 리스트                       |       | '[]'                                         |
+      | except_headers      | Backend 에 전달되는 Header에서 제외할 파라미터 Key 리스트                             |       | '[]'                                         |
+      | middleware          | Endpoint 단위에서 적용할 Middleware 설정 (위 개별 설정 참고)                          |       |                                              |
+      | health_check        | Health Check 설정 (아래 개별 설정 참고, 단 현재 버전에서는 지원하지 않음)             |       |                                              |
+      | backend             | Endpoint에서 호출할 Backend API 서버 호출/응답 처리 설정 리스트 (아래 개별 설정 참고) |   O   |                                              |
 
     - Backend 설정
 
       > 서비스에 대한 Backend API 서버 호출/응답 처리 설정
       
-      | 설정 | 내용 | 필수 | 기본값 |
-      |---|---|:-:|---|
-      | url_pattern | Backend 호출에 사용할 URL Patthern | O | '' |
-      | hosts | Backend API Server의 Host URI (아래 개별 설정 참고, 지정하지 않으면 Endpoint의 Host 정보 사용) | | |
-      | timeout | Backend 처리 시간 (지정하지 않으면 Endpoint의 timeout 정보 사용) | | |
-      | method | Backend 호출에 사용할 HTTP Method (지정하지 않으면 Endpoint의 method 정보 사용) | | |
-      | encoding | 인코딩 포맷 | | 'json' ('json', 'string', 'no-op' 사용 가능) |
-      | group | Backend 결과를 묶을 Group 명 | | '' |
-      | blacklist | Backend 결과에서 생략할 필드명 리스트 | | '[]' |
-      | whitelist | Backend 결과에서 추출할 필드명 리스트 | | '[]' |
-      | mapping | Backend 결과에서 필드명을 변경할 리스트 맵 | | '{}' |
-      | is_collection | Backend 결과가 컬랙션인지 여부 | | false |
-      | wrap_collection_to_json | Backend 결과가 컬랙션인 경우 "collection" 으로 묶어서 JSON 포맷을 만들 것인지 여부, 아니면 컬랙션인 상태로 반환 | | false |
-      | target | Backend 결과 중에서 특정한 필드만 처리할 경우의 필드명 | | '' |
-      | disable_host_sanitize | host 정보의 정제작업 비활성화 여부 | | false |
-      | lb_mode | Backend Loadbalacing 모드 (기본값: "", "rr" - "roundrobin", "wrr" - "weighted roundrobin", "" - random) | O | '' |
-      | middleware | Backend 단위에서 적용할 Middleware 설정 (위 개별 설정 참고)| |  |
+      | 설정                    | 내용                                                                                                            | 필수  | 기본값                                       |
+      | ----------------------- | --------------------------------------------------------------------------------------------------------------- | :---: | -------------------------------------------- |
+      | url_pattern             | Backend 호출에 사용할 URL Patthern                                                                              |   O   | ''                                           |
+      | hosts                   | Backend API Server의 Host URI (아래 개별 설정 참고, 지정하지 않으면 Endpoint의 Host 정보 사용)                  |       |                                              |
+      | timeout                 | Backend 처리 시간 (지정하지 않으면 Endpoint의 timeout 정보 사용)                                                |       |                                              |
+      | method                  | Backend 호출에 사용할 HTTP Method (지정하지 않으면 Endpoint의 method 정보 사용)                                 |       |                                              |
+      | encoding                | 인코딩 포맷                                                                                                     |       | 'json' ('json', 'string', 'no-op' 사용 가능) |
+      | group                   | Backend 결과를 묶을 Group 명                                                                                    |       | ''                                           |
+      | blacklist               | Backend 결과에서 생략할 필드명 리스트                                                                           |       | '[]'                                         |
+      | whitelist               | Backend 결과에서 추출할 필드명 리스트                                                                           |       | '[]'                                         |
+      | mapping                 | Backend 결과에서 필드명을 변경할 리스트 맵                                                                      |       | '{}'                                         |
+      | is_collection           | Backend 결과가 컬랙션인지 여부                                                                                  |       | false                                        |
+      | wrap_collection_to_json | Backend 결과가 컬랙션인 경우 "collection" 으로 묶어서 JSON 포맷을 만들 것인지 여부, 아니면 컬랙션인 상태로 반환 |       | false                                        |
+      | target                  | Backend 결과 중에서 특정한 필드만 처리할 경우의 필드명                                                          |       | ''                                           |
+      | disable_host_sanitize   | host 정보의 정제작업 비활성화 여부                                                                              |       | false                                        |
+      | lb_mode                 | Backend Loadbalacing 모드 (기본값: "", "rr" - "roundrobin", "wrr" - "weighted roundrobin", "" - random)         |   O   | ''                                           |
+      | middleware              | Backend 단위에서 적용할 Middleware 설정 (위 개별 설정 참고)                                                     |       |                                              |
 
     - Host 설정
 
       > Load Balancing 적용을 위한 Backend Server 정보 설정
       
-      | 설정 | 내용 | 필수 | 기본값 |
-      |---|---|:-:|---|
-      | host | Backend Service 호스트 정보 | O | '' |
-      | weight | Weighted Roundrobin 선택 적용할 가중치 | | 0 |
+      | 설정   | 내용                                   | 필수  | 기본값 |
+      | ------ | -------------------------------------- | :---: | ------ |
+      | host   | Backend Service 호스트 정보            |   O   | ''     |
+      | weight | Weighted Roundrobin 선택 적용할 가중치 |       | 0      |
 
     - HealthCheck 설정
 
       > 서비스 동작 여부를 검증하기 위한 Health Check 정보 설정 (현재 버전에서는 지원하지 않음)
       
-      | 설정 | 내용 | 필수 | 기본값 |
-      |---|---|:-:|---|
-      | url | Health Checking URL | O | '' |
-      | timeout | 검증 제한 시간 | O | 0 (제한없음) |
+      | 설정    | 내용                | 필수  | 기본값       |
+      | ------- | ------------------- | :---: | ------------ |
+      | url     | Health Checking URL |   O   | ''           |
+      | timeout | 검증 제한 시간      |   O   | 0 (제한없음) |
 
 ### Bypass 설정하는 방법
   - 위에서 설명한 설정 중에서 Endpoint 와 Backend 설정을 조정해서 사용한다.

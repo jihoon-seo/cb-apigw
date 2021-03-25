@@ -2,6 +2,7 @@
 package api
 
 import (
+	"strings"
 	"sync"
 
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
@@ -20,10 +21,22 @@ type (
 
 // ===== [ Implementations ] =====
 
+// checkDuplicates - 지정한 API Definition이 중복으로 존재하는지 검증
+// - Name : 동일 그룹에 중복 불가
+// - Endpoint : 전체 그룹에 중복 불가
+func (imr *InMemoryRepository) checkDuplicates(group string, eConf *config.EndpointConfig) bool {
+	for _, dm := range imr.Groups {
+		if dm.CheckDuplicates(group, eConf) {
+			return true
+		}
+	}
+	return false
+}
+
 // getGroup - 지정한 소스 경로에 맞는 GroupMap 반환
 func (imr *InMemoryRepository) getGroup(path string) *DefinitionMap {
 	for _, sm := range imr.Groups {
-		if sm.Name == path {
+		if strings.EqualFold(sm.Name, path) {
 			return sm
 		}
 	}
@@ -38,21 +51,28 @@ func (imr *InMemoryRepository) add(group string, eConf *config.EndpointConfig) e
 
 	log := logging.GetLogger()
 
+	// API Definition 검증
 	err := eConf.Validate()
 	if nil != err {
 		log.WithError(err).Error("[REPOSITORY] MEMORY > Validation errors")
 		return err
 	}
 
+	// API Definition Group 생성 및 등록
 	sm := imr.getGroup(group)
-	if nil != sm {
-		sm.Definitions = append(sm.Definitions, eConf)
-		log.Debug("[REPOSITORY] MEMORY > " + eConf.Name + " definition added to " + group + " group")
-	} else {
-		sm := &DefinitionMap{Name: group, State: NONE, Definitions: make([]*config.EndpointConfig, 0)}
-		sm.Definitions = append(sm.Definitions, eConf)
+	if sm == nil {
+		sm = &DefinitionMap{Name: group, State: NONE, Definitions: make([]*config.EndpointConfig, 0)}
 		imr.Groups = append(imr.Groups, sm)
 	}
+
+	// API Definition 중복 검증 (Name and Endpoint)
+	if imr.checkDuplicates(group, eConf) {
+		log.Warnf("[REPOSITORY] MEMORY > Duplicates exists. [ Name: %s, Endpoint: %s] Ignored.", eConf.Name, eConf.Endpoint)
+		return nil
+	} else {
+		sm.Definitions = append(sm.Definitions, eConf)
+	}
+
 	return nil
 }
 

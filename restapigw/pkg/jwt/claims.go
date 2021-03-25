@@ -49,7 +49,7 @@ func (ac *AppClaims) Valid() error {
 		vErr.Errors |= jwt.ValidationErrorNotValidYet
 	}
 
-	if 0 == vErr.Errors {
+	if vErr.Errors == 0 {
 		return nil
 	}
 

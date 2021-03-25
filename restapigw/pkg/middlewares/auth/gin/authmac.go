@@ -48,12 +48,12 @@ func (t token) resolveToken(rawToken string, ids []string) error {
 	}
 
 	data := bytes.Split(tokenBytes, []byte("||"))
-	if 2 != len(data) || 0 == len(data[0]) || 0 == len(data[1]) {
+	if len(data) != 2 || len(data[0]) == 0 || len(data[1]) == 0 {
 		return errors.New("invalid auth token")
 	}
 
 	tokenInfo := strings.Split(string(data[1]), "|")
-	if 3 != len(tokenInfo) {
+	if len(tokenInfo) != 3 {
 		return errors.New("invalid auth token")
 	}
 
@@ -62,7 +62,7 @@ func (t token) resolveToken(rawToken string, ids []string) error {
 	t.accessKey = tokenInfo[2]
 
 	newToken := t.makeToken()
-	if 0 != bytes.Compare(data[0], newToken) {
+	if !bytes.Equal(data[0], newToken) {
 		return errors.New("invalid auth token")
 	} else if !t.checkDuration() {
 		return errors.New("invalid time limit or expired")
@@ -125,10 +125,10 @@ func parseDuration(duration string) (time.Duration, error) {
 
 // ValidateToken - description
 func ValidateToken(secretKey string, rawToken string, ids []string) error {
-	if "" == secretKey {
+	if secretKey == "" {
 		return errors.New("secretKey is required")
 	}
-	if "" == rawToken {
+	if rawToken == "" {
 		return errors.New("rawToken that used to validate is required")
 	}
 
@@ -144,10 +144,10 @@ func ValidateToken(secretKey string, rawToken string, ids []string) error {
 
 // CreateToken - HMAC 토큰 생성
 func CreateToken(secretKey string, accessID string, duration string) (string, error) {
-	if "" == secretKey {
+	if secretKey == "" {
 		return "", errors.New("secretKey is required")
 	}
-	if "" == accessID {
+	if accessID == "" {
 		return "", errors.New("accessID is required")
 	}
 	if _, err := parseDuration(duration); nil != err {

@@ -123,10 +123,10 @@ func runtimePoint(hostname string, now time.Time, histograms map[string]metrics.
 
 // isEmpty - Histogram의 값이 전부 비어있는지 검사
 func isEmpty(histogram metrics.HistogramData) bool {
-	return 0 == histogram.Max && 0 == histogram.Min &&
-		.0 == histogram.Mean && .0 == histogram.Stddev && 0 == histogram.Variance &&
-		(0 == len(histogram.Percentiles) ||
-			.0 == histogram.Percentiles[0] && .0 == histogram.Percentiles[len(histogram.Percentiles)-1])
+	return histogram.Max == 0 && histogram.Min == 0 &&
+		histogram.Mean == .0 && histogram.Stddev == .0 && histogram.Variance == 0 &&
+		(len(histogram.Percentiles) == 0 ||
+			histogram.Percentiles[0] == .0 && histogram.Percentiles[len(histogram.Percentiles)-1] == .0)
 }
 
 // newFields - 지정한 Histogram 정보를 기준으로 Percentiles 생성

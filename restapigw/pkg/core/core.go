@@ -14,6 +14,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"reflect"
 	"strings"
 	"syscall"
 
@@ -89,7 +90,7 @@ func getClientIPByRequestRemoteAddr(req *http.Request) (string, error) {
 
 	userIP := net.ParseIP(ip)
 	if nil == userIP {
-		message := fmt.Sprintf("debug: Parsing IP from Request.RemoteAddr got nothing.")
+		message := "debug: Parsing IP from Request.RemoteAddr got nothing"
 		log.Println(message)
 		return "", fmt.Errorf(message)
 	}
@@ -107,59 +108,13 @@ func getClientIPByHeaders(req *http.Request) (string, error) {
 
 	for _, v := range ipSlice {
 		log.Printf("debug: client request header check gives ip: %v\n", v)
-		if "" != v {
+		if v != "" {
 			return v, nil
 		}
 	}
 
 	err := errors.New("error: Could not find clients IP address from the Request Headers")
 	return "", err
-}
-
-// getMyInterfaceAddr - Private network IP를 통한 IP 검증
-func getMyInterfaceAddr() (net.IP, error) {
-	ifaces, err := net.Interfaces()
-	if nil != err {
-		return nil, err
-	}
-	addresses := []net.IP{}
-	for _, iface := range ifaces {
-		if 0 == iface.Flags&net.FlagUp {
-			continue // interface down
-		}
-		if 0 != iface.Flags&net.FlagLoopback {
-			continue // loopback interface
-		}
-		addrs, err := iface.Addrs()
-		if nil != err {
-			continue
-		}
-
-		for _, addr := range addrs {
-			var ip net.IP
-			switch v := addr.(type) {
-			case *net.IPNet:
-				ip = v.IP
-			case *net.IPAddr:
-				ip = v.IP
-			}
-			if nil == ip || ip.IsLoopback() {
-				continue
-			}
-			ip = ip.To4()
-			if nil == ip {
-				continue // not an ipv4 address
-			}
-			addresses = append(addresses, ip)
-		}
-	}
-
-	if 0 == len(addresses) {
-		return nil, fmt.Errorf("no address found, net.InterfaceAddrs: %v", addresses)
-	}
-
-	// only need first
-	return addresses[0], nil
 }
 
 // ===== [ Public Functions ] =====
@@ -171,11 +126,9 @@ func ContextWithSignal(ctx context.Context) context.Context {
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
-		select {
-		case <-signals:
-			cancel()
-			close(signals)
-		}
+		<-signals
+		cancel()
+		close(signals)
 	}()
 
 	return newCtx
@@ -243,7 +196,7 @@ func GetInt64(data map[string]interface{}, key string) int64 {
 // ContainsString returns true if a string is present in a iteratee.
 func ContainsString(s []string, v string) bool {
 	for _, vv := range s {
-		if vv == v {
+		if strings.EqualFold(vv, v) {
 			return true
 		}
 	}
@@ -298,12 +251,12 @@ func GetClientIPHelper(req *http.Request) (string, error) {
 
 // GetLastPart - 지정한 문자열을 지정한 문자로 분리하고 마지막 부분 반환
 func GetLastPart(source, seperater string) string {
-	if "" == source {
+	if source == "" {
 		return source
 	}
 
 	srcs := strings.Split(source, seperater)
-	if 1 == len(srcs) {
+	if len(srcs) == 1 {
 		return srcs[0]
 	}
 	return srcs[len(srcs)-1]
@@ -356,4 +309,9 @@ func GCD(x, y int) int {
 func RemoveSlice(arr []interface{}, idx int) []interface{} {
 	arr[idx] = arr[len(arr)-1]
 	return arr[:len(arr)-1]
+}
+
+// IsZeroOfUnderlyingType - 지정한 형식의 Zero Value 상태인지 검증
+func IsZeroOfUnderlyingType(t interface{}) bool {
+	return reflect.DeepEqual(t, reflect.Zero(reflect.TypeOf(t)).Interface())
 }

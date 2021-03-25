@@ -10,7 +10,6 @@ import (
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/proxy"
 	"github.com/rcrowley/go-metrics"
-	gometrics "github.com/rcrowley/go-metrics"
 )
 
 // ===== [ Constants and Variables ] =====
@@ -23,7 +22,7 @@ var (
 
 // ProxyMetrics - Proxy 에 대한 Metrics Collector 구조 정의
 type ProxyMetrics struct {
-	register gometrics.Registry
+	register metrics.Registry
 }
 
 // ===== [ Implementations ] =====
@@ -60,13 +59,13 @@ func (p *Producer) BackendFactory(segmentName string, next proxy.BackendFactory)
 }
 
 // Counter - Metric Counter가 없는 경우는 등록하고 대상 Counter 반환
-func (pm *ProxyMetrics) Counter(labels ...string) gometrics.Counter {
-	return gometrics.GetOrRegisterCounter(strings.Join(labels, "."), pm.register)
+func (pm *ProxyMetrics) Counter(labels ...string) metrics.Counter {
+	return metrics.GetOrRegisterCounter(strings.Join(labels, "."), pm.register)
 }
 
 // Histogram - Metric Histogram이 없는 경우는 등록하고 대상 Histogram 반환
-func (pm *ProxyMetrics) Histogram(labels ...string) gometrics.Histogram {
-	return gometrics.GetOrRegisterHistogram(strings.Join(labels, "."), pm.register, defaultSample())
+func (pm *ProxyMetrics) Histogram(labels ...string) metrics.Histogram {
+	return metrics.GetOrRegisterHistogram(strings.Join(labels, "."), pm.register, defaultSample())
 }
 
 // ===== [ Private Functions ] =====

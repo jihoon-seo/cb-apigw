@@ -9,6 +9,7 @@ import (
 
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/admin/response"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
+	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/errors"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/jwt/provider"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
@@ -52,7 +53,7 @@ func (h *Handler) Login(cc *config.CredentialsConfig, logger logging.Logger) htt
 			return
 		}
 
-		if 0 == h.Guard.Timeout {
+		if core.IsZeroOfUnderlyingType(h.Guard.Timeout) {
 			h.Guard.Timeout = time.Hour
 		}
 
@@ -77,7 +78,7 @@ func (h *Handler) Logout(cc *config.CredentialsConfig, logger logging.Logger) ht
 	return func(rw http.ResponseWriter, req *http.Request) {
 		accessToken, err := extractAccessToken(req)
 
-		if nil != err || "" == accessToken {
+		if err != nil || accessToken == "" {
 			logger.WithError(err).Debug("[ADMIN API] failed to extract access token")
 			response.Errorf(rw, req, http.StatusBadRequest, err)
 			return

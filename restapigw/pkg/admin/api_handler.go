@@ -144,7 +144,7 @@ func (ah *APIHandler) RemoveDefinition() http.HandlerFunc {
 		cm.Name = gin.URLParam(req, "gid")
 		cm.Definitions = make([]*config.EndpointConfig, 0)
 
-		def := config.NewDefinition()
+		def := &config.EndpointConfig{}
 		def.Name = gin.URLParam(req, "id")
 		cm.Definitions = append(cm.Definitions, def)
 
@@ -184,7 +184,7 @@ func (ah *APIHandler) GetGroup() http.HandlerFunc {
 
 		//cm.Name = core.GetURLVariable(req.URL.Path, GroupBasePath)
 
-		if "" == cm.Name {
+		if cm.Name == "" {
 			response.Errorf(rw, req, -1, errors.New("cannot found group data from request"))
 			return
 		}
@@ -265,7 +265,7 @@ func (ah *APIHandler) RemoveGroup() http.HandlerFunc {
 
 		cm.Name = gin.URLParam(req, "gid")
 
-		if "" == cm.Name {
+		if cm.Name == "" {
 			response.Errorf(rw, req, -1, errors.New("cannot found group data from request"))
 			return
 		}

@@ -146,7 +146,7 @@ func setField(fv reflect.Value, defaultValue string) error {
 		setField(fv.Elem(), defaultValue)
 		callSetter(fv.Interface())
 	case reflect.Struct:
-		if err := Set(fv.Addr().Interface()); nil != err {
+		if err := ApplyDefaultValues(fv.Addr().Interface()); nil != err {
 			return err
 		}
 	case reflect.Slice:
@@ -173,8 +173,8 @@ func CanUpdate(v interface{}) bool {
 	return isInitialValue(reflect.ValueOf(v))
 }
 
-// Set - Pointer로 참조되는 Structure의 Field들에 대한 초기값을 설정한다.
-func Set(ptr interface{}) error {
+// ApplyDefaultValues - Pointer로 참조되는 Structure의 Field들에 대한 초기값을 설정한다.
+func ApplyDefaultValues(ptr interface{}) error {
 	// Checking structure pointer
 	if reflect.TypeOf(ptr).Kind() != reflect.Ptr {
 		return errInvalidType

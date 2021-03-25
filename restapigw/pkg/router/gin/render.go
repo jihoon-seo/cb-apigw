@@ -146,11 +146,11 @@ func noopRender(c *gin.Context, res *proxy.Response) {
 // getRender - Endpoint 설정에 지정된 Backend의 "encoding" 을 기준 Encoding(fallback)을 설정하고 Endpoint 설정의 "output_encoding" 기준으로 운영되는 Render 반환
 func getRender(eConf *config.EndpointConfig) Render {
 	fallback := jsonRender
-	if 1 == len(eConf.Backend) {
+	if len(eConf.Backend) == 1 {
 		fallback = getWithFallback(eConf.Backend[0].Encoding, fallback)
 	}
 
-	if "" == eConf.OutputEncoding {
+	if eConf.OutputEncoding == "" {
 		return fallback
 	}
 

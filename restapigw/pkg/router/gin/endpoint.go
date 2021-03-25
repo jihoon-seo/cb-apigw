@@ -16,9 +16,7 @@ import (
 
 // ===== [ Constants and Variables ] =====
 
-const (
-	requestParamsAsterisk = "*"
-)
+const ()
 
 var (
 	logger = logging.NewLogger()
@@ -123,7 +121,7 @@ func NewRequest(eConf *config.EndpointConfig) func(*gin.Context, []string) *prox
 // CustomErrorEndpointHandler - 지정한 Endpoint 설정과 수행할 Proxy 정보 및 오류 처리를 위한 Gin Framework handler 생성
 func CustomErrorEndpointHandler(eConf *config.EndpointConfig, proxy proxy.Proxy, errF router.ToHTTPError) gin.HandlerFunc {
 	cacheControlHeaderValue := fmt.Sprintf("public, max-age=%d", int(eConf.CacheTTL.Seconds()))
-	isCacheEnabled := 0 != eConf.CacheTTL.Seconds()
+	isCacheEnabled := eConf.CacheTTL.Seconds() != 0
 	requestGenerator := NewRequest(eConf)
 	render := getRender(eConf)
 
@@ -140,7 +138,7 @@ func CustomErrorEndpointHandler(eConf *config.EndpointConfig, proxy proxy.Proxy,
 		}
 
 		complete := router.HeaderIncompleteResponseValue
-		if nil != response && 0 < len(response.Data) {
+		if nil != response && len(response.Data) > 0 {
 			if response.IsComplete {
 				complete = router.HeaderCompleteResponseValue
 				if isCacheEnabled {
@@ -160,6 +158,7 @@ func CustomErrorEndpointHandler(eConf *config.EndpointConfig, proxy proxy.Proxy,
 			// Proxy 처리 중에 발생한 오류들을 Header로 설정
 			c.Header(router.MessageResponseHeaderName, err.Error())
 			logger.Errorf("[API G/W] Router > Endpoint Error Processing: %s", err.Error())
+
 			c.Error(err)
 
 			// Response가 없는 경우의 상태 코드 설정
@@ -175,7 +174,11 @@ func CustomErrorEndpointHandler(eConf *config.EndpointConfig, proxy proxy.Proxy,
 				return
 			}
 		} else {
-			c.Header(router.MessageResponseHeaderName, "OK")
+			if response.IsComplete {
+				c.Header(router.MessageResponseHeaderName, "OK")
+			} else {
+				c.Header(router.MessageResponseHeaderName, "Some backend calls has errors. check the error information(return_error_details)")
+			}
 		}
 
 		render(c, response)

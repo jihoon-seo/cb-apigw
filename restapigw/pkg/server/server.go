@@ -4,6 +4,7 @@ package server
 import (
 	"context"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/admin"
@@ -128,7 +129,7 @@ func (s *Server) listenProviders(stop chan struct{}) {
 			hasChanges := false
 			for _, dm := range configMsg.Configurations.DefinitionMaps {
 				for i, cdm := range s.currConfigurations.DefinitionMaps {
-					if dm.Name == cdm.Name {
+					if strings.EqualFold(dm.Name, cdm.Name) {
 						// Group이 삭제된 경우
 						if dm.State == api.REMOVED {
 							s.logger.Debug("[SERVER] Removed definition group was found in the repository. [" + dm.Name + "]")
@@ -143,7 +144,23 @@ func (s *Server) listenProviders(stop chan struct{}) {
 								continue
 							}
 
-							cdm.Definitions = dm.Definitions
+							// 중복 검증 및 변경 적용 (기존 삭제 후 재 등록)
+							cdm.Definitions = cdm.Definitions[:0]
+
+							for _, def := range dm.Definitions {
+								if s.currConfigurations.FindByName(dm.Name, def.Name) != nil {
+									s.logger.Warnf("[SERVER] Changed API Definition is exists. API Definition name is must be unique in group. Skip changes [%s - %s - %s]", dm.Name, def.Name, def.Endpoint)
+									continue
+								}
+								if s.currConfigurations.FindByListenPath(def.Endpoint) != nil {
+									s.logger.Warnf("[SERVER] Changed API Definition is exists. API Definition endpoint is must be unique in all definitions. Skip changes [%s - %s - $s]", dm.Name, def.Name, def.Endpoint)
+									continue
+								}
+
+								cdm.Definitions = append(cdm.Definitions, def)
+							}
+
+							// cdm.Definitions = dm.Definitions
 							if !hasChanges {
 								hasChanges = true
 							}

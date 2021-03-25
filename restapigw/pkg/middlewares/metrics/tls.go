@@ -11,7 +11,6 @@ var (
 		tls.VersionTLS11: "VersionTLS11",
 		tls.VersionTLS12: "VersionTLS12",
 		tls.VersionTLS13: "VersionTLS13",
-		tls.VersionSSL30: "VersionSSL30",
 	}
 
 	tlsCipherSuite = map[uint16]string{

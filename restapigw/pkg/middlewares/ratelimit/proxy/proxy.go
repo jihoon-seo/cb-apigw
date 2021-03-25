@@ -67,7 +67,7 @@ func NewBackendLimiter(bConf *config.BackendConfig) proxy.CallChain {
 			logger.Debugf("[Backend Process Flow] RateLimit > CallChain (%s)", req.Path)
 			// TokenBucket 검증
 			if !backendLimiter.Allow() {
-				logger.Debugf("[Backend Process Flow] RateLimit > CallChain (%s) ::: STOPPED!!", req.Path)
+				logger.Warnf("[Backend Process Flow] RateLimit > CallChain (%s) ::: STOPPED!!", req.Path)
 				return nil, ratelimit.ErrProxyLimited
 			}
 			logger.Debugf("[Backend Process Flow] RateLimit > CallChain (%s) ::: CONTINUE TO NEXT STEP!!", req.Path)

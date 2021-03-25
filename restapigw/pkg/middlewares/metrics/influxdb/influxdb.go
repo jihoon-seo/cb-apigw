@@ -84,7 +84,7 @@ func (cw clientWrapper) keepUpdated(ctx context.Context, ticker <-chan time.Time
 		}
 
 		if err := cw.influxClient.Write(bp); nil != err {
-			cw.logger.Error("[METRICS] InfluxDB > Writing to influx:", err.Error())
+			cw.logger.Warn("[METRICS] InfluxDB > Writing to influx (batch):", err.Error())
 			cw.buff.Add(bp)
 			continue
 		}
@@ -102,7 +102,7 @@ func (cw clientWrapper) keepUpdated(ctx context.Context, ticker <-chan time.Time
 		retryBatch.AddPoints(pts)
 
 		if err := cw.influxClient.Write(retryBatch); nil != err {
-			cw.logger.Error("[METRICS] InfluxDB > Writing to influx:", err.Error())
+			cw.logger.Warn("[METRICS] InfluxDB > Writing to influx (retry batch):", err.Error())
 			cw.buff.Add(bpPending...)
 			continue
 		}
@@ -117,7 +117,7 @@ func (cw clientWrapper) keepUpdated(ctx context.Context, ticker <-chan time.Time
 func SetupAndRun(ctx context.Context, idbConf Config, collectFunc func() interface{}, logger *logging.Logger) error {
 	// creating a new influxdb client
 
-	if nil == &idbConf || "" == idbConf.Address {
+	if nil == &idbConf || idbConf.Address == "" {
 		return errNoConfig
 	}
 
@@ -136,7 +136,7 @@ func SetupAndRun(ctx context.Context, idbConf Config, collectFunc func() interfa
 	go func() {
 		_, _, err := influxClient.Ping(time.Second)
 		if nil != err {
-			logger.Error("[METRICS] InfluxDB > unable to ping the influxdb server:", err.Error())
+			logger.Warnf("[METRICS] InfluxDB > unable to ping the influxdb server: %v", err.Error())
 			return
 		}
 	}()

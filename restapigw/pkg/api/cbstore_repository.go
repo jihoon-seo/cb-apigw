@@ -3,6 +3,7 @@ package api
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
@@ -109,7 +110,7 @@ func NewCbStoreRepository(sConf *config.ServiceConfig, key string, refreshTime t
 
 	for _, kv := range keyValues {
 		// Skip Root
-		if kv.Key == key {
+		if strings.EqualFold(kv.Key, key) {
 			continue
 		}
 

@@ -26,7 +26,7 @@ type (
 
 // Uint32 - 관리 중인 Random Seed 값을 기준으로 uint32 랜덤 값 생성
 func (r *RNG) Uint32() uint32 {
-	for 0 == r.x {
+	for r.x == 0 {
 		r.x = getRandomUint32()
 	}
 

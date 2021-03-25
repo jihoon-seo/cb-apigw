@@ -59,12 +59,12 @@ type (
 func (p *Parser) jwtFromHeader(req *http.Request, key string) (string, error) {
 	authHeader := req.Header.Get(key)
 
-	if "" == authHeader {
+	if authHeader == "" {
 		return "", errors.New("auth header empty")
 	}
 
 	parts := strings.SplitN(authHeader, " ", 2)
-	if !(2 == len(parts) && "Bearer" == parts[0]) {
+	if !(len(parts) == 2 && parts[0] == "Bearer") {
 		return "", errors.New("invalid auth header")
 	}
 
@@ -74,7 +74,7 @@ func (p *Parser) jwtFromHeader(req *http.Request, key string) (string, error) {
 func (p *Parser) jwtFromQuery(req *http.Request, key string) (string, error) {
 	token := req.URL.Query().Get(key)
 
-	if "" == token {
+	if token == "" {
 		return "", errors.New("query token empty")
 	}
 

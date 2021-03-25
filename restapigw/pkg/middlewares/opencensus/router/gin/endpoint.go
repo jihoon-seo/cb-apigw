@@ -112,13 +112,6 @@ func requestAttrs(r *http.Request) []trace.Attribute {
 	}
 }
 
-// responseAttrs - Trace에 Responst 관련 정보를 속성으로 추가
-func responseAttrs(resp *http.Response) []trace.Attribute {
-	return []trace.Attribute{
-		trace.Int64Attribute(ochttp.StatusCodeAttribute, int64(resp.StatusCode)),
-	}
-}
-
 // ===== [ Public Functions ] =====
 
 // HandlerFunc - 지정된 Endpoint 설정과 Gin Framework handler를 기준으로 Trace 구성을 처리하는 Handler 구성 반환

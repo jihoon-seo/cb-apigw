@@ -39,7 +39,7 @@ func (t *trackingResponseWriter) end() {
 			m = append(m, ochttp.ServerRequestBytes.M(t.reqSize))
 		}
 		status := t.Status()
-		if 0 == status {
+		if status == 0 {
 			status = http.StatusOK
 		}
 		ctx, _ := tag.New(t.ctx, tag.Upsert(ochttp.StatusCode, strconv.Itoa(status)))

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/admin/health"
@@ -69,7 +70,7 @@ func findValidAPIHealthChecks(maps []*api.DefinitionMap) []*config.EndpointConfi
 
 	for _, dm := range maps {
 		for _, def := range dm.Definitions {
-			if def.Active && "" != def.HealthCheck.URL {
+			if def.Active && def.HealthCheck.URL != "" {
 				validDefs = append(validDefs, def)
 			}
 		}
@@ -109,7 +110,7 @@ func NewStatusHandler(conf *api.Configuration, logger logging.Logger) http.Handl
 
 		name := ginAdapter.URLParam(req, "name")
 		for _, def := range defs {
-			if name == def.Name {
+			if strings.EqualFold(name, def.Name) {
 				resp, err := doStatusRequest(def, false, logger)
 				if nil != err {
 					logger.WithField("name", name).WithError(err).Error("[ADMIN Server] Error requesting service health status")

@@ -12,7 +12,6 @@ import (
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core/defaults"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/encoding"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/errors"
-	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
 )
 
 // ===== [ Constants and Variables ] =====
@@ -33,7 +32,6 @@ var (
 	jwtAlgorithms = []string{"HS256", "HS384", "HS512", "RS256", "RS384", "RS512"}
 	encodings     = []string{"no-op", "json", "string"}
 
-	errInvalidHost         = errors.New("invalid host")
 	errInvalidNoOpEncoding = errors.New("can not use NoOp encoding with more than one backends connected to the same endpoint")
 
 	// ErrNoHosts - Load Balancing 처리 대상 Host 가 지정되지 않은 경우 오류
@@ -57,7 +55,10 @@ type (
 		// 서비스 식별 명 (기본값: '')
 		Name string `mapstructure:"name"`
 		// 기본 처리 시간 (기본값: 2s)
+		// API의 Endpoint / Backend에 별도의 Timeout 미 지정시 사용
 		Timeout time.Duration `mapstructure:"timeout" default:"2s"`
+		// OutputEncoding - 반환결과 처리에 사용할 인코딩 (기본값: "json")
+		OutputEncoding string `yaml:"output_encoding" json:"output_encoding" default:"json"`
 		// 종료시 잔여 요청을 처리하기 위한 대기 시간 (기본 값: 0s)
 		GraceTimeout time.Duration `mapstructure:"grace_timeout"`
 		// 디버그모드 여부 (기본값: false)
@@ -166,10 +167,11 @@ type (
 		// Endpoint - 클라이언트에 노출될 URL 패턴
 		Endpoint string `yaml:"endpoint" json:"endpoint"`
 		// Hosts - 전역으로 사용할 기본 Host 리스트 (기본값: "[]")
+		// Backend에 지정되지 않은 경우 사용
 		Hosts []*HostConfig `yaml:"hosts" json:"hosts" default:"[]"`
 		// Method - Endpoint에 대한 HTTP 메서드 (GET, POST, PUT, etc) (기본값: "GET"")
 		Method string `yaml:"method" json:"method" default:"GET"`
-		// Timeout - Endpoint 처리 시간 (기본값: "2s"")
+		// Timeout - Endpoint 처리 시간 (기본값: "2s", 없으면 ServiceConfig.Timeout 사용)
 		Timeout time.Duration `yaml:"timeout" json:"timeout" default:"2s"`
 		// CacheTTL - GET 처리에 대한 캐시 TTL 기간 (기본값: "1h")
 		CacheTTL time.Duration `yaml:"cache_ttl" json:"cache_ttl" default:"1h"`
@@ -203,20 +205,20 @@ type (
 		// Encoding - 인코딩 포맷 (기본값: "json")
 		Encoding string `yaml:"encoding" json:"encoding" default:"json"`
 		// Group - Backend 결과를 묶을 Group 명 (기본값: "")
-		Group string `yaml:"group" json:"group"`
+		Group string `yaml:"group" json:"group" default:""`
 		// Blacklist - Backend 결과에서 생략할 필드명 리스트 (기본값: "[]", flatmap 적용 "." operation)
 		Blacklist []string `yaml:"blacklist" json:"blacklist" default:"[]"`
 		// Whitelist - Backend 결과에서 추출할 필드명 리스트 (기본값: "[]", flatmap 적용 "." operation)
 		Whitelist []string `yaml:"whitelist" json:"whitelist" default:"[]"`
 		// Mapping - Backend 결과에서 필드명을 변경할 리스트 맵 (기본값: "{}")
-		Mapping map[string]string `yaml:"mapping" json:"mapping"`
+		Mapping map[string]string `yaml:"mapping" json:"mapping" default:"{}"`
 		// IsCollection - Backend 결과가 컬랙션인지 여부 (기본값: false)
 		IsCollection bool `yaml:"is_collection" json:"is_collection" default:"false"`
 		// WrapCollectionToJSON - Backend 결과가 컬랙션인 경우에 core.CollectionTag ("collection") 으로 JSON 포맷을 할 것인지 여부
 		// (True 면 core.CollectionTag ("collection") 으로 JSON 전환, false면 Array 상태로 반환) (기본값: false)
 		WrapCollectionToJSON bool `yaml:"wrap_collection_to_json" json:"wrap_collection_to_json" default:"false"`
 		// Target - Backend 결과 중에서 특정한 필드만 처리할 경우의 필드명 (기본값: "")
-		Target string `yaml:"target" json:"target"`
+		Target string `yaml:"target" json:"target" default:""`
 		// Middleware - Backend 에서 동작할 Middleware 설정
 		Middleware MWConfig `yaml:"middleware" json:"middleware"`
 		// HostSanitizationDisabled - host 정보의 정제작업 비활성화 여부 (기본값: false)
@@ -270,7 +272,7 @@ type (
 		// URL - Health Checking URL (기본값: "")
 		URL string `mapstructure:"url" yaml:"url" json:"url" bson:"url"` // `mapstructure:"url" yaml:"url" json:"url" bson:"url" valid:"url"`
 		// Timeout - 검증 제한 시간 (기본값: 0, 제한없음)
-		Timeout time.Duration `mapstructure:"timeout" yaml:"timeout" json:"timeout" bson:"timeout"`
+		Timeout time.Duration `mapstructure:"timeout" yaml:"timeout" json:"timeout" bson:"timeout" default:"0s"`
 	}
 
 	// UnsupportedVersionError - 설정 초기화 과정에서 버전 검증을 통해 반환할 오류 구조
@@ -322,15 +324,12 @@ type (
 
 // IsHTTPS - HTTPS 활성화 여부 검증
 func (t *TLSConfig) IsHTTPS() bool {
-	return nil != t && "" != t.PublicKey && "" != t.PrivateKey
+	return nil != t && t.PublicKey != "" && t.PrivateKey != ""
 }
 
 // InitializeDefaults - 기본 값 설정
 func (t *TLSConfig) InitializeDefaults() error {
 	// TLSConfig 초기화
-	if err := defaults.Set(t); nil != err {
-		return err
-	}
 
 	return nil
 }
@@ -343,9 +342,6 @@ func (t *TLSConfig) Validate() error {
 // InitializeDefaults - 기본 값 설정
 func (ba *BasicAuthConfig) InitializeDefaults() error {
 	// BasicAuthConfig 초기화
-	if err := defaults.Set(ba); nil != err {
-		return err
-	}
 
 	return nil
 }
@@ -358,9 +354,6 @@ func (ba *BasicAuthConfig) Validate() error {
 // InitializeDefaults - 기본값 설정
 func (cc *CredentialsConfig) InitializeDefaults() error {
 	// CredentialsConfig 초기화
-	if err := defaults.Set(cc); nil != err {
-		return err
-	}
 
 	if nil != cc.Basic {
 		if err := cc.Basic.InitializeDefaults(); nil != err {
@@ -386,9 +379,6 @@ func (cc *CredentialsConfig) Validate() error {
 // InitializeDefaults - 기본값 설정
 func (hc *HealthCheck) InitializeDefaults() error {
 	// HealthCheck 초기화
-	if err := defaults.Set(hc); nil != err {
-		return err
-	}
 
 	return nil
 }
@@ -400,10 +390,7 @@ func (hc *HealthCheck) Validate() error {
 
 // InitializeDefaults - 기본값 설정
 func (h *HostConfig) InitializeDefaults() error {
-	// HealthCheck 초기화
-	if err := defaults.Set(h); nil != err {
-		return err
-	}
+	// Host 초기화 설정
 
 	return nil
 }
@@ -415,10 +402,7 @@ func (h *HostConfig) Validate() error {
 
 // InitializeDefaults - 기본 값 설정
 func (admin *AdminConfig) InitializeDefaults() error {
-	// AdminConfig 초기화
-	if err := defaults.Set(admin); nil != err {
-		return err
-	}
+	// AdminConfig 초기화 설정
 
 	if nil != admin.TLS {
 		if err := admin.TLS.InitializeDefaults(); nil != err {
@@ -451,10 +435,6 @@ func (admin *AdminConfig) Validate() error {
 // InitializeDefaults - 기본 값 설정
 func (r *RepositoryConfig) InitializeDefaults() error {
 	// RepositoryConfig 초기화
-	if err := defaults.Set(r); nil != err {
-		return err
-	}
-
 	return nil
 }
 
@@ -470,10 +450,6 @@ func (r *RepositoryConfig) Validate() error {
 // InitializeDefaults - 기본 값 설정
 func (c *ClusterConfig) InitializeDefaults() error {
 	// ClusterConfig 초기화
-	if err := defaults.Set(c); nil != err {
-		return err
-	}
-
 	return nil
 }
 
@@ -546,10 +522,10 @@ func (sConf *ServiceConfig) Init() error {
 	return nil
 }
 
-// InitializeDefaults - 전역 설정 초기화
+// InitializeDefaults - 서비스 설정 초기화
 func (sConf *ServiceConfig) InitializeDefaults() error {
 	// ServiceConfig 초기화
-	if err := defaults.Set(sConf); nil != err {
+	if err := defaults.ApplyDefaultValues(sConf); nil != err {
 		return err
 	}
 
@@ -596,7 +572,7 @@ func (sConf *ServiceConfig) Validate() error {
 			Want: ConfigVersion,
 		}
 	}
-	if "" == sConf.Name {
+	if sConf.Name == "" {
 		return errors.New("service name reqired")
 	}
 	if nil == sConf.Admin {
@@ -625,11 +601,30 @@ func (sConf *ServiceConfig) Validate() error {
 	return nil
 }
 
+// InheriteFromService - 서비스 설정에서 상속 받을 데이터 설정
+func (eConf *EndpointConfig) InheriteFromService(sConf *ServiceConfig) {
+	// Timeout 미 지정시 서비스 설정 사용
+	if core.IsZeroOfUnderlyingType(eConf.Timeout) {
+		eConf.Timeout = sConf.Timeout
+	}
+
+	// Cache TTL 미 지정시 서비스 설정 사용
+	if core.IsZeroOfUnderlyingType(eConf.CacheTTL) {
+		eConf.CacheTTL = sConf.CacheTTL
+	}
+
+	// Output Encoding 미 지정시 서비스 설정 사용
+	if core.IsZeroOfUnderlyingType(eConf.OutputEncoding) {
+		eConf.OutputEncoding = sConf.OutputEncoding
+	}
+}
+
 // InitializeDefaults - Endpoint에 미 설정된 항목들을 기본 값으로 초기화
 func (eConf *EndpointConfig) InitializeDefaults() error {
-	if err := defaults.Set(eConf); nil != err {
+	if err := defaults.ApplyDefaultValues(eConf); nil != err {
 		return err
 	}
+
 	if nil != eConf.Hosts {
 		for _, host := range eConf.Hosts {
 			if err := host.InitializeDefaults(); nil != err {
@@ -643,19 +638,17 @@ func (eConf *EndpointConfig) InitializeDefaults() error {
 			return err
 		}
 	}
-	if nil != eConf.Backend {
-		for _, bConf := range eConf.Backend {
-			if err := bConf.InitializeDefaults(); nil != err {
-				return err
-			}
-		}
-	}
 
 	return nil
 }
 
 // AdjustValues - 설정 정보를 사용가능한 정보로 재 구성
 func (eConf *EndpointConfig) AdjustValues(sConf *ServiceConfig) error {
+	// 생략된 속성들에 대한 기본 값 설정
+	if err := eConf.InitializeDefaults(); nil != err {
+		return errors.Wrapf(err, "couldn't initialize api definition (default values): '%s'", eConf.Name)
+	}
+
 	eConf.Endpoint = core.CleanPath(eConf.Endpoint)
 
 	// Endpoint URL에 지정된 파라미터를 Input parameter로 설정
@@ -699,22 +692,26 @@ func (eConf *EndpointConfig) AdjustValues(sConf *ServiceConfig) error {
 func (eConf *EndpointConfig) InitBackendDefaults(bIdx int) error {
 	backend := eConf.Backend[bIdx]
 
-	if err := backend.InitializeDefaults(); nil != err {
-		return err
-	}
-
-	if 0 == len(backend.Hosts) {
-		// URL 미 지정시 전역 URL 사용
+	if core.IsZeroOfUnderlyingType(backend.Hosts) && len(backend.Hosts) == 0 {
+		// HOST 미 지정시 전역 URL 사용
 		backend.Hosts = eConf.Hosts
 	} else if !backend.HostSanitizationDisabled {
 		cleanHosts(backend.Hosts)
 	}
+
 	// Method 미 지정시 Endpoint Method 사용
-	if "" == backend.Method {
+	if core.IsZeroOfUnderlyingType(backend.Method) {
 		backend.Method = eConf.Method
 	}
-	if 0 == backend.Timeout {
+
+	// Timeout 미 지정시 Endpoint Timeout 사용
+	if core.IsZeroOfUnderlyingType(backend.Timeout) {
 		backend.Timeout = eConf.Timeout
+	}
+
+	// 생략된 데이터 구성
+	if err := backend.InitializeDefaults(); nil != err {
+		return err
 	}
 
 	// Backend 처리 결과를 위한 Decoder 구성
@@ -766,7 +763,7 @@ func (eConf *EndpointConfig) InitBackendURLMappings(bIdx int, inputParams map[st
 
 // Validate - Endpoint 별 세부 필수 항목 검증
 func (eConf *EndpointConfig) Validate() error {
-	if "" == eConf.Name {
+	if eConf.Name == "" {
 		return errors.New("endpoint name required")
 	}
 
@@ -782,11 +779,13 @@ func (eConf *EndpointConfig) Validate() error {
 		return &EndpointPathError{Path: eConf.Endpoint, Method: eConf.Method}
 	}
 
+	// Output Encoding 검믕
 	if !core.ContainsString(encodings, eConf.OutputEncoding) {
 		return errors.New("invalid output encoding")
 	}
 
-	if 0 == len(eConf.Backend) {
+	// Backend 검증
+	if len(eConf.Backend) == 0 {
 		return &NoBackendsError{Path: eConf.Endpoint, Method: eConf.Method}
 	}
 	for _, backend := range eConf.Backend {
@@ -800,19 +799,22 @@ func (eConf *EndpointConfig) Validate() error {
 
 // InitializeDefaults - 설정 초기화
 func (bConf *BackendConfig) InitializeDefaults() error {
-	if err := defaults.Set(bConf); nil != err {
+	// Endpoint InitializeDefault 처리보다 먼저 설정되어야 하는 값이 존재하기 때문에 여기서 처리
+	if err := defaults.ApplyDefaultValues(bConf); nil != err {
 		return err
 	}
+
+	// 필요한 정보 초기화
 	return nil
 }
 
 // Validate - 설정 검증
 func (bConf *BackendConfig) Validate() error {
-	if 0 == len(bConf.Hosts) {
+	if len(bConf.Hosts) == 0 {
 		return ErrNoHosts
 	}
 
-	if "" == bConf.URLPattern {
+	if bConf.URLPattern == "" {
 		return errors.New("invalid backend url pattern")
 	}
 
@@ -839,7 +841,7 @@ func uniqueOutput(output []string) ([]string, int) {
 	j := 0
 	outputSetSize := 0
 	for i := 1; i < len(output); i++ {
-		if output[j] == output[i] {
+		if strings.EqualFold(output[j], output[i]) {
 			continue
 		}
 		if !core.SequentialParamsPattern.MatchString(output[j]) {
@@ -872,13 +874,3 @@ func cleanHosts(hcs []*HostConfig) {
 }
 
 // ===== [ Public Functions ] =====
-
-// NewDefinition - 시스템에서 사용할 Definition (Endpoint) 생성
-func NewDefinition() *EndpointConfig {
-	def := &EndpointConfig{}
-	if err := def.InitializeDefaults(); nil != err {
-		logging.GetLogger().WithError(err).Debug("[CONFIG] Failed to initialize definition (Endpoint)")
-	}
-
-	return def
-}

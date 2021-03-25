@@ -70,7 +70,7 @@ func (ef entityFormatter) Format(entity Response) Response {
 			}
 		}
 	}
-	if "" != ef.Prefix {
+	if ef.Prefix != "" {
 		entity.Data = map[string]interface{}{ef.Prefix: entity.Data}
 	}
 	return entity
@@ -79,14 +79,14 @@ func (ef entityFormatter) Format(entity Response) Response {
 // Format - Flatmap을 활용하는 FlatmapFormatter 구현
 func (ff flatmapFormatter) Format(entity Response) Response {
 	// Target 처리
-	if "" != ff.Target {
+	if ff.Target != "" {
 		extractTarget(ff.Target, &entity)
 	}
 
 	// Flatmap 처리
 	ff.processOps(&entity)
 
-	if "" != ff.Prefix {
+	if ff.Prefix != "" {
 		entity.Data = map[string]interface{}{ff.Prefix: entity.Data}
 	}
 	return entity
@@ -201,7 +201,7 @@ func newBlacklistFilter(blacklist []string) propertyFilter {
 
 	return func(entity *Response) {
 		for k, sub := range bl {
-			if 0 == len(sub) {
+			if len(sub) == 0 {
 				delete(entity.Data, k)
 			} else {
 				if tmp := blacklistFilterSub(entity.Data[k], sub); 0 < len(tmp) {
@@ -229,7 +229,7 @@ func newFlatmapFormatter(bConf *config.BackendConfig) EntityFormatter {
 	if v, ok := bConf.Middleware[MWNamespace]; ok {
 		if e, ok := v.(config.MWConfig); ok {
 			if vs, ok := e[flatmapFilter].([]interface{}); ok {
-				if 0 == len(vs) {
+				if len(vs) == 0 {
 					return nil
 				}
 				ops := []flatmapOp{}
@@ -254,7 +254,7 @@ func newFlatmapFormatter(bConf *config.BackendConfig) EntityFormatter {
 					}
 					ops = append(ops, op)
 				}
-				if 0 == len(ops) {
+				if len(ops) == 0 {
 					return nil
 				}
 

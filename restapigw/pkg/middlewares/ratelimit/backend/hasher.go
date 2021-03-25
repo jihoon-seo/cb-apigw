@@ -5,7 +5,10 @@ package backend
 
 const (
 	offset64 uint64 = 14695981039346656037
-	prime64         = 1099511628211
+)
+
+const (
+	prime64 = 1099511628211
 )
 
 // ===== [ Types ] =====

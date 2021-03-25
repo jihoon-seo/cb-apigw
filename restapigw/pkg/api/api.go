@@ -3,6 +3,7 @@ package api
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/errors"
@@ -87,11 +88,6 @@ type (
 
 // ===== [ Implementations ] =====
 
-// // EqualsTo - 현재 동작 중인 설정과 지정된 설정이 동일한지 여부 검증
-// func (c *Configuration) EqualsTo(tc *Configuration) bool {
-// 	return reflect.DeepEqual(c, tc)
-// }
-
 // GetAllDefinitions - 관리하고 있는 API Definition들 반환
 func (c *Configuration) GetAllDefinitions() []*config.EndpointConfig {
 	defs := make([]*config.EndpointConfig, 0)
@@ -118,7 +114,7 @@ func (c *Configuration) GetDefinitionMaps() []*DefinitionMap {
 // ExistGroup - 지정한 Group가 존재하는지 검증
 func (c *Configuration) ExistGroup(name string) bool {
 	for _, dm := range c.DefinitionMaps {
-		if dm.Name == name {
+		if strings.EqualFold(dm.Name, name) {
 			return true
 		}
 	}
@@ -127,27 +123,16 @@ func (c *Configuration) ExistGroup(name string) bool {
 
 // Exists - 지정한 Group내에 지정한 Definition이 존재하는지 검증
 func (c *Configuration) Exists(name string, ec *config.EndpointConfig) (bool, error) {
-	for _, dm := range c.DefinitionMaps {
-		if dm.Name == name {
-			for _, def := range dm.Definitions {
-				// 동일 그룹에 동일한 이름이 존재하는지 검증
-				if def.Name == ec.Name {
-					return true, ErrAPINameExists
-				}
+	// 이름 검증
+	def := c.FindByName(name, ec.Name)
+	if def != nil {
+		return true, ErrAPINameExists
+	}
 
-				// 동일 그룹에 Endpoint가 존재하는지 검증
-				if def.Endpoint == ec.Endpoint {
-					return true, ErrAPIListenPathExists
-				}
-			}
-		} else {
-			// 다른 그룹에 Endpoint가 존재하는지 검증
-			for _, def := range dm.Definitions {
-				if def.Endpoint == ec.Endpoint {
-					return true, ErrAPIListenPathExists
-				}
-			}
-		}
+	// Endpoint 검증
+	def = c.FindByListenPath(ec.Endpoint)
+	if def != nil {
+		return true, ErrAPIListenPathExists
 	}
 
 	return false, nil
@@ -157,11 +142,11 @@ func (c *Configuration) Exists(name string, ec *config.EndpointConfig) (bool, er
 func (c *Configuration) ExistsDefinition(ec *config.EndpointConfig) error {
 	for _, dm := range c.DefinitionMaps {
 		for _, def := range dm.Definitions {
-			if def.Name == ec.Name {
+			if strings.EqualFold(def.Name, ec.Name) {
 				return ErrAPINameExists
 			}
 
-			if def.Endpoint == ec.Endpoint {
+			if strings.EqualFold(def.Endpoint, ec.Endpoint) {
 				return ErrAPIListenPathExists
 			}
 		}
@@ -173,9 +158,9 @@ func (c *Configuration) ExistsDefinition(ec *config.EndpointConfig) error {
 // FindByName - 지정한 이름의 Endpoint Definition이 존재하는지 검증 (동일 소스 대상)
 func (c *Configuration) FindByName(gname, dname string) *config.EndpointConfig {
 	for _, dm := range c.DefinitionMaps {
-		if dm.Name == gname {
+		if strings.EqualFold(dm.Name, gname) {
 			for _, def := range dm.Definitions {
-				if def.Name == dname {
+				if strings.EqualFold(def.Name, dname) {
 					return def
 				}
 			}
@@ -189,7 +174,7 @@ func (c *Configuration) FindByName(gname, dname string) *config.EndpointConfig {
 func (c *Configuration) FindByListenPath(listenPath string) *config.EndpointConfig {
 	for _, dm := range c.DefinitionMaps {
 		for _, def := range dm.Definitions {
-			if def.Endpoint == listenPath {
+			if strings.EqualFold(def.Endpoint, listenPath) {
 				return def
 			}
 		}
@@ -201,7 +186,15 @@ func (c *Configuration) FindByListenPath(listenPath string) *config.EndpointConf
 // AddDefinition - 지정한 정보를 기준으로 관리 중인 API Definition 추가
 func (c *Configuration) AddDefinition(name string, ec *config.EndpointConfig) error {
 	for _, dm := range c.DefinitionMaps {
-		if dm.Name == name {
+		if strings.EqualFold(dm.Name, name) {
+			// 중복 검증
+			if c.FindByName(name, ec.Name) != nil {
+				return errors.New("API Definition name is must be unique in group")
+			}
+			if c.FindByListenPath(ec.Endpoint) != nil {
+				return errors.New("API Definition endpoint is must be unique in all definitions")
+			}
+
 			dm.Definitions = append(dm.Definitions, ec)
 			if dm.State != ADDED {
 				dm.State = CHANGED
@@ -215,10 +208,26 @@ func (c *Configuration) AddDefinition(name string, ec *config.EndpointConfig) er
 // UpdateDefinition - 지정한 정보를 기준으로 관리 중인 API Definition 갱신
 func (c *Configuration) UpdateDefinition(name string, ec *config.EndpointConfig) error {
 	for _, dm := range c.DefinitionMaps {
-		if dm.Name == name {
+		if strings.EqualFold(dm.Name, name) {
 			for i, def := range dm.Definitions {
-				if def.Name == ec.Name {
-					dm.Definitions[i] = ec
+				if strings.EqualFold(def.Name, ec.Name) {
+					// 기존 설정 값 삭제
+					oldDef := def
+					dm.Definitions = append(dm.Definitions[:i], dm.Definitions[i+1:]...)
+
+					// 중복 검증
+					if c.FindByName(name, ec.Name) != nil {
+						// 기존 설정 복원
+						dm.Definitions = append(dm.Definitions, oldDef)
+						return errors.New("API Definition name is must be unique in group")
+					}
+					if c.FindByListenPath(ec.Endpoint) != nil {
+						// 기존 설정 복원
+						dm.Definitions = append(dm.Definitions, oldDef)
+						return errors.New("API Definition endpoint is must be unique in all definitions")
+					}
+					dm.Definitions = append(dm.Definitions, ec)
+
 					if dm.State != ADDED {
 						dm.State = CHANGED
 					}
@@ -235,10 +244,10 @@ func (c *Configuration) UpdateDefinition(name string, ec *config.EndpointConfig)
 func (c *Configuration) RemoveDefinition(name string, ec *config.EndpointConfig) error {
 	for _, dm := range c.DefinitionMaps {
 		// find group
-		if dm.Name == name {
+		if strings.EqualFold(dm.Name, name) {
 			// remove definitions
 			for i, def := range dm.Definitions {
-				if def.Name == ec.Name {
+				if strings.EqualFold(def.Name, ec.Name) {
 					dm.Definitions = append(dm.Definitions[:i], dm.Definitions[i+1:]...)
 					if dm.State != ADDED {
 						dm.State = CHANGED
@@ -254,7 +263,7 @@ func (c *Configuration) RemoveDefinition(name string, ec *config.EndpointConfig)
 // GetGroup - 지정한 Group 정보 반환
 func (c *Configuration) GetGroup(name string) *DefinitionMap {
 	for _, dm := range c.DefinitionMaps {
-		if dm.Name == name {
+		if strings.EqualFold(dm.Name, name) {
 			return dm
 		}
 	}
@@ -263,6 +272,13 @@ func (c *Configuration) GetGroup(name string) *DefinitionMap {
 
 // AddGroupAndDefinitions - 지정한 정보를 기준으로 API Group을 생성하고 Definition들 추가
 func (c *Configuration) AddGroupAndDefinitions(name string, ecs []*config.EndpointConfig) error {
+	// 중복 검증
+	for _, def := range ecs {
+		if c.FindByListenPath(def.Endpoint) != nil {
+			return errors.New("API Definition endpoint is must be unique in all definitions")
+		}
+	}
+
 	c.DefinitionMaps = append(c.DefinitionMaps, &DefinitionMap{Name: name, State: ADDED, Definitions: ecs})
 	return nil
 }
@@ -276,7 +292,7 @@ func (c *Configuration) AddGroup(name string) error {
 // RemoveGroup - 지정한 정보를 기준으로 API Group 삭제
 func (c *Configuration) RemoveGroup(name string) error {
 	for i, dm := range c.DefinitionMaps {
-		if dm.Name == name {
+		if strings.EqualFold(dm.Name, name) {
 			if dm.State == ADDED {
 				c.DefinitionMaps = append(c.DefinitionMaps[:i], c.DefinitionMaps[i+1:]...)
 				return nil
