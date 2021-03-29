@@ -63,7 +63,7 @@ func CallChain(tag string, isBypass bool, url string) proxy.CallChain {
 						span.SetStatus(trace.Status{Code: int32(resp.Metadata.StatusCode), Message: err.Error()})
 					} else {
 						if we, ok := err.(core.WrappedError); ok {
-							if "[backend]" != tag {
+							if tag != "[backend]" {
 								//span.SetStatus(trace.Status{Code: 500, Message: err.Error()})
 								span.SetStatus(trace.Status{Code: int32(we.Code()), Message: we.GetError().Error()})
 							} else {

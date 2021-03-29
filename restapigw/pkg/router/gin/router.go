@@ -136,12 +136,6 @@ func (pc *PipeConfig) RegisterAPIs(sConf *config.ServiceConfig, defs []*config.E
 	pc.logger.Info("[API G/W] Loading API Endpoints")
 
 	for _, def := range defs {
-		// 정보 재구성
-		err := def.AdjustValues(sConf)
-		if nil != err {
-			pc.logger.WithError(err).Error("[API G/W] Router > Can not adjust values for definition")
-		}
-
 		// 활성화된 경우만 적용
 		if def.Active {
 			// Endpoint에 연결되어 동작할 수 있도록 ProxyFactory의 Call chain에 대한 인스턴스 생성 (ProxyStack)
@@ -158,6 +152,8 @@ func (pc *PipeConfig) RegisterAPIs(sConf *config.ServiceConfig, defs []*config.E
 				// Normal case
 				pc.registerAPI(def.Method, def.Endpoint, pc.handlerFactory(def, proxyStack), len(def.Backend))
 			}
+		} else {
+			pc.logger.Infof("[API G/W] Router > Not actived. Skip to registering: %s", def.Name)
 		}
 	}
 

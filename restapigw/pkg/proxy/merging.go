@@ -70,10 +70,10 @@ func (ima *incrementalMergeAccumulator) Merge(res *Response, err error) {
 // Result - 처리된 Merging 결과 반환
 func (ima *incrementalMergeAccumulator) Result() (*Response, error) {
 	if nil == ima.data {
-		return &Response{Data: make(map[string]interface{}, 0), IsComplete: false}, newMergeError(ima.errs)
+		return &Response{Data: make(map[string]interface{}), IsComplete: false}, newMergeError(ima.errs)
 	}
 
-	if 0 != ima.pending || 0 != len(ima.errs) {
+	if ima.pending != 0 || len(ima.errs) != 0 {
 		ima.data.IsComplete = false
 	}
 	return ima.data, newMergeError(ima.errs)
@@ -92,7 +92,7 @@ func (me mergeError) Error() string {
 
 // newMergeError - Merging 처리 중에 발생한 오류들을 하나의 오류로 반환
 func newMergeError(errs []error) error {
-	if 0 == len(errs) {
+	if len(errs) == 0 {
 		return nil
 	}
 	return mergeError{errs}
@@ -153,7 +153,7 @@ func combineData(backendCount int, reses []*Response) *Response {
 
 	if nil == mergedResponse {
 		// do not allow nil data to response
-		return &Response{Data: make(map[string]interface{}, 0), IsComplete: isComplete}
+		return &Response{Data: make(map[string]interface{}), IsComplete: isComplete}
 	}
 	mergedResponse.IsComplete = isComplete
 	return mergedResponse
@@ -276,7 +276,7 @@ func sequentialMerge(patterns []string, timeout time.Duration, rc ResponseCombin
 			requestPart(localCtx, n, req, out, errCh)
 			select {
 			case err := <-errCh:
-				if 0 == i {
+				if i == 0 {
 					cancel()
 					return nil, err
 				}
@@ -302,10 +302,10 @@ func sequentialMerge(patterns []string, timeout time.Duration, rc ResponseCombin
 // NewMergeDataChain - 전달된 Endpoint 설정을 기준으로 Backend 갯수에 따라서 Response를 Merging 하는 Proxy Call chain 생성
 func NewMergeDataChain(eConf *config.EndpointConfig) CallChain {
 	totalBackends := len(eConf.Backend)
-	if 0 == totalBackends {
+	if totalBackends == 0 {
 		panic(ErrNoBackends)
 	}
-	if 1 == totalBackends {
+	if totalBackends == 1 {
 		return EmptyChain
 	}
 

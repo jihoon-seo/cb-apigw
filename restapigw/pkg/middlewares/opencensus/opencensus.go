@@ -129,7 +129,7 @@ func (c *composableRegister) ExporterFactories(ctx context.Context, conf Config,
 
 // Reegister - 지정된 정보를 기준으로 Opencensus 연동 Register에 Views 와 옵션 정보 (Sampling Rate, Reporting Period) 등록 처리
 func (c composableRegister) Register(ctx context.Context, conf Config, vs []*view.View) error {
-	if 0 == len(vs) {
+	if len(vs) == 0 {
 		vs = DefaultViews
 	}
 

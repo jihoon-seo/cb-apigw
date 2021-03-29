@@ -10,10 +10,9 @@ import (
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/errors"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/logging"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/proxy"
-	"github.com/cloud-barista/cb-apigw/restapigw/pkg/router"
 	ginRouter "github.com/cloud-barista/cb-apigw/restapigw/pkg/router/gin"
 	"github.com/gin-gonic/gin"
-	"gopkg.in/yaml.v3"
+	"gopkg.in/yaml.v2"
 )
 
 // ===== [ Constants and Variables ] =====
@@ -24,6 +23,9 @@ var (
 )
 
 // ===== [ Types ] =====
+
+// AuthMiddleware - HMAC Auth 처리가 적용된 Handler Func 반환 형식
+type AuthMiddleware func(gin.HandlerFunc) gin.HandlerFunc
 
 // Config - AUTH 운영을 위한 설정 구조
 type Config struct {
@@ -37,8 +39,8 @@ type Config struct {
 
 // ===== [ Private Functions ] =====
 
-// ParseConfig - HTTPCache 운영을 위한 Configuration parsing 처리
-func ParseConfig(mwConf config.MWConfig) *Config {
+// parseConfig - HTTPCache 운영을 위한 Configuration parsing 처리
+func parseConfig(mwConf config.MWConfig) *Config {
 	conf := new(Config)
 	tmp, ok := mwConf[MWNamespace]
 	if !ok {
@@ -57,7 +59,7 @@ func ParseConfig(mwConf config.MWConfig) *Config {
 // validateToken - Header로 전달된 Auth Token 검증
 func validateToken(conf *Config, req *http.Request) error {
 	token := req.Header.Get("Authorization")
-	if "" == token {
+	if token == "" {
 		return errors.New("Authorization token not found")
 	}
 
@@ -66,27 +68,33 @@ func validateToken(conf *Config, req *http.Request) error {
 	return ValidateToken(conf.SecureKey, token, conf.AcessIds)
 }
 
-// ===== [ Public Functions ] =====
-
-// TokenValidator - Auth Token Validation 처리를 수행하는 Route Handler 구성
-func TokenValidator(hf ginRouter.HandlerFactory, logger logging.Logger) ginRouter.HandlerFactory {
-	return func(eConf *config.EndpointConfig, proxy proxy.Proxy) gin.HandlerFunc {
-		handler := hf(eConf, proxy)
-
-		conf := ParseConfig(eConf.Middleware)
-		if nil == conf {
-			return handler
-		}
-
+// tokenValidator - Auth Token Validation 처리를 수행하는 Route Handler 구성
+func tokenValidator(conf *Config, logger logging.Logger) AuthMiddleware {
+	return func(next gin.HandlerFunc) gin.HandlerFunc {
 		return func(c *gin.Context) {
 			if err := validateToken(conf, c.Request); nil != err {
-				c.Header(router.CompleteResponseHeaderName, "false")
-				c.Header(router.MessageResponseHeaderName, err.Error())
+				logger.Error("[HMAC AUTH] Unauthorized accessing")
 				c.AbortWithError(http.StatusUnauthorized, err)
 				return
 			}
 
-			handler(c)
+			next(c)
 		}
+	}
+}
+
+// ===== [ Public Functions ] =====
+
+// HandlerFactory - Auth 기능을 수행하는 Route Handler Factory 구성
+func HandlerFactory(next ginRouter.HandlerFactory, logger logging.Logger) ginRouter.HandlerFactory {
+	return func(eConf *config.EndpointConfig, p proxy.Proxy) gin.HandlerFunc {
+		handlerFunc := next(eConf, p)
+
+		conf := parseConfig(eConf.Middleware)
+		if conf != nil {
+			handlerFunc = tokenValidator(conf, logger)(handlerFunc)
+		}
+
+		return handlerFunc
 	}
 }

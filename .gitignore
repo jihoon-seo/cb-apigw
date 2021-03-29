@@ -41,3 +41,9 @@ restapigw/deploy/data/etcd-volume/
 restapigw/tests
 restapigw/cb-restapigw
 restapigw/web/node_modules
+
+data/grafana/data/grafana.db
+data/grafana/data/plugins/
+data/png/
+data/influxdb/data/
+data/influxdb/data/data

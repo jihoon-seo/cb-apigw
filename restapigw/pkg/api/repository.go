@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/url"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
@@ -58,6 +59,24 @@ type (
 )
 
 // ===== [ Implementations ] =====
+
+// CheckDuplicates - 관리중인 Definitions에 대해 중복 검증
+func (dm *DefinitionMap) CheckDuplicates(group string, eConf *config.EndpointConfig) bool {
+	log := logging.GetLogger()
+
+	for _, def := range dm.Definitions {
+		if strings.EqualFold(dm.Name, group) && strings.EqualFold(def.Name, eConf.Name) {
+			log.Warnf("Same Endpoint's Name [%s] exist on group [%s]. Endpoint's Name must be unique in group", eConf.Name, group)
+			return true
+		}
+		if strings.EqualFold(def.Endpoint, eConf.Endpoint) {
+			log.Warnf("Same Endpoint [%s] exist. Endpoint must be unique in all groups", eConf.Endpoint)
+			return true
+		}
+	}
+	return false
+}
+
 // ===== [ Private Functions ] =====
 
 // parseEndpoint - 지정된 정보를 Definition 정보로 전환
@@ -70,9 +89,13 @@ func parseEndpoint(sConf *config.ServiceConfig, apiDef []byte) (*GroupDefinition
 	}
 
 	// 로드된 Endpoint 정보 재 구성
-	for _, ec := range apiConfigs.Definitions {
-		if err := ec.AdjustValues(sConf); nil != err {
-			return nil, errors.Wrapf(err, "couldn't initialize api definition: '%s'", ec.Name)
+	for _, def := range apiConfigs.Definitions {
+		// 서비스 설정에서 상속할 정보들 설정
+		def.InheriteFromService(sConf)
+
+		// 서비스 설정과 연계해서 처리할 정보들 설정
+		if err := def.AdjustValues(sConf); nil != err {
+			return nil, errors.Wrapf(err, "couldn't initialize api definition (adjust values): '%s'", def.Name)
 		}
 	}
 
@@ -103,7 +126,7 @@ func BuildRepository(sConf *config.ServiceConfig, refreshTime time.Duration) (Re
 	}
 
 	// File 모드인 경우는 상대경로 처리 검증
-	if dsnURL.Scheme == "file" && dsnURL.Host == "." {
+	if strings.EqualFold(dsnURL.Scheme, "file") && strings.EqualFold(dsnURL.Host, ".") {
 		path, err := filepath.Abs(dsnURL.Host + dsnURL.Path)
 		if nil != err {
 			return nil, err

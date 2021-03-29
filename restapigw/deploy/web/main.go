@@ -23,26 +23,26 @@ var (
 
 // ===== [ Types ] =====
 
-// hmac - description
+// config - HMAC 운영을 위한 데이터 처리 구조
 type config struct {
-	SecretKey string `mapstructure:"secret_key"`
-	AccessKey string `mapstructure:"access_key"`
-	Duration  string `mapstructure:"duration"`
-	Timestamp string
-	Token     string
-	Message   string
+	SecretKey string `mapstructure:"secret_key" query:"SecretKey"`
+	AccessKey string `mapstructure:"access_key" query:"AccessKey"`
+	Duration  string `mapstructure:"duration" query:"Duration"`
+	Timestamp string `mapstructure:"timestamp" query:"Timestamp"`
+	Token     string `mapstructure:"token" query:"Token"`
+	Message   string `mapstructure:"message" query:"Message"`
 }
 
 // ===== [ Implementations ] =====
 
 // ===== [ Private Functions ] =====
 
-// getTime - description
+// getTime - UTC 기준 현재 시간 반환
 func getTime() time.Time {
 	return time.Now().UTC()
 }
 
-// parseDuration - description
+// parseDuration - 지정한 Time 제한을 time.Duration 값으로 반환
 func parseDuration(limitTime string) time.Duration {
 	duration, err := time.ParseDuration(limitTime)
 	if nil != err {
@@ -52,7 +52,7 @@ func parseDuration(limitTime string) time.Duration {
 	return duration
 }
 
-// checkDuration - description
+// checkDuration - 지정한 시간과 Duration의 초과여부 검증
 func checkDuration(checkTime time.Time, timestamp string, duration time.Duration) bool {
 	ts, err := time.Parse(time.UnixDate, timestamp)
 	if nil != err {
@@ -68,7 +68,7 @@ func checkDuration(checkTime time.Time, timestamp string, duration time.Duration
 	return 0 <= ts.Sub(checkTime)
 }
 
-// makeToken - description
+// makeToken - 현재 시간 + 제한 시간 + 액세스 키를 기준으로 비밀 키를 사용해서 HMAC 토큰 생성
 func makeToken(task config) []byte {
 	data := task.Duration + "^" + task.Timestamp + "^" + task.AccessKey
 
@@ -79,7 +79,7 @@ func makeToken(task config) []byte {
 	return h.Sum(nil)
 }
 
-// getHMACToken - description
+// getHMACToken - 생성한 토큰을 검증 정보 (현재 시간, 제한 시간, 액세스 키)를 추가한 최종 HMAC 토큰 문자열 반환
 func getHMACToken(task config) config {
 	token := append(makeToken(task), []byte("||"+task.Timestamp+"|"+task.Duration+"|"+task.AccessKey)...)
 	task.Token = hex.EncodeToString(token)
@@ -87,7 +87,7 @@ func getHMACToken(task config) config {
 	return task
 }
 
-// getTokenData - description
+// getTokenData - 지정한 토큰 데이터를 검증 가능한 [][]byte로 반환
 func getTokenData(token string) [][]byte {
 	log.Printf("received token: [%v]", token)
 
@@ -103,14 +103,14 @@ func getTokenData(token string) [][]byte {
 	return data
 }
 
-// getTask - description
+// getTask - 설정 정보 반환
 func getConfigInfo() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		return c.JSON(http.StatusOK, task)
 	}
 }
 
-// createToken - description
+// createToken - 요청된 정보를 기준으로 HMAC 토큰 문자열 생성
 func createToken() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		var newTask config
@@ -122,7 +122,7 @@ func createToken() echo.HandlerFunc {
 	}
 }
 
-// validateToken - description
+// validateToken - 요청된 정보를 기준으로 HMAC 토큰 문자열 유효성 검증
 func validateToken() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		var newTask config
@@ -150,7 +150,7 @@ func validateToken() echo.HandlerFunc {
 	}
 }
 
-// loadConfig -
+// loadConfig - 구동을 위한 설정 정보 로드
 func loadConfig() {
 	viper.SetConfigFile("./conf/hmac.yaml")
 	viper.AutomaticEnv()

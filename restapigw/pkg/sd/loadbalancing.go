@@ -90,7 +90,7 @@ func (wb *weightLB) Host() (string, error) {
 		return "", err
 	}
 
-	if 1 == len(hosts) {
+	if len(hosts) == 1 {
 		return hosts[0].Host, nil
 	}
 
@@ -151,7 +151,7 @@ func NewBalancer(subscriber Subscriber) Balancer {
 
 // NewRoundRobinLB - 지정한 Subscriber 정보를 기준으로 Roundrobin 정책을 적용한 Load Balancer 생성
 func NewRoundRobinLB(subscriber Subscriber) Balancer {
-	if fc, ok := subscriber.(FixedSubscriber); ok && 1 == len(fc.hosts) {
+	if fc, ok := subscriber.(FixedSubscriber); ok && len(fc.hosts) == 1 {
 		return noBalancer(fc.hosts[0].Host)
 	}
 	return &roundRobinLB{
@@ -162,7 +162,7 @@ func NewRoundRobinLB(subscriber Subscriber) Balancer {
 
 // NewRandomLB - 난수 생성을 통해서 랜덤으로 처리하는 Load Balancer 생성
 func NewRandomLB(subscriber Subscriber) Balancer {
-	if fc, ok := subscriber.(FixedSubscriber); ok && 1 == len(fc.hosts) {
+	if fc, ok := subscriber.(FixedSubscriber); ok && len(fc.hosts) == 1 {
 		return noBalancer(fc.hosts[0].Host)
 	}
 	return &randomLB{
@@ -173,7 +173,7 @@ func NewRandomLB(subscriber Subscriber) Balancer {
 
 // NewWeightLB - 지정한 Subscriber 정보를 기준으로 Weighted 정책을 적용한 Load Balancer 생성
 func NewWeightLB(subscriber Subscriber) Balancer {
-	if fc, ok := subscriber.(FixedSubscriber); ok && 1 == len(fc.hosts) {
+	if fc, ok := subscriber.(FixedSubscriber); ok && len(fc.hosts) == 1 {
 		return noBalancer(fc.hosts[0].Host)
 	}
 

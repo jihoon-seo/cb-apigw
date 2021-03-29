@@ -106,7 +106,7 @@ func Register(c Config) {
 	mu.Lock()
 	defer mu.Unlock()
 
-	if 0 == c.Timeout {
+	if core.IsZeroOfUnderlyingType(c.Timeout) {
 		c.Timeout = time.Second * 2
 	}
 	checks = append(checks, c)

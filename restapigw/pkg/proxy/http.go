@@ -29,13 +29,6 @@ type responseError interface {
 	StatusCode() int
 }
 
-// wrappedError - Defines interface for Wrapped response error
-type wrappedError interface {
-	Error() error
-	StatusCode() int
-	Message() string
-}
-
 // ===== [ Implementations ] =====
 
 // ===== [ Private Functions ] =====
@@ -71,7 +64,7 @@ func NewHTTPProxyDetailed(bconf *config.BackendConfig, hre client.HTTPRequestExe
 
 		// Body Size 정보 설정
 		if nil != req.Body {
-			if v, ok := req.Headers["Content-Length"]; ok && 1 == len(v) && "chunked" != v[0] {
+			if v, ok := req.Headers["Content-Length"]; ok && len(v) == 1 && v[0] != "chunked" {
 				if size, err := strconv.Atoi(v[0]); nil == err {
 					reqToBackend.ContentLength = int64(size)
 				}
@@ -111,12 +104,13 @@ func NewHTTPProxyDetailed(bconf *config.BackendConfig, hre client.HTTPRequestExe
 		resp, err = hsh(ctx, resp)
 		if nil != err {
 			if t, ok := err.(responseError); ok {
+				// return_error_details로 처리되는 경우는 오류 제거하고 정상적인 반환으로 처리
 				return &Response{
 					Data: map[string]interface{}{
 						fmt.Sprintf("error_%s", t.Name()): t,
 					},
 					Metadata: Metadata{StatusCode: t.StatusCode()},
-				}, err
+				}, nil
 			} else if we, ok := err.(core.WrappedError); ok {
 				return nil, we
 			}

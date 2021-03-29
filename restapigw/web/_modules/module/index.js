@@ -115,19 +115,6 @@ module.exports = function(moduleOptions) {
   /**
    * Plugins
    */
-  // // Add common utility functions plugin
-  // this.addPlugin({
-  //   src: resolve(__dirname, 'cb-utilities.js'),
-  //   filename: 'cb-utilities.js',
-  //   options: undefined
-  // })
-  // // Add event-bus plugin
-  // this.addPlugin({
-  //   src: resolve(__dirname, 'cb-event-bus.js'),
-  //   filename: 'cb-event-bus.js',
-  //   options: undefined
-  // })
-
   // Add global-components plugin
   this.addPlugin({
     src: resolve(__dirname, "cb-components.js"),

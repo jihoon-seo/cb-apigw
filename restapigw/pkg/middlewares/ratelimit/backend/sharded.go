@@ -18,26 +18,6 @@ type ShardedMemoryBackend struct {
 
 // ===== [ Implementations ] =====
 
-// del - 지정한 키들에 해당하는 정보를 삭제
-func (smb *ShardedMemoryBackend) del(key ...string) {
-	buckets := map[uint64][]string{}
-
-	for _, k := range key {
-		h := smb.shard(k)
-		ks, ok := buckets[h]
-		if !ok {
-			ks = []string{k}
-		} else {
-			ks = append(ks, k)
-		}
-		buckets[h] = ks
-	}
-
-	for s, ks := range buckets {
-		smb.shards[s].del(ks...)
-	}
-}
-
 // shard - 지정한 키에 해당하는 Shard 정보 반환
 func (smb *ShardedMemoryBackend) shard(key string) uint64 {
 	return smb.hasher(key) % smb.total

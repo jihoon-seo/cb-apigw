@@ -9,8 +9,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cloud-barista/cb-apigw/restapigw/pkg/admin"
-	"github.com/cloud-barista/cb-apigw/restapigw/pkg/api"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/core"
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/errors"
@@ -60,10 +58,9 @@ var (
 		tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
 	}
 	versions = map[string]uint16{
-		"SSL3.0": tls.VersionSSL30,
-		"TLS10":  tls.VersionTLS10,
-		"TLS11":  tls.VersionTLS11,
-		"TLS12":  tls.VersionTLS12,
+		"TLS10": tls.VersionTLS10,
+		"TLS11": tls.VersionTLS11,
+		"TLS12": tls.VersionTLS12,
 	}
 )
 
@@ -72,18 +69,6 @@ var (
 type (
 	// ToHTTPError - 처리 중에 발생한 오류를 StatusCode로 처리하는 함수 정의
 	ToHTTPError func(error) int
-
-	// Server - REST API G/W 운영 서버 구조
-	Server struct {
-		server      *http.Server
-		adminServer *admin.Server
-
-		serviceConfig      config.ServiceConfig
-		currConfiugrations *api.Configuration
-
-		configurationChan chan api.RepoChangedMessage
-		stopChan          chan struct{}
-	}
 )
 
 // ===== [ Implementations ] =====
@@ -99,7 +84,7 @@ func parseTLSVersion(key string) uint16 {
 
 func parseCurveIDs(conf *config.TLSConfig) []tls.CurveID {
 	l := len(conf.CurvePreferences)
-	if 0 == l {
+	if l == 0 {
 		return defaultCurves
 	}
 
@@ -112,7 +97,7 @@ func parseCurveIDs(conf *config.TLSConfig) []tls.CurveID {
 
 func parseCipherSuites(conf *config.TLSConfig) []uint16 {
 	l := len(conf.CipherSuites)
-	if 0 == l {
+	if l == 0 {
 		return defaultCipherSuites
 	}
 
@@ -163,10 +148,10 @@ func RunServer(ctx context.Context, sConf *config.ServiceConfig, handler http.Ha
 			done <- s.ListenAndServe()
 		}()
 	} else {
-		if "" == sConf.TLS.PublicKey {
+		if sConf.TLS.PublicKey == "" {
 			return ErrPublicKey
 		}
-		if "" == sConf.TLS.PrivateKey {
+		if sConf.TLS.PrivateKey == "" {
 			return ErrPrivateKey
 		}
 		go func() {

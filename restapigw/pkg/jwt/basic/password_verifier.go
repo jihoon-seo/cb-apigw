@@ -90,7 +90,7 @@ func (pv *PasswordVerifier) Verify(req *http.Request, hc *http.Client) (bool, er
 // 지정한 Content에서 필요 정보 추출
 func filterFlags(content string) string {
 	for i, char := range content {
-		if ' ' == char || ';' == char {
+		if char == ' ' || char == ';' {
 			return content[:i]
 		}
 	}

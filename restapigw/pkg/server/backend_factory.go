@@ -23,11 +23,11 @@ import (
 // setupGinBackendFactoryWithContext - 지정한 Context 기반으로 Middleware 들이 적용된 BackendFactory 설정
 func setupGinBackendFactoryWithContext(ctx context.Context, logger logging.Logger, mc *ginMetrics.Collector) proxy.BackendFactory {
 	requestExecutorFactory := func(bConf *config.BackendConfig) client.HTTPRequestExecutor {
-		var clientFactory client.HTTPClientFactory
 		// TODO: Backend Auth
+		// var clientFactory client.HTTPClientFactory
 
 		// HTTPCache 가 적용된 HTTP Client
-		clientFactory = httpcache.NewHTTPClient(bConf)
+		clientFactory := httpcache.NewHTTPClient(bConf)
 		// Opencensus 와 연계된 HTTP Request Executor
 		return opencensus.HTTPRequestExecutor(clientFactory)
 	}

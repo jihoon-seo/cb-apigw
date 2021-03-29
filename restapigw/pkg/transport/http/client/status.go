@@ -84,7 +84,7 @@ func GetHTTPStatusHandler(bConf *config.BackendConfig) HTTPStatusHandler {
 	if e, ok := bConf.Middleware[MWNamespace]; ok {
 		if m, ok := e.(config.MWConfig); ok {
 			if v, ok := m["return_error_details"]; ok {
-				if b, ok := v.(string); ok && "" != b {
+				if b, ok := v.(string); ok && b != "" {
 					return DetailedHTTPStatusHandler(DefaultHTTPStatusHandler, b)
 				}
 			}

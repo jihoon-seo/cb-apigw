@@ -116,7 +116,6 @@ func (tb *Bucket) adjustAvailableTokens(tick int64) {
 	}
 
 	logger.Debugf("Adjust Available Token on TokenBucket - [Quantum : %d, fillInterval : %d, lastTick: %d, tick: %d, Added Token: %d (max capacity %d)]", tb.quantum, tb.fillInterval, lastTick, tick, (tick-lastTick)*tb.quantum, tb.capacity)
-	return
 }
 
 // take - 현재 시각을 기준으로 Blocking 없이 TokenBucket에서 지정한 갯수만큼의 토큰을 삭제(사용)하고, 부족한 경우는 토큰이 추가될 때까지의 대기 시간을 반환 (지정한 최대 대기 시간을 초과하는 경우는 즉시 반환)

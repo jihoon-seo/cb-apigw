@@ -19,7 +19,6 @@ var (
 	// ErrClientLimited - Client 식별 기준 Rate Limit 제한인 경우의 오류
 	ErrClientLimited = errors.New("ERROR: Endpoint(By Client) rate limit exceeded")
 	// ErrProxyLimited - Rate Limit 제한인 경우의 오류
-	//ErrProxyLimited = errors.New("ERROR: Proxy(Backend) rate limit exceeded")
 	ErrProxyLimited = core.NewWrappedError(503, "Proxy(Backend) rate limit exceeded", errors.New("ERROR: Proxy(Backend) rate limit exceeded"))
 )
 

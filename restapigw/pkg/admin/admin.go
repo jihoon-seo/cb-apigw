@@ -181,7 +181,7 @@ func (s *Server) AddRoutes(ge *gin.Engine) {
 	ge.Use(
 		ginCors.New(cors.Options{
 			AllowedOrigins:   []string{"*"},
-			AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE"},
+			AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD"},
 			AllowedHeaders:   []string{"*"},
 			AllowCredentials: true,
 		}),
