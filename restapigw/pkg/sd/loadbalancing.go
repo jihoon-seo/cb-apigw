@@ -64,7 +64,7 @@ type (
 // Host - 연계된 Subscriber를 통해 대상 Host 반환
 func (rrb *roundRobinLB) Host() (string, error) {
 	hosts, err := rrb.hosts()
-	if nil != err {
+	if err != nil {
 		return "", err
 	}
 	offset := (atomic.AddUint64(&rrb.counter, 1) - 1) % uint64(len(hosts))
@@ -75,7 +75,7 @@ func (rrb *roundRobinLB) Host() (string, error) {
 // Host - 연계된 Subscriber를 통해 대상 Host 반환
 func (rb *randomLB) Host() (string, error) {
 	hosts, err := rb.hosts()
-	if nil != err {
+	if err != nil {
 		return "", err
 	}
 	offset := int(rb.rand(uint32(len(hosts))))
@@ -86,7 +86,7 @@ func (rb *randomLB) Host() (string, error) {
 // Host - 연계된 Subscriber를 통해 대상 Host 반환
 func (wb *weightLB) Host() (string, error) {
 	hosts, err := wb.hosts()
-	if nil != err {
+	if err != nil {
 		return "", err
 	}
 
@@ -119,10 +119,10 @@ func (wb *weightLB) Host() (string, error) {
 // hosts - 관리 중인 Subscriber의 Hosts 반환
 func (b *balancer) hosts() ([]*config.HostConfig, error) {
 	hosts, err := b.subscriber.Hosts()
-	if nil != err {
+	if err != nil {
 		return hosts, err
 	}
-	if 0 >= len(hosts) {
+	if len(hosts) <= 0 {
 		return hosts, config.ErrNoHosts
 	}
 	return hosts, nil
@@ -184,7 +184,7 @@ func NewWeightLB(subscriber Subscriber) Balancer {
 	wb.currentWeight = 0
 
 	hosts, err := wb.hosts()
-	if nil == err || 0 < len(hosts) {
+	if err == nil || len(hosts) > 0 {
 		gcdNum := hosts[0].Weight
 		max := 0
 		for _, host := range hosts {

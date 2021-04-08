@@ -84,7 +84,7 @@ func (s *Server) rebuildRouter() {
 // applyToRepository - 관리 중인 설정 변경내역을 리포지토리로 출력
 func (s *Server) applyToRepository() error {
 	err := s.repoProvider.Write(s.currConfigurations.DefinitionMaps)
-	if nil != err {
+	if err != nil {
 		return err
 	}
 
@@ -193,7 +193,7 @@ func (s *Server) startProvider(ctx context.Context) error {
 		admin.WithProfiler(s.serviceConfig.Admin.ProfilingEnabled, s.serviceConfig.Admin.ProfilingPublic),
 	)
 
-	if err := s.adminServer.Start(); nil != err {
+	if err := s.adminServer.Start(); err != nil {
 		return errors.Wrap(err, "[SERVER] Coluld not start Admin API Server")
 	}
 
@@ -217,7 +217,7 @@ func (s *Server) startProvider(ctx context.Context) error {
 				// 변경된 내용을 API G/W Routing으로 반영
 				s.logger.Debug("[SERVER] Configuration change detected by Admin API")
 				err := s.updateConfiguration(c)
-				if nil == err {
+				if err == nil {
 					if c.Operation != api.ApplyGroupsOperation && (c.Operation != api.AddedGroupOperation || (c.Operation == api.AddedGroupOperation && len(c.Definitions) > 0)) {
 						s.rebuildRouter()
 					}
@@ -251,7 +251,7 @@ func (s *Server) StartWithContext(ctx context.Context) error {
 		defer s.Close()
 
 		<-ctx.Done()
-		if 0 < s.serviceConfig.GraceTimeout {
+		if s.serviceConfig.GraceTimeout > 0 {
 			s.logger.Infof("[SERVER] Waiting %s for incoming requests to cease", s.serviceConfig.GraceTimeout)
 			time.Sleep(s.serviceConfig.GraceTimeout)
 		}
@@ -266,7 +266,7 @@ func (s *Server) StartWithContext(ctx context.Context) error {
 	go func() {
 		httpServer.InitHTTPDefaultTransport(s.serviceConfig)
 
-		if err := httpServer.RunServer(ctx, s.serviceConfig, s.router.Engine()); nil != err {
+		if err := httpServer.RunServer(ctx, s.serviceConfig, s.router.Engine()); err != nil {
 			s.logger.WithError(err).Error("[SERVER] Could not start HTTP Server")
 		}
 	}()
@@ -276,13 +276,13 @@ func (s *Server) StartWithContext(ctx context.Context) error {
 
 	// API 설정 정보 검색
 	definifionMaps, err := s.repoProvider.FindAll()
-	if nil != err {
+	if err != nil {
 		return errors.Wrap(err, "could not find all configurations from the repository")
 	}
 
 	// Admin Server 구동
 	s.currConfigurations = &api.Configuration{DefinitionMaps: definifionMaps}
-	if err := s.startProvider(ctx); nil != err {
+	if err := s.startProvider(ctx); err != nil {
 		s.logger.WithError(err).Fatal("[SERVER] Could not start api providers")
 	}
 

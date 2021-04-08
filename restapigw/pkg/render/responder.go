@@ -26,7 +26,7 @@ func JSON(rw http.ResponseWriter, code int, v interface{}) {
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	enc := json.NewEncoder(buf)
 	enc.SetEscapeHTML(true)
-	if err := enc.Encode(v); nil != err {
+	if err := enc.Encode(v); err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}

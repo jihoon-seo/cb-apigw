@@ -19,7 +19,7 @@ func setupGinProxyFactory(logger logging.Logger, bf proxy.BackendFactory, mc *gi
 	proxyFactory := proxy.NewDefaultFactory(bf, logger)
 
 	// Metrics 연동 기반의 ProxyFactory 설정
-	proxyFactory = mc.ProxyFactory("pipe", proxyFactory)
+	proxyFactory = mc.ProxyFactory("proxy", proxyFactory)
 
 	// Opencensus 연동 기반의 ProxyFactory 설정
 	proxyFactory = opencensus.ProxyFactory(proxyFactory)

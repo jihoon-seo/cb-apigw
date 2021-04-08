@@ -143,7 +143,7 @@ func RunServer(ctx context.Context, sConf *config.ServiceConfig, handler http.Ha
 	done := make(chan error)
 	s := NewServer(sConf, handler)
 
-	if nil == s.TLSConfig {
+	if s.TLSConfig == nil {
 		go func() {
 			done <- s.ListenAndServe()
 		}()
@@ -182,7 +182,7 @@ func NewServer(sConf *config.ServiceConfig, handler http.Handler) *http.Server {
 
 // ParseTLSConfig - 서비스 설정에 지정된 TLS 설정을 기준으로 tls 모듈에 대한 설정 반환
 func ParseTLSConfig(tlsConf *config.TLSConfig) *tls.Config {
-	if nil == tlsConf {
+	if tlsConf == nil {
 		return nil
 	}
 	if tlsConf.IsDisabled {

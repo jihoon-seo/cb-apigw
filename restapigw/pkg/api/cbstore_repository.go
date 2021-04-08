@@ -41,17 +41,17 @@ func (csr *CbStoreRepository) Write(definitionMaps []*DefinitionMap) error {
 	for _, dm := range csr.Groups {
 		if dm.State == REMOVED {
 			err := csr.store.Delete(csr.getStorePath(dm.Name))
-			if nil != err {
+			if err != nil {
 				return err
 			}
 		} else if dm.State != NONE {
 			data, err := groupDefinitions(dm)
-			if nil != err {
+			if err != nil {
 				return err
 			}
 
 			err = csr.store.Put(csr.getStorePath(dm.Name), string(data))
-			if nil != err {
+			if err != nil {
 				return err
 			}
 		}
@@ -81,7 +81,7 @@ func (csr *CbStoreRepository) Watch(ctx context.Context, repoChan chan<- RepoCha
 			select {
 			case <-refreshTicker.C:
 				definitionMaps, err := csr.FindAll()
-				if nil != err {
+				if err != nil {
 					log.WithError(err).Error("[REPOSITORY] CB-STORE > Failed to get API definitions on watch")
 					continue
 				}
@@ -104,7 +104,7 @@ func NewCbStoreRepository(sConf *config.ServiceConfig, key string, refreshTime t
 
 	// Grab configuration from CB-STORE
 	keyValues, err := repo.store.GetList(key, true)
-	if nil != err {
+	if err != nil {
 		return nil, err
 	}
 
@@ -115,13 +115,13 @@ func NewCbStoreRepository(sConf *config.ServiceConfig, key string, refreshTime t
 		}
 
 		apiDef, err := parseEndpoint(sConf, []byte(kv.Value))
-		if nil != err {
+		if err != nil {
 			log.WithError(err).Error("[REPOSITORY] CB-STORE > Failed during parsing definitions")
 			return nil, err
 		}
 
 		for _, def := range apiDef.Definitions {
-			if err := repo.add(core.GetLastPart(kv.Key, "/"), def); nil != err {
+			if err := repo.add(core.GetLastPart(kv.Key, "/"), def); err != nil {
 				log.WithField("endpoint", def.Endpoint).WithError(err).Error("[REPOSITORY] CB-STORE > Failed during add endpoint to the repository")
 				return nil, err
 			}

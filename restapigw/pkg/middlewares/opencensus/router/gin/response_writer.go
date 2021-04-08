@@ -35,7 +35,7 @@ func (t *trackingResponseWriter) end() {
 			ochttp.ServerLatency.M(float64(time.Since(t.start)) / float64(time.Millisecond)),
 			ochttp.ServerResponseBytes.M(int64(t.Size())),
 		}
-		if 0 <= t.reqSize {
+		if t.reqSize >= 0 {
 			m = append(m, ochttp.ServerRequestBytes.M(t.reqSize))
 		}
 		status := t.Status()

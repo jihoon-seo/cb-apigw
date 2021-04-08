@@ -24,14 +24,16 @@ func setupGinRouter(ctx context.Context, sConf *config.ServiceConfig, logger log
 	mc := ginMetrics.New(ctx, sConf.Middleware, logger, sConf.Debug)
 
 	// Setup the InfluxDB client for metrics
-	if nil != mc.Config {
-		influxdb.SetupAndRun(ctx, mc.Config.InfluxDB, func() interface{} { return mc.Snapshot() }, &logger)
+	if mc.Config != nil {
+		if err := influxdb.SetupAndRun(ctx, mc.Config.InfluxDB, func() interface{} { return mc.Snapshot() }, &logger); err != nil {
+			logger.WithError(err).Warn("Skip the influxdb setup and running because the no configuration or incorrect.")
+		}
 	} else {
-		logger.Warn("Skip the influxdb setup and running because the no metrics configuration or incorrect.")
+		logger.Warn("Skip the setup and running metrics because the no configuration or incorrect")
 	}
 
 	// Setup the Opencensus
-	if err := opencensus.Setup(ctx, *sConf); nil != err {
+	if err := opencensus.Setup(ctx, *sConf); err != nil {
 		logger.Fatal(err)
 	}
 

@@ -29,6 +29,7 @@ var (
 type HTTPStatusHandler func(context.Context, *http.Response) (*http.Response, error)
 
 // HTTPResponseError - DetailedHTTPStatusHandler 처리 후에 반환되는 오류 구조 정의
+// - responseError interface 구현체
 type HTTPResponseError struct {
 	Code int    `json:"http_status_code"`
 	Msg  string `json:"http_body,omitempty"`
@@ -59,17 +60,23 @@ func (r HTTPResponseError) StatusCode() int {
 
 // DefaultHTTPStatusHandler - Request/Response 기준으로 StatusCode를 처리하는 기본 HTTPStatusHandler
 func DefaultHTTPStatusHandler(ctx context.Context, resp *http.Response) (*http.Response, error) {
-	if nil == resp || (resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated) {
-		if nil != resp {
-			msg, err := core.GetResponseString(resp)
-			if nil != err {
-				return nil, ErrInvalidStatusCode
-			}
-
-			return nil, core.NewWrappedError(resp.StatusCode, msg, ErrInvalidStatusCode)
+	// 오류 검증
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+		msg, err := core.GetResponseString(resp)
+		if err != nil {
+			return nil, ErrInvalidStatusCode
 		}
+
+		// 오류가 발생했지만 Response가 존재하는 경우는 Response 반환
+		if msg != "" {
+			return resp, core.NewWrappedError(resp.StatusCode, msg, ErrInvalidStatusCode)
+		}
+
+		// 오류 반환
 		return nil, ErrInvalidStatusCode
 	}
+
+	// 정상 반환
 	return resp, nil
 }
 
@@ -78,8 +85,33 @@ func NoOpHTTPStatusHandler(_ context.Context, resp *http.Response) (*http.Respon
 	return resp, nil
 }
 
-// GetHTTPStatusHandler - "mw-http" Middleware 설정에 "return_error_details" 설정이 된 경우에는 DetailedHTTPStatusHandler를 사용하고,
-// 그렇지 않는 경우는 DefaultHTTPStatusHandler 사용
+// DetailedHTTPStatusHandler - Request/Response 기준으로 발생한 오류에 정보를 상세하게 처리하기 위한 HTTPStatusHandler
+func DetailedHTTPStatusHandler(next HTTPStatusHandler, name string) HTTPStatusHandler {
+	return func(ctx context.Context, resp *http.Response) (*http.Response, error) {
+		if r, err := next(ctx, resp); err == nil {
+			return r, nil
+		}
+
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			body = []byte{}
+		}
+		resp.Body.Close()
+		resp.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+
+		// 오류가 존재하는 경우는 오류 정보 구성하고 Response도 같이 반환
+		return resp, HTTPResponseError{
+			Code: resp.StatusCode,
+			Msg:  string(body),
+			Path: resp.Request.URL.Path,
+			name: name,
+		}
+	}
+}
+
+// GetHTTPStatusHandler - Backend를 호출한 후의 Response State 처리
+// - "mw-http" Middleware 설정에 "return_error_details" 설정이 된 경우에는 DetailedHTTPStatusHandler를 사용 (내부적으로 DefaultHTTPStatusHandler 호출)
+// - 그외는 DefaultHTTPStatusHandler 사용
 func GetHTTPStatusHandler(bConf *config.BackendConfig) HTTPStatusHandler {
 	if e, ok := bConf.Middleware[MWNamespace]; ok {
 		if m, ok := e.(config.MWConfig); ok {
@@ -91,27 +123,4 @@ func GetHTTPStatusHandler(bConf *config.BackendConfig) HTTPStatusHandler {
 		}
 	}
 	return DefaultHTTPStatusHandler
-}
-
-// DetailedHTTPStatusHandler - Request/Response 기준으로 발생한 오류에 정보를 상세하게 처리하기 위한 HTTPStatusHandler
-func DetailedHTTPStatusHandler(next HTTPStatusHandler, name string) HTTPStatusHandler {
-	return func(ctx context.Context, resp *http.Response) (*http.Response, error) {
-		if r, err := next(ctx, resp); nil == err {
-			return r, nil
-		}
-
-		body, err := ioutil.ReadAll(resp.Body)
-		if nil != err {
-			body = []byte{}
-		}
-		resp.Body.Close()
-		resp.Body = ioutil.NopCloser(bytes.NewBuffer(body))
-
-		return resp, HTTPResponseError{
-			Code: resp.StatusCode,
-			Msg:  string(body),
-			Path: resp.Request.URL.Path,
-			name: name,
-		}
-	}
 }

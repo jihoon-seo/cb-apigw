@@ -50,7 +50,7 @@ func NewHTTPProxyWithHTTPExecutor(bconf *config.BackendConfig, hre client.HTTPRe
 func NewHTTPProxyDetailed(bconf *config.BackendConfig, hre client.HTTPRequestExecutor, hsh client.HTTPStatusHandler, hrp HTTPResponseParser) Proxy {
 	return func(ctx context.Context, req *Request) (*Response, error) {
 		reqToBackend, err := http.NewRequest(strings.ToTitle(req.Method), req.URL.String(), req.Body)
-		if nil != err {
+		if err != nil {
 			return nil, err
 		}
 
@@ -63,16 +63,16 @@ func NewHTTPProxyDetailed(bconf *config.BackendConfig, hre client.HTTPRequestExe
 		}
 
 		// Body Size 정보 설정
-		if nil != req.Body {
+		if req.Body != nil {
 			if v, ok := req.Headers["Content-Length"]; ok && len(v) == 1 && v[0] != "chunked" {
-				if size, err := strconv.Atoi(v[0]); nil == err {
+				if size, err := strconv.Atoi(v[0]); err == nil {
 					reqToBackend.ContentLength = int64(size)
 				}
 			}
 		}
 
 		// Backend 호출에 필요한 Query String 정보 설정
-		if nil != req.Query {
+		if req.Query != nil {
 			q := reqToBackend.URL.Query()
 			for k, v := range req.Query {
 				q.Add(k, v[0])
@@ -80,44 +80,75 @@ func NewHTTPProxyDetailed(bconf *config.BackendConfig, hre client.HTTPRequestExe
 			reqToBackend.URL.RawQuery = q.Encode()
 		}
 
-		logger.Debugf("[Backend Process Flow] Proxy(HTTP) > CallChain (%s)", reqToBackend.URL.String())
+		logger.Debugf("[CallChain] HTTP to Backend > %s", reqToBackend.URL.String())
 
 		// Backed 호출
 		resp, err := hre(ctx, reqToBackend)
-		if nil != reqToBackend.Body {
+		if reqToBackend.Body != nil {
 			reqToBackend.Body.Close()
 		}
 
 		select {
 		case <-ctx.Done():
-			// 호출에 문제가 생긴 경우
+			// 호출이 종료된 경우 (ex. timeout)
 			return nil, ctx.Err()
 		default:
 		}
 
-		// 응답이 없어서 상태 확인이 안되는 경우
-		if nil == resp && nil != err {
+		//
+		if resp == nil && err != nil {
 			return nil, err
 		}
 
 		// Response Status 처리
 		resp, err = hsh(ctx, resp)
-		if nil != err {
+		if err != nil {
+			// HTTPResponseError 구현체인지 검증
 			if t, ok := err.(responseError); ok {
-				// return_error_details로 처리되는 경우는 오류 제거하고 정상적인 반환으로 처리
-				return &Response{
-					Data: map[string]interface{}{
-						fmt.Sprintf("error_%s", t.Name()): t,
-					},
-					Metadata: Metadata{StatusCode: t.StatusCode()},
-				}, nil
-			} else if we, ok := err.(core.WrappedError); ok {
+				if !req.IsBypass {
+					// return_error_details로 처리되는 경우는 오류 제거하고 정상적인 반환으로 처리
+					return &Response{
+						Data: map[string]interface{}{
+							fmt.Sprintf("error_%s", t.Name()): t,
+						},
+						Metadata: Metadata{StatusCode: t.StatusCode(), Message: t.Error()},
+					}, nil
+				} else if resp != nil {
+					if parseData, parseError := hrp(ctx, resp); parseError != nil {
+						return parseData, parseError
+					} else {
+						// Proxy Response 정보에 오류 상태 설정 및 반환
+						parseData.Metadata.StatusCode = t.StatusCode()
+						parseData.IsComplete = false
+						return parseData, err
+					}
+				} else {
+					return nil, err
+				}
+			}
+
+			// WrappedError 여부 검증
+			if we, ok := err.(core.WrappedError); ok {
+				// Bypass 이면서 Response가 존재하는 경우
+				if req.IsBypass && resp != nil {
+					if parseData, parseError := hrp(ctx, resp); parseError != nil {
+						return parseData, parseError
+					} else {
+						// Proxy Response 정보에 오류 상태 설정 및 반환
+						parseData.Metadata.StatusCode = we.Code()
+						parseData.IsComplete = false
+						return parseData, we
+					}
+				}
+				// Bypass가 아니거나 Response가 없는 경우
 				return nil, we
 			}
+
+			// 기타 오류 상태
 			return nil, err
 		}
 
-		// Response Parser 호출
+		// Response Parser 호출후 Proxy Response 정보 반환
 		return hrp(ctx, resp)
 	}
 }
@@ -125,7 +156,7 @@ func NewHTTPProxyDetailed(bconf *config.BackendConfig, hre client.HTTPRequestExe
 // NewRequestBuilderChain - Request 파라미터와 Backend Path를 설정한 Proxy 호출 체인을 생성한다.
 func NewRequestBuilderChain(bConf *config.BackendConfig) CallChain {
 	return func(next ...Proxy) Proxy {
-		if 1 < len(next) {
+		if len(next) > 1 {
 			panic(ErrTooManyProxies)
 		}
 		return func(ctx context.Context, req *Request) (*Response, error) {

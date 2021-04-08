@@ -28,34 +28,37 @@ var (
 
 // ===== [ Types ] =====
 
-// readCloserWrapper - Context 기반의 종료나 취소 시점에 닫을 수 있는 io.Reader 관리를 위한 구조 정의
-type readCloserWrapper struct {
-	ctx context.Context
-	rc  io.ReadCloser
-}
+type (
+	// readCloserWrapper - Context 기반의 종료나 취소 시점에 닫을 수 있는 io.Reader 관리를 위한 구조 정의
+	readCloserWrapper struct {
+		ctx context.Context
+		rc  io.ReadCloser
+	}
 
-// Proxy - Context 기반에서 Request를 처리하고 Response 또는 error 를 반환하는 함수 형식
-type Proxy func(ctx context.Context, req *Request) (*Response, error)
+	// Proxy - Context 기반에서 Request를 처리하고 Response 또는 error 를 반환하는 함수 형식
+	Proxy func(ctx context.Context, req *Request) (*Response, error)
 
-// Metadata - http.Response의 Headers와 StatusCode 관리를 위한 Metadata 구조 정의
-type Metadata struct {
-	Headers    map[string][]string
-	StatusCode int
-}
+	// Metadata - http.Response의 Headers와 StatusCode 관리를 위한 Metadata 구조 정의
+	Metadata struct {
+		Headers    map[string][]string
+		Message    string
+		StatusCode int
+	}
 
-// Response - Backend 처리를 통해 반환된 http.Response 처리를 위한 Response 구조 정의
-type Response struct {
-	Data       map[string]interface{}
-	IsComplete bool
-	Metadata   Metadata
-	Io         io.Reader
-}
+	// Response - Backend 처리를 통해 반환된 http.Response 처리를 위한 Response 구조 정의
+	Response struct {
+		Data       map[string]interface{}
+		IsComplete bool
+		Metadata   Metadata
+		Io         io.Reader
+	}
 
-// BackendFactory - 지정된 BackendConfig 정보를 기반으로 수행할 Proxy를 반환하는 함수 형식
-type BackendFactory func(bConf *config.BackendConfig) Proxy
+	// BackendFactory - 지정된 BackendConfig 정보를 기반으로 수행할 Proxy를 반환하는 함수 형식
+	BackendFactory func(bConf *config.BackendConfig) Proxy
 
-// CallChain - 설정에 따른 중첩 Proxy 연계 구조를 위한 함수 형식
-type CallChain func(next ...Proxy) Proxy
+	// CallChain - 설정에 따른 중첩 Proxy 연계 구조를 위한 함수 형식
+	CallChain func(next ...Proxy) Proxy
+)
 
 // ===== [ Implementations ] =====
 
@@ -76,7 +79,7 @@ func (rcw readCloserWrapper) closeOnCancel() {
 
 // EmptyChain - 테스트나 오류 처리를 위한 빈 Proxy Chain 생성
 func EmptyChain(next ...Proxy) Proxy {
-	if 1 < len(next) {
+	if len(next) > 1 {
 		panic(ErrTooManyProxies)
 	}
 	return next[0]

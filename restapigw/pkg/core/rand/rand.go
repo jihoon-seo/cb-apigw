@@ -58,7 +58,7 @@ func getRandomUint32() uint32 {
 // Uint32 - 램덤 값을 uint32로 반환
 func Uint32() uint32 {
 	v := rngPool.Get()
-	if nil == v {
+	if v == nil {
 		v = &RNG{}
 	}
 	r := v.(*RNG)

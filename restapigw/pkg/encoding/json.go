@@ -29,7 +29,7 @@ func JSONDecoder(r io.Reader, v *map[string]interface{}) error {
 // JSONCollectionDecoder - 지정한 Reader의 JSON 데이터에 대한 Collection 으로 Decoder를 생성하고 Decode 처리 (최종 반환할 때 Array인 형태로 변횐해서 처리)
 func JSONCollectionDecoder(r io.Reader, v *map[string]interface{}) error {
 	var collection []interface{}
-	if err := core.JSONDecode(r, &collection); nil != err {
+	if err := core.JSONDecode(r, &collection); err != nil {
 		return err
 	}
 	// Backend 결과 Array를 처리하기 위한 식별자 설정
@@ -40,7 +40,7 @@ func JSONCollectionDecoder(r io.Reader, v *map[string]interface{}) error {
 // JSONWrapedCollectionDecoder - 지정한 Reader의 JSON 데이터에 대한 Collection 으로 Decoder를 생성하고 Decode 처리
 func JSONWrapedCollectionDecoder(r io.Reader, v *map[string]interface{}) error {
 	var collection []interface{}
-	if err := core.JSONDecode(r, &collection); nil != err {
+	if err := core.JSONDecode(r, &collection); err != nil {
 		return err
 	}
 	// Backend 결과 Array를 처리하기 위한 식별자 설정

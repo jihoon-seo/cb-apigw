@@ -30,7 +30,7 @@ func Points(hostname string, now time.Time, counters map[string]int64, logger lo
 		"gauge": int(counters[prefix+"connected-gauge"]),
 	}
 	incoming, err := client.NewPoint("router", map[string]string{"host": hostname, "direction": "in"}, in, now)
-	if nil != err {
+	if err != nil {
 		logger.Error("[METRICS] InfluxDB > Creating incoming connection counters point:", err.Error())
 		return points
 	}
@@ -40,7 +40,7 @@ func Points(hostname string, now time.Time, counters map[string]int64, logger lo
 		"gauge": int(counters[prefix+"disconnected-gauge"]),
 	}
 	outgoing, err := client.NewPoint("router", map[string]string{"host": hostname, "direction": "out"}, out, now)
-	if nil != err {
+	if err != nil {
 		logger.Error("[METRICS] InfluxDB > creating outgoing connection counters point:", err.Error())
 		return points
 	}
@@ -65,14 +65,14 @@ func Points(hostname string, now time.Time, counters map[string]int64, logger lo
 	}
 
 	debugPoint, err := client.NewPoint("debug", map[string]string{"host": hostname}, debug, now)
-	if nil != err {
+	if err != nil {
 		logger.Error("[METRICS] InfluxDB > Creating debug counters point:", err.Error())
 		return points
 	}
 	points[2] = debugPoint
 
 	runtimePoint, err := client.NewPoint("runtime", map[string]string{"host": hostname}, runtime, now)
-	if nil != err {
+	if err != nil {
 		logger.Error("[METRICS] InfluxDB > Creating runtime counters point:", err.Error())
 		return points
 	}

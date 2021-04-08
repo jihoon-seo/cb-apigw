@@ -82,14 +82,14 @@ func (we WrappedError) GetError() error {
 // getClientIPByRequestRemoteAddr - Request의 Remote Addr를 통한 IP 검증
 func getClientIPByRequestRemoteAddr(req *http.Request) (string, error) {
 	ip, port, err := net.SplitHostPort(req.RemoteAddr)
-	if nil != err {
+	if err != nil {
 		log.Printf("debug: Getting req.RemoteAddr: %v\n", err)
 		return "", err
 	}
 	log.Printf("debug: With req.RemoteAddr found IP: %v, Port: %v\n", ip, port)
 
 	userIP := net.ParseIP(ip)
-	if nil == userIP {
+	if userIP == nil {
 		message := "debug: Parsing IP from Request.RemoteAddr got nothing"
 		log.Println(message)
 		return "", fmt.Errorf(message)
@@ -206,7 +206,7 @@ func ContainsString(s []string, v string) bool {
 // GetResponseString - http.Response Body를 문자열로 반환
 func GetResponseString(resp *http.Response) (string, error) {
 	body, err := ioutil.ReadAll(resp.Body)
-	if nil != err {
+	if err != nil {
 		return "", err
 	}
 
@@ -222,10 +222,10 @@ func GetResponseString(resp *http.Response) (string, error) {
 func GetClientIPHelper(req *http.Request) (string, error) {
 	// Try parse "Origin" from header
 	url, err := url.Parse(req.Header.Get("Origin"))
-	if nil == err {
+	if err == nil {
 		host := url.Host
 		ip, _, err := net.SplitHostPort(host)
-		if nil == err {
+		if err == nil {
 			log.Printf("debug: Found IP using Header (Origin) sniffing, ip: %v\n", ip)
 			return ip, nil
 		}
@@ -233,14 +233,14 @@ func GetClientIPHelper(req *http.Request) (string, error) {
 
 	// Try parse request
 	ip, err := getClientIPByRequestRemoteAddr(req)
-	if nil == err {
+	if err == nil {
 		log.Printf("debug: Found IP using Request, ip: %v\n", ip)
 		return ip, nil
 	}
 
 	// Try parse "X-Forwarder" from header
 	ip, err = getClientIPByHeaders(req)
-	if nil == err {
+	if err == nil {
 		log.Printf("debug: Found IP using Request Headers (X-Forwarder) sniffing, ip: %v\n", ip)
 		return ip, nil
 	}
@@ -265,7 +265,7 @@ func GetLastPart(source, seperater string) string {
 // ToJSON - 지정 정보를 JSON 문자열로 변환
 func ToJSON(data interface{}) string {
 	bytes, err := JSONMarshal(data)
-	if nil != err {
+	if err != nil {
 		log.Println("error on convert to json")
 		return ""
 	}

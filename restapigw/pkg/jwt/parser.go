@@ -84,7 +84,7 @@ func (p *Parser) jwtFromQuery(req *http.Request, key string) (string, error) {
 func (p *Parser) jwtFromCookie(req *http.Request, key string) (string, error) {
 	cookie, _ := req.Cookie(key)
 
-	if nil == cookie {
+	if cookie == nil {
 		return "", errors.New("cookie token empty")
 	}
 
@@ -104,14 +104,14 @@ func (p *Parser) Parse(tokenString string) (*jwt.Token, error) {
 				return []byte(method.Key), nil
 			case *jwt.SigningMethodRSA:
 				block, _ := pem.Decode([]byte(method.Key))
-				if nil == block {
+				if block == nil {
 					return nil, ErrInvalidPEMBlock
 				}
 				if got, want := block.Type, "PUBLIC KEY"; got != want {
 					return nil, ErrNotRSAPublicKey
 				}
 				pub, err := x509.ParsePKIXPublicKey(block.Bytes)
-				if nil != err {
+				if err != nil {
 					return nil, err
 				}
 
@@ -125,12 +125,12 @@ func (p *Parser) Parse(tokenString string) (*jwt.Token, error) {
 			}
 		})
 
-		if nil != err {
+		if err != nil {
 			if err == ErrSigningMethodMismatch {
 				continue
 			}
 
-			if validationErr, ok := err.(*jwt.ValidationError); ok && (0 < validationErr.Errors&jwt.ValidationErrorUnverifiable || 0 < validationErr.Errors&jwt.ValidationErrorSignatureInvalid) {
+			if validationErr, ok := err.(*jwt.ValidationError); ok && (validationErr.Errors&jwt.ValidationErrorUnverifiable > 0 || validationErr.Errors&jwt.ValidationErrorSignatureInvalid > 0) {
 				continue
 			}
 		}
@@ -156,7 +156,7 @@ func (p *Parser) ParseFromRequest(req *http.Request) (*jwt.Token, error) {
 		token, err = p.jwtFromCookie(req, parts[1])
 	}
 
-	if nil != err {
+	if err != nil {
 		return nil, err
 	}
 

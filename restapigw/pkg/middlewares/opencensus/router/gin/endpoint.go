@@ -91,9 +91,9 @@ func (h *handler) startStats(w gin.ResponseWriter, r *http.Request) (gin.Respons
 		ctx:            ctx,
 		ResponseWriter: w,
 	}
-	if nil == r.Body {
+	if r.Body == nil {
 		track.reqSize = -1
-	} else if 0 < r.ContentLength {
+	} else if r.ContentLength > 0 {
 		track.reqSize = r.ContentLength
 	}
 	stats.Record(ctx, ochttp.ServerRequestCount.M(1))
@@ -119,7 +119,7 @@ func HandlerFunc(eConf *config.EndpointConfig, next gin.HandlerFunc, hf propagat
 	if !opencensus.IsRouterEnabled() {
 		return next
 	}
-	if nil == hf {
+	if hf == nil {
 		hf = &b3.HTTPFormat{}
 	}
 	h := &handler{

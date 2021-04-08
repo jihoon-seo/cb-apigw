@@ -94,10 +94,8 @@ func NewRequest(eConf *config.EndpointConfig) func(*gin.Context, []string) *prox
 		query := c.Request.URL.Query()
 
 		// Black list 적용
-		if nil != exceptQueryStrings {
-			for i := range exceptQueryStrings {
-				delete(query, exceptQueryStrings[i])
-			}
+		for i := range exceptQueryStrings {
+			delete(query, exceptQueryStrings[i])
 		}
 
 		// Bypass인 경우 실제 호출 경로 설정
@@ -131,14 +129,14 @@ func CustomErrorEndpointHandler(eConf *config.EndpointConfig, proxy proxy.Proxy,
 		response, err := proxy(requestCtx, requestGenerator(c, eConf.ExceptQueryStrings))
 		select {
 		case <-requestCtx.Done():
-			if nil == err {
+			if err == nil {
 				err = router.ErrInternalError
 			}
 		default:
 		}
 
 		complete := router.HeaderIncompleteResponseValue
-		if nil != response && len(response.Data) > 0 {
+		if response != nil && len(response.Data) > 0 {
 			if response.IsComplete {
 				complete = router.HeaderCompleteResponseValue
 				if isCacheEnabled {
@@ -154,7 +152,7 @@ func CustomErrorEndpointHandler(eConf *config.EndpointConfig, proxy proxy.Proxy,
 		}
 		c.Header(router.CompleteResponseHeaderName, complete)
 
-		if nil != err {
+		if err != nil {
 			// Proxy 처리 중에 발생한 오류들을 Header로 설정
 			c.Header(router.MessageResponseHeaderName, err.Error())
 			logger.Errorf("[API G/W] Router > Endpoint Error Processing: %s", err.Error())
@@ -162,7 +160,7 @@ func CustomErrorEndpointHandler(eConf *config.EndpointConfig, proxy proxy.Proxy,
 			c.Error(err)
 
 			// Response가 없는 경우의 상태 코드 설정
-			if nil == response {
+			if response == nil {
 				if t, ok := err.(responseError); ok {
 					c.Status(t.StatusCode())
 				} else if e, ok := err.(core.WrappedError); ok {
@@ -172,6 +170,9 @@ func CustomErrorEndpointHandler(eConf *config.EndpointConfig, proxy proxy.Proxy,
 				}
 				cancel()
 				return
+			} else {
+				// 오류가 발생했지만 Response 정보가 존재하는 경우는 오류 상태로 설정
+				c.Status(response.Metadata.StatusCode)
 			}
 		} else {
 			if response.IsComplete {
@@ -181,6 +182,7 @@ func CustomErrorEndpointHandler(eConf *config.EndpointConfig, proxy proxy.Proxy,
 			}
 		}
 
+		// Response를 클라이언트로 출력
 		render(c, response)
 		cancel()
 	}

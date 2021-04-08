@@ -54,7 +54,7 @@ func (ef entityFormatter) Format(entity Response) Response {
 	if ef.Target != "" {
 		extractTarget(ef.Target, &entity)
 	}
-	if 0 < len(entity.Data) {
+	if len(entity.Data) > 0 {
 		ef.PropertyFilter(&entity)
 		// Mapping 처리
 		for formerKey, newKey := range ef.Mapping {
@@ -95,7 +95,7 @@ func (ff flatmapFormatter) Format(entity Response) Response {
 // processOps - Flatmap 설정에 대한 처리
 func (ff flatmapFormatter) processOps(entity *Response) {
 	flatten, err := tree.New(entity.Data)
-	if nil != err {
+	if err != nil {
 		return
 	}
 	for _, op := range ff.Ops {
@@ -188,7 +188,7 @@ func newBlacklistFilter(blacklist []string) propertyFilter {
 	bl := make(map[string][]string, len(blacklist))
 	for _, key := range blacklist {
 		keys := strings.Split(key, ".")
-		if 1 < len(keys) {
+		if len(keys) > 1 {
 			if sub, ok := bl[keys[0]]; ok {
 				bl[keys[0]] = append(sub, keys[1])
 			} else {
@@ -204,7 +204,7 @@ func newBlacklistFilter(blacklist []string) propertyFilter {
 			if len(sub) == 0 {
 				delete(entity.Data, k)
 			} else {
-				if tmp := blacklistFilterSub(entity.Data[k], sub); 0 < len(tmp) {
+				if tmp := blacklistFilterSub(entity.Data[k], sub); len(tmp) > 0 {
 					entity.Data[k] = tmp
 				}
 			}
@@ -290,12 +290,12 @@ func extractTarget(target string, entity *Response) {
 
 // NewEntityFormatter - 지정된 Backend 설정을 기준으로 Response 처리에 사용할 EntityFormatter 생성
 func NewEntityFormatter(bConf *config.BackendConfig) EntityFormatter {
-	if ff := newFlatmapFormatter(bConf); nil != ff {
+	if ff := newFlatmapFormatter(bConf); ff != nil {
 		return ff
 	}
 
 	var pf propertyFilter
-	if 0 < len(bConf.Whitelist) {
+	if len(bConf.Whitelist) > 0 {
 		// Response를 대상으로 whitelist 필터링
 		pf = newWhitelistFilter(bConf.Whitelist)
 	} else {

@@ -23,7 +23,7 @@ import (
 // doStatusRequest - Health Checking용 요청 처리
 func doStatusRequest(def *config.EndpointConfig, closeBody bool, logger logging.Logger) (*http.Response, error) {
 	req, err := http.NewRequest(http.MethodGet, def.HealthCheck.URL, nil)
-	if nil != err {
+	if err != nil {
 		logger.WithError(err).Error("[ADMIN Server] Creating the request for the health check failed")
 		return nil, err
 	}
@@ -32,7 +32,7 @@ func doStatusRequest(def *config.EndpointConfig, closeBody bool, logger logging.
 	req.Header.Set("Connection", "close")
 
 	resp, err := http.DefaultClient.Do(req)
-	if nil != err {
+	if err != nil {
 		logger.WithError(err).Error("[ADMIN Server] Making the request for the health check failed")
 		return resp, err
 	}
@@ -48,7 +48,7 @@ func doStatusRequest(def *config.EndpointConfig, closeBody bool, logger logging.
 func check(def *config.EndpointConfig, logger logging.Logger) func() error {
 	return func() error {
 		resp, err := doStatusRequest(def, true, logger)
-		if nil != err {
+		if err != nil {
 			return fmt.Errorf("%s health check endpoint %s is unreachable", def.Name, def.HealthCheck.URL)
 		}
 
@@ -112,7 +112,7 @@ func NewStatusHandler(conf *api.Configuration, logger logging.Logger) http.Handl
 		for _, def := range defs {
 			if strings.EqualFold(name, def.Name) {
 				resp, err := doStatusRequest(def, false, logger)
-				if nil != err {
+				if err != nil {
 					logger.WithField("name", name).WithError(err).Error("[ADMIN Server] Error requesting service health status")
 					rw.WriteHeader(http.StatusInternalServerError)
 					rw.Write([]byte(err.Error()))
@@ -120,11 +120,11 @@ func NewStatusHandler(conf *api.Configuration, logger logging.Logger) http.Handl
 				}
 
 				body, err := ioutil.ReadAll(resp.Body)
-				if closeErr := resp.Body.Close(); nil != closeErr {
+				if closeErr := resp.Body.Close(); closeErr != nil {
 					logger.WithField("name", name).WithError(closeErr).Error("[ADMIN Server] Error closing health status body")
 				}
 
-				if nil != err {
+				if err != nil {
 					logger.WithField("name", name).WithError(err).Error("[ADMIN Server] Error reading health status body")
 					rw.WriteHeader(http.StatusInternalServerError)
 					rw.Write([]byte(err.Error()))

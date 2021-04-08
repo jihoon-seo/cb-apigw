@@ -53,7 +53,7 @@ func (pv *PasswordVerifier) getUserFromRequest(req *http.Request) (*user, error)
 		switch contentType {
 		case contentTypeJSON:
 			err := core.JSONDecode(req.Body, &u)
-			if nil != err {
+			if err != nil {
 				return u, errors.Wrap(err, "could not parse the json body")
 			}
 		default:
@@ -72,7 +72,7 @@ func (pv *PasswordVerifier) getUserFromRequest(req *http.Request) (*user, error)
 // Verify - 지정한 Request 정보를 기준으로 사용자 정보를 검증
 func (pv *PasswordVerifier) Verify(req *http.Request, hc *http.Client) (bool, error) {
 	currUser, err := pv.getUserFromRequest(req)
-	if nil != err {
+	if err != nil {
 		return false, errors.Wrap(err, "could not get user from request")
 	}
 

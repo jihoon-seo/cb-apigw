@@ -17,7 +17,7 @@ middleware:
     influxdb:
       address: http://localhost:8086 #"http://cb-restapigw-influxdb:8086"
       database: cbrestapigw
-      reporting_period: 11s
+      reporting_period: 10s
       buffer_size: 0
   mw-opencensus:
     sample_rate: 100

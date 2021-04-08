@@ -175,7 +175,7 @@ func parseConfig(mConf config.MWConfig) *Config {
 
 	buf := new(bytes.Buffer)
 	yaml.NewEncoder(buf).Encode(tmp)
-	if err := yaml.NewDecoder(buf).Decode(conf); nil != err {
+	if err := yaml.NewDecoder(buf).Decode(conf); err != nil {
 		return nil
 	}
 
@@ -193,7 +193,7 @@ func NewDummyRegistry() metrics.Registry {
 func New(ctx context.Context, mConf config.MWConfig, log logging.Logger) *Producer {
 	// 설정 기반으로 Metric Producer 구성
 	conf := parseConfig(mConf)
-	if nil == conf {
+	if conf == nil {
 		// 설정이 존재하지 않는 경우는 장애 방지를 위한 Dummy Registry 활용
 		dummyRegistry := NewDummyRegistry()
 		return &Producer{

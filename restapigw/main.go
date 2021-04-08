@@ -19,7 +19,7 @@ func init() {
 // main - Entrypoint
 func main() {
 	rootCmd := cmd.NewRootCmd()
-	if err := rootCmd.Execute(); nil != err {
+	if err := rootCmd.Execute(); err != nil {
 		log.Println("cb-restapigw terminated with error: ", err.Error())
 	}
 }

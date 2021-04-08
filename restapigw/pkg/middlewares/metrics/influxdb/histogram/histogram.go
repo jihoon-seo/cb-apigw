@@ -49,7 +49,7 @@ func latencyPoints(hostname string, now time.Time, histograms map[string]metrics
 		}
 
 		histogramPoint, err := client.NewPoint("requests", tags, newFields(histogram), now)
-		if nil != err {
+		if err != nil {
 			logger.Error("[METRICS] InfluxDB > Creating histogram point:", err.Error())
 			continue
 		}
@@ -76,7 +76,7 @@ func routerPoints(hostname string, now time.Time, histograms map[string]metrics.
 		}
 
 		histogramPoint, err := client.NewPoint("router.response-"+params[1], tags, newFields(histogram), now)
-		if nil != err {
+		if err != nil {
 			logger.Error("[METRICS] InfluxDB > Creating histogram point:", err.Error())
 			continue
 		}
@@ -96,7 +96,7 @@ func debugPoint(hostname string, now time.Time, histograms map[string]metrics.Hi
 	}
 
 	histogramPoint, err := client.NewPoint("service.debug.GCStats.Pause", tags, newFields(hd), now)
-	if nil != err {
+	if err != nil {
 		logger.Error("[METRICS] InfluxDB > Creating histogram point:", err.Error())
 		return nil
 	}
@@ -114,7 +114,7 @@ func runtimePoint(hostname string, now time.Time, histograms map[string]metrics.
 	}
 
 	histogramPoint, err := client.NewPoint("service.runtime.MemStats.PauseNs", tags, newFields(hd), now)
-	if nil != err {
+	if err != nil {
 		logger.Error("[METRICS] InfluxDB > Creating histogram point:", err.Error())
 		return nil
 	}
@@ -160,10 +160,10 @@ func newFields(h metrics.HistogramData) map[string]interface{} {
 func Points(hostname string, now time.Time, histograms map[string]metrics.HistogramData, logger logging.Logger) []*client.Point {
 	points := latencyPoints(hostname, now, histograms, logger)
 	points = append(points, routerPoints(hostname, now, histograms, logger)...)
-	if p := debugPoint(hostname, now, histograms, logger); nil != p {
+	if p := debugPoint(hostname, now, histograms, logger); p != nil {
 		points = append(points, p)
 	}
-	if p := runtimePoint(hostname, now, histograms, logger); nil != p {
+	if p := runtimePoint(hostname, now, histograms, logger); p != nil {
 		points = append(points, p)
 	}
 	return points

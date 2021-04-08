@@ -155,7 +155,7 @@ func HandlerFunc(rw http.ResponseWriter, req *http.Request) {
 				setStatus(&status, c.SkipOnErr)
 				break loop
 			case res := <-resChan:
-				if nil != res.err {
+				if res.err != nil {
 					failures[res.name] = res.err.Error()
 					setStatus(&status, res.skipOnErr)
 				}
@@ -167,7 +167,7 @@ func HandlerFunc(rw http.ResponseWriter, req *http.Request) {
 	rw.Header().Set("Content-Type", "application/json")
 	c := newCheck(status, failures)
 	data, err := core.JSONMarshal(c)
-	if nil != err {
+	if err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return

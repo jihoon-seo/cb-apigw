@@ -53,7 +53,7 @@ func (imr *InMemoryRepository) add(group string, eConf *config.EndpointConfig) e
 
 	// API Definition 검증
 	err := eConf.Validate()
-	if nil != err {
+	if err != nil {
 		log.WithError(err).Error("[REPOSITORY] MEMORY > Validation errors")
 		return err
 	}
@@ -101,7 +101,7 @@ func (imr *InMemoryRepository) FindAllByGroup(group string) ([]*config.EndpointC
 
 	endpoints := make([]*config.EndpointConfig, 0)
 	sm := imr.getGroup(group)
-	if nil != sm {
+	if sm != nil {
 		endpoints = append(endpoints, sm.Definitions...)
 	}
 	return endpoints, nil

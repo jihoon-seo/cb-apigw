@@ -41,18 +41,18 @@ func (fsr *FileSystemRepository) Write(definitionMaps []*DefinitionMap) error {
 		filePath := path.Join(fsr.path, dm.Name)
 		if dm.State == REMOVED {
 			err := os.Remove(filePath)
-			if nil != err {
+			if err != nil {
 				return err
 			}
 			// 삭제된 Group에 대한 Watcher 제거
 			_ = fsr.watcher.Remove(filePath)
 		} else if dm.State != NONE {
 			data, err := groupDefinitions(dm)
-			if nil != err {
+			if err != nil {
 				return err
 			}
 			err = ioutil.WriteFile(filePath, data, os.FileMode(0666))
-			if nil != err {
+			if err != nil {
 				return err
 			}
 			if dm.State == ADDED {
@@ -78,12 +78,12 @@ func (fsr *FileSystemRepository) Watch(ctx context.Context, repoChan chan<- Repo
 				// 변경된 경우
 				if event.Op&fsnotify.Write == fsnotify.Write {
 					body, err := ioutil.ReadFile(event.Name)
-					if nil != err {
+					if err != nil {
 						log.WithError(err).Errorf("[REPOSITORY] FILE > Couldn't load the api definition file: '%s'. Ignored!!", event.Name)
 						continue
 					}
 					apiDef, err := parseEndpoint(fsr.sConf, body)
-					if nil != err {
+					if err != nil {
 						log.WithError(err).Errorf("[REPOSITORY] FILE > Couldn't parsing api definition: '%s'. Ignored!!", event.Name)
 						continue
 					}
@@ -136,12 +136,12 @@ func NewFileSystemRepository(sConf *config.ServiceConfig, dir string) (*FileSyst
 
 	// Grab json files from directory
 	files, err := ioutil.ReadDir(dir)
-	if nil != err {
+	if err != nil {
 		return nil, err
 	}
 
 	watcher, err := fsnotify.NewWatcher()
-	if nil != err {
+	if err != nil {
 		return nil, errors.Wrap(err, "failed to create a file system watcher")
 	}
 
@@ -154,25 +154,25 @@ func NewFileSystemRepository(sConf *config.ServiceConfig, dir string) (*FileSyst
 			log.WithField("path", filePath)
 
 			appConfigBody, err := ioutil.ReadFile(filePath)
-			if nil != err {
+			if err != nil {
 				log.WithError(err).Error("[REPOSITORY] FILE > Couldn't load the api definition file")
 				return nil, err
 			}
 
 			err = repo.watcher.Add(filePath)
-			if nil != err {
+			if err != nil {
 				log.WithError(err).Error("[REPOSITORY] FILE > Couldn't load the api definition file")
 				return nil, err
 			}
 
 			apiDef, err := parseEndpoint(sConf, appConfigBody)
-			if nil != err {
+			if err != nil {
 				log.Errorf("[REPOSITORY] FILE > Couldn't parsing the api definition file (%s)", filePath)
 				return nil, err
 			}
 
 			for _, v := range apiDef.Definitions {
-				if err = repo.add(fileName, v); nil != err {
+				if err = repo.add(fileName, v); err != nil {
 					log.WithField("endpoint", v.Endpoint).WithError(err).Error("[REPOSITORY] FILE > Failed during add endpoint to the repository")
 					return nil, err
 				}

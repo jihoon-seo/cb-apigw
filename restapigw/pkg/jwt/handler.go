@@ -38,7 +38,7 @@ func (h *Handler) Login(cc *config.CredentialsConfig, logger logging.Logger) htt
 	return func(rw http.ResponseWriter, req *http.Request) {
 		accessToken, err := extractAccessToken(req)
 
-		if nil != err {
+		if err != nil {
 			logger.WithError(err).Debug("[ADMIN API] failed to extract access token")
 		}
 
@@ -48,7 +48,7 @@ func (h *Handler) Login(cc *config.CredentialsConfig, logger logging.Logger) htt
 
 		verified, err := p.Verify(req, httpClient)
 
-		if nil != err || !verified {
+		if err != nil || !verified {
 			response.Errorf(rw, req, http.StatusUnauthorized, err)
 			return
 		}
@@ -58,13 +58,13 @@ func (h *Handler) Login(cc *config.CredentialsConfig, logger logging.Logger) htt
 		}
 
 		claims, err := p.GetClaims(httpClient)
-		if nil != err {
+		if err != nil {
 			response.Errorf(rw, req, http.StatusBadRequest, err)
 			return
 		}
 
 		token, err := IssueAdminToken(h.Guard.SigningMethod, claims, h.Guard.Timeout)
-		if nil != err {
+		if err != nil {
 			response.Errorf(rw, req, http.StatusUnauthorized, err)
 			return
 		}
@@ -117,7 +117,7 @@ func (h *Handler) Refresh() http.HandlerFunc {
 
 		// 현재는 HSxxx 형식 알고리즘만 지원
 		tokenString, err := newToken.SignedString([]byte(h.Guard.SigningMethod.Key))
-		if nil != err {
+		if err != nil {
 			response.Errorf(rw, req, http.StatusUnauthorized, errors.New("create JWT Token failed"))
 			return
 		}
@@ -138,7 +138,7 @@ func extractAccessToken(req *http.Request) (string, error) {
 	// Access Key들을 검증하는 OAuth 활용
 	authHeaderValue := req.Header.Get("Authorization")
 	parts := strings.Split(authHeaderValue, " ")
-	if 2 > len(parts) {
+	if len(parts) < 2 {
 		return "", errors.New("attempted access with malformed header, no auth header found")
 	}
 

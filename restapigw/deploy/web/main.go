@@ -5,6 +5,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"log"
 	"net/http"
 	"strings"
@@ -33,6 +34,11 @@ type config struct {
 	Message   string `mapstructure:"message" query:"Message"`
 }
 
+// TODO: REMOTE - For Test
+type message struct {
+	Message string `mapstructure:"message" json:"message"`
+}
+
 // ===== [ Implementations ] =====
 
 // ===== [ Private Functions ] =====
@@ -45,7 +51,7 @@ func getTime() time.Time {
 // parseDuration - 지정한 Time 제한을 time.Duration 값으로 반환
 func parseDuration(limitTime string) time.Duration {
 	duration, err := time.ParseDuration(limitTime)
-	if nil != err {
+	if err != nil {
 		return 0
 	}
 
@@ -55,7 +61,7 @@ func parseDuration(limitTime string) time.Duration {
 // checkDuration - 지정한 시간과 Duration의 초과여부 검증
 func checkDuration(checkTime time.Time, timestamp string, duration time.Duration) bool {
 	ts, err := time.Parse(time.UnixDate, timestamp)
-	if nil != err {
+	if err != nil {
 		return false
 	}
 
@@ -65,7 +71,7 @@ func checkDuration(checkTime time.Time, timestamp string, duration time.Duration
 	log.Printf("Durable timestamp: %v", ts)
 	log.Printf("Difference: %v", checkTime.Sub(ts))
 
-	return 0 <= ts.Sub(checkTime)
+	return ts.Sub(checkTime) >= 0
 }
 
 // makeToken - 현재 시간 + 제한 시간 + 액세스 키를 기준으로 비밀 키를 사용해서 HMAC 토큰 생성
@@ -92,7 +98,7 @@ func getTokenData(token string) [][]byte {
 	log.Printf("received token: [%v]", token)
 
 	tokenBytes, err := hex.DecodeString(token)
-	if nil != err {
+	if err != nil {
 		return [][]byte{}
 	}
 
@@ -150,6 +156,24 @@ func validateToken() echo.HandlerFunc {
 	}
 }
 
+// TODO: REMOTE - For Test
+// errorProcessing - 500 오류와 Response Body 구성 테스트
+func errorProcessing() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		msg := &message{Message: "[aws-us-east-1:vpc:aws-us-east-1-jhseo] does not exist!"}
+
+		return c.JSON(http.StatusInternalServerError, msg)
+	}
+}
+
+// TODO: REMOTE - For Test
+// error404 - 404오류 Response 없는 테스트
+func error404() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		return errors.New("404")
+	}
+}
+
 // loadConfig - 구동을 위한 설정 정보 로드
 func loadConfig() {
 	viper.SetConfigFile("./conf/hmac.yaml")
@@ -159,11 +183,11 @@ func loadConfig() {
 	task = config{}
 
 	// Reading
-	if err := viper.ReadInConfig(); nil != err {
+	if err := viper.ReadInConfig(); err != nil {
 		task = config{}
 	}
 	// Unmarshal to struct
-	if err := viper.Unmarshal(&task); nil != err {
+	if err := viper.Unmarshal(&task); err != nil {
 		task = config{}
 	}
 
@@ -182,6 +206,10 @@ func main() {
 	e.GET("/task", getConfigInfo())
 	e.PUT("/task", createToken())
 	e.GET("/validate", validateToken())
+
+	// TODO: REMOTE - For Test
+	e.GET("/error/500", errorProcessing())
+	e.GET("/error/404", error404())
 
 	e.Logger.Fatal(e.Start(":8010"))
 }

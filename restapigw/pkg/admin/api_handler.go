@@ -33,7 +33,7 @@ func (ah *APIHandler) GetDefinitions() http.HandlerFunc {
 		_, span := trace.StartSpan(req.Context(), "definitions.GetAll")
 		defer span.End()
 
-		if nil == ah.Configs.DefinitionMaps {
+		if ah.Configs.DefinitionMaps == nil {
 			// API Definition이 없을 경우는 빈 JSON Array 처리 (ID 기준)
 			response.Write(rw, req, []int{})
 			return
@@ -49,7 +49,7 @@ func (ah *APIHandler) UpdateDefinition() http.HandlerFunc {
 		cm := &api.ConfigModel{}
 
 		err := core.JSONDecode(req.Body, cm)
-		if nil != err {
+		if err != nil {
 			response.Errorf(rw, req, -1, err)
 			return
 		}
@@ -58,13 +58,13 @@ func (ah *APIHandler) UpdateDefinition() http.HandlerFunc {
 		def := ah.Configs.FindByName(cm.Name, cm.Definitions[0].Name)
 		span.End()
 
-		if nil == def {
+		if def == nil {
 			response.Errorf(rw, req, -1, api.ErrAPIDefinitionNotFound)
 			return
 		}
 
 		err = cm.Definitions[0].Validate()
-		if nil != err {
+		if err != nil {
 			response.Errorf(rw, req, -1, err)
 			return
 		}
@@ -74,7 +74,7 @@ func (ah *APIHandler) UpdateDefinition() http.HandlerFunc {
 		existingDef := ah.Configs.FindByListenPath(cm.Definitions[0].Endpoint)
 		span.End()
 
-		if nil != existingDef && existingDef.Name != cm.Definitions[0].Name {
+		if existingDef != nil && existingDef.Name != cm.Definitions[0].Name {
 			response.Errorf(rw, req, -1, api.ErrAPIListenPathExists)
 			return
 		}
@@ -98,13 +98,13 @@ func (ah *APIHandler) AddDefinition() http.HandlerFunc {
 		cm := &api.ConfigModel{}
 
 		err := core.JSONDecode(req.Body, cm)
-		if nil != err {
+		if err != nil {
 			response.Errorf(rw, req, -1, err)
 			return
 		}
 
 		err = cm.Definitions[0].Validate()
-		if nil != err {
+		if err != nil {
 			response.Errorf(rw, req, -1, err)
 			return
 		}
@@ -114,7 +114,7 @@ func (ah *APIHandler) AddDefinition() http.HandlerFunc {
 		exists, err := ah.Configs.Exists(cm.Name, cm.Definitions[0])
 		span.End()
 
-		if nil != err {
+		if err != nil {
 			response.Errorf(rw, req, -1, err)
 			return
 		}
@@ -152,7 +152,7 @@ func (ah *APIHandler) RemoveDefinition() http.HandlerFunc {
 		exists, err := ah.Configs.Exists(cm.Name, cm.Definitions[0])
 		span.End()
 
-		if nil != err && err != api.ErrAPINameExists {
+		if err != nil && err != api.ErrAPINameExists {
 			response.Errorf(rw, req, -1, err)
 			return
 		}
@@ -201,7 +201,7 @@ func (ah *APIHandler) GetGroup() http.HandlerFunc {
 		_, span = trace.StartSpan(req.Context(), "repo.GetGroup")
 		defer span.End()
 
-		if nil == ah.Configs.DefinitionMaps {
+		if ah.Configs.DefinitionMaps == nil {
 			// API Definition이 없을 경우는 빈 JSON Array 처리 (ID 기준)
 			response.Write(rw, req, []int{})
 			return
@@ -217,7 +217,7 @@ func (ah *APIHandler) AddGroup() http.HandlerFunc {
 		cm := &api.ConfigModel{}
 
 		err := core.JSONDecode(req.Body, cm)
-		if nil != err {
+		if err != nil {
 			response.Errorf(rw, req, -1, err)
 			return
 		}
@@ -235,7 +235,7 @@ func (ah *APIHandler) AddGroup() http.HandlerFunc {
 			_, span := trace.StartSpan(req.Context(), "repo.Exists")
 			for _, ec := range cm.Definitions {
 				err := ah.Configs.ExistsDefinition(ec)
-				if nil != err {
+				if err != nil {
 					response.Errorf(rw, req, -1, err)
 					span.End()
 					return
