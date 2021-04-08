@@ -47,7 +47,7 @@ func (rw *responseWriter) end() {
 
 // HandlerFactory - 전달된 HandlerFactory 수행 전에 필요한 Metric 관련 처리를 수행하는 HandlerFactory 구성
 func (c *Collector) HandlerFactory(hf ginRouter.HandlerFactory, log logging.Logger) ginRouter.HandlerFactory {
-	if nil == c.Config || !c.Config.RouterEnabled {
+	if c.Config == nil || !c.Config.RouterEnabled {
 		return hf
 	}
 
@@ -141,7 +141,7 @@ func New(ctx context.Context, mConf config.MWConfig, log logging.Logger, debugMo
 	mc := Collector{metrics.New(ctx, mConf, log)}
 
 	// 설정에 따라서 Metrics에 대한 Endpoint 설정
-	if nil != mc.Config && mc.Config.ExposeMetrics {
+	if mc.Config != nil && mc.Config.ExposeMetrics {
 		mc.RunEndpoint(ctx, mc.NewEngine(debugMode), log)
 	}
 

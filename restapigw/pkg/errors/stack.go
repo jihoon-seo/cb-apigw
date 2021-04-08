@@ -33,7 +33,7 @@ func (f Frame) pc() uintptr { return uintptr(f) - 1 }
 // function for this Frame's pc.
 func (f Frame) file() string {
 	fn := runtime.FuncForPC(f.pc())
-	if nil == fn {
+	if fn == nil {
 		return "unknown"
 	}
 	file, _ := fn.FileLine(f.pc())
@@ -44,7 +44,7 @@ func (f Frame) file() string {
 // function for this Frame's pc.
 func (f Frame) line() int {
 	fn := runtime.FuncForPC(f.pc())
-	if nil == fn {
+	if fn == nil {
 		return 0
 	}
 	_, line := fn.FileLine(f.pc())
@@ -69,7 +69,7 @@ func (f Frame) Format(s fmt.State, verb rune) {
 		case s.Flag('+'):
 			pc := f.pc()
 			fn := runtime.FuncForPC(pc)
-			if nil == fn {
+			if fn == nil {
 				io.WriteString(s, "unknown")
 			} else {
 				file, _ := fn.FileLine(pc)

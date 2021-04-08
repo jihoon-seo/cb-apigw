@@ -28,7 +28,7 @@ import (
 func setupRepository(sConf *config.ServiceConfig, log logging.Logger) (api.Repository, error) {
 	// API Routing 정보를 관리하는 Repository 구성
 	repo, err := api.BuildRepository(sConf, sConf.Cluster.UpdateFrequency)
-	if nil != err {
+	if err != nil {
 		return nil, err
 	}
 
@@ -44,7 +44,7 @@ func SetupAndRun(ctx context.Context, sConf *config.ServiceConfig) error {
 
 	// API 운영을 위한 라우팅 리파지토리 구성
 	repo, err := setupRepository(sConf, *logger)
-	if nil != err {
+	if err != nil {
 		logger.WithError(err).Error("[SERVER] Terminate with Errors")
 		return nil
 	}

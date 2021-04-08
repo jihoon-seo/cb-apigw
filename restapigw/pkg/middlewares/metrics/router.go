@@ -26,7 +26,7 @@ type RouterMetrics struct {
 // Connection - Router에 연결이 발생한 경우에 Connection counter 증가 처리
 func (rm *RouterMetrics) Connection(TLS *tls.ConnectionState) {
 	rm.connected.Inc(1)
-	if nil == TLS {
+	if TLS == nil {
 		return
 	}
 

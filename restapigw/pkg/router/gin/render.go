@@ -65,7 +65,7 @@ func getWithFallback(key string, fallback Render) Render {
 // jsonRender - JSON 포맷에 대한 Render 처리
 func jsonRender(c *gin.Context, res *proxy.Response) {
 	status := c.Writer.Status()
-	if nil == res {
+	if res == nil {
 		c.JSON(status, emptyResponse)
 		return
 	}
@@ -86,7 +86,7 @@ func jsonRender(c *gin.Context, res *proxy.Response) {
 func stringRender(c *gin.Context, res *proxy.Response) {
 	status := c.Writer.Status()
 
-	if nil == res {
+	if res == nil {
 		c.String(status, "")
 		return
 	}
@@ -106,7 +106,7 @@ func stringRender(c *gin.Context, res *proxy.Response) {
 // xmlRender - XML 포맷에 대한 Render 처리
 func xmlRender(c *gin.Context, res *proxy.Response) {
 	status := c.Writer.Status()
-	if nil == res {
+	if res == nil {
 		c.XML(status, nil)
 		return
 	}
@@ -121,7 +121,7 @@ func xmlRender(c *gin.Context, res *proxy.Response) {
 // yamlRender - YAML 포맷에 대한 Render 처리
 func yamlRender(c *gin.Context, res *proxy.Response) {
 	status := c.Writer.Status()
-	if nil == res {
+	if res == nil {
 		c.YAML(status, emptyResponse)
 		return
 	}
@@ -130,7 +130,7 @@ func yamlRender(c *gin.Context, res *proxy.Response) {
 
 // noopRender - 아무 변환도 없는 Render 처리
 func noopRender(c *gin.Context, res *proxy.Response) {
-	if nil == res {
+	if res == nil {
 		c.Status(http.StatusInternalServerError)
 		return
 	}

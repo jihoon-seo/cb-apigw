@@ -23,13 +23,13 @@ type ()
 // newLoadBalancedChain - Load Balancer 기능이 적용된 Call Chain 생성
 func newLoadBalancedChain(sb sd.Balancer) CallChain {
 	return func(next ...Proxy) Proxy {
-		if 1 < len(next) {
+		if len(next) > 1 {
 			panic(ErrTooManyProxies)
 		}
 
 		return func(ctx context.Context, req *Request) (*Response, error) {
 			host, err := sb.Host()
-			if nil != err {
+			if err != nil {
 				return nil, err
 			}
 
@@ -39,10 +39,10 @@ func newLoadBalancedChain(sb sd.Balancer) CallChain {
 			b.WriteString(host)
 			b.WriteString(r.Path)
 			r.URL, err = url.Parse(b.String())
-			if nil != err {
+			if err != nil {
 				return nil, err
 			}
-			if 0 < len(r.Query) {
+			if len(r.Query) > 0 {
 				r.URL.RawQuery += "&" + r.Query.Encode()
 			}
 

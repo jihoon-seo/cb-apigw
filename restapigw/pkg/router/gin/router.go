@@ -51,7 +51,7 @@ func (pc *PipeConfig) createRouter(sConf *config.ServiceConfig) http.Handler {
 	cors.New(sConf.Middleware, engine)
 
 	// HTTPSecure Middleware 반영
-	if err := httpsecure.Register(sConf.Middleware, engine); nil != err {
+	if err := httpsecure.Register(sConf.Middleware, engine); err != nil {
 		pc.logger.Warning(err)
 	}
 
@@ -79,8 +79,8 @@ func (pc *PipeConfig) createEngine(sConf *config.ServiceConfig) {
 
 // registerAPIGroup - Bypass인 경우는 Group 단위로 Gin Engine에 Endpoint Handler 등록
 func (pc PipeConfig) registerAPIGroup(path string, handler gin.HandlerFunc, totBackends int) {
-	if 1 < totBackends {
-		pc.logger.Errorf("[API G/W] Router > Bypass endpoint must have a single backend! Ignoring -> %s", path)
+	if totBackends > 1 {
+		pc.logger.Warnf("[API G/W] Router > Bypass endpoint must have a single backend! Ignoring -> %s", path)
 		return
 	}
 
@@ -97,7 +97,7 @@ func (pc PipeConfig) registerAPIGroup(path string, handler gin.HandlerFunc, totB
 // registerAPI - 지정한 정보를 기준으로 Gin Engine에 Endpoint Handler 등록
 func (pc PipeConfig) registerAPI(method, path string, handler gin.HandlerFunc, totBackends int) {
 	method = strings.ToTitle(method)
-	if method != http.MethodGet && 1 < totBackends {
+	if method != http.MethodGet && totBackends > 1 {
 		pc.logger.Errorf("[API G/W] Router > Method: %s, endpoints must have a single backend! Ignoring -> %s", method, path)
 		return
 	}
@@ -140,7 +140,7 @@ func (pc *PipeConfig) RegisterAPIs(sConf *config.ServiceConfig, defs []*config.E
 		if def.Active {
 			// Endpoint에 연결되어 동작할 수 있도록 ProxyFactory의 Call chain에 대한 인스턴스 생성 (ProxyStack)
 			proxyStack, err := pc.proxyFactory.New(def)
-			if nil != err {
+			if err != nil {
 				pc.logger.WithError(err).Error("[API G/W] Router > Can not calling the ProxyFactory")
 				continue
 			}

@@ -26,14 +26,14 @@ func runFunc(ctx context.Context, cmd *cobra.Command, args []string) {
 		err   error
 	)
 
-	if sConf, err = checkAndLoad(cmd, args); nil != err {
+	if sConf, err = checkAndLoad(cmd, args); err != nil {
 		fmt.Printf("[RUN - ERROR] %s \n", err)
 		os.Exit(1)
 		return
 	}
 
 	// launching the setup process
-	if err := SetupAndRun(ctx, sConf); nil != err {
+	if err := SetupAndRun(ctx, sConf); err != nil {
 		cmd.PrintErr(err)
 	}
 }

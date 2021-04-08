@@ -65,7 +65,7 @@ func Wrap(f func(h http.Handler) http.HandlerFunc) gin.HandlerFunc {
 func URLParam(req *http.Request, key string) string {
 	nextHandler := new(connectHandler)
 	state := req.Context().Value(nextHandler).(*middlewareCtx)
-	if nil != state {
+	if state != nil {
 		return state.ctx.Param(key)
 	}
 	return ""

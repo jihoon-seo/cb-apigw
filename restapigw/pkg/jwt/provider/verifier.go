@@ -32,7 +32,7 @@ func (vb *VerifierBasket) Verify(req *http.Request, hc *http.Client) (bool, erro
 	var wrappedErrors error
 	for _, verifier := range vb.verifiers {
 		verified, err := verifier.Verify(req, hc)
-		if nil != err {
+		if err != nil {
 			wrappedErrors = errors.Wrap(err, "verification failed")
 			continue
 		}

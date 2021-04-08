@@ -45,7 +45,7 @@ func ParseConfig(mwConf config.MWConfig) *Config {
 
 	buf := new(bytes.Buffer)
 	yaml.NewEncoder(buf).Encode(tmp)
-	if err := yaml.NewDecoder(buf).Decode(conf); nil != err {
+	if err := yaml.NewDecoder(buf).Decode(conf); err != nil {
 		return nil
 	}
 
@@ -55,22 +55,22 @@ func ParseConfig(mwConf config.MWConfig) *Config {
 // NewBackendLimiter - Backend 호출에 대한 Rate Limit 기능을 제공하는 Middleware 생성
 func NewBackendLimiter(bConf *config.BackendConfig) proxy.CallChain {
 	conf := ParseConfig(bConf.Middleware)
-	if nil == conf || 0 >= conf.MaxRate {
+	if conf == nil || conf.MaxRate <= 0 {
 		return proxy.EmptyChain
 	}
 	backendLimiter := ratelimit.NewLimiterWithRate(conf.MaxRate, conf.Capacity)
 	return func(next ...proxy.Proxy) proxy.Proxy {
-		if 1 < len(next) {
+		if len(next) > 1 {
 			panic(proxy.ErrTooManyProxies)
 		}
 		return func(ctx context.Context, req *proxy.Request) (*proxy.Response, error) {
-			logger.Debugf("[Backend Process Flow] RateLimit > CallChain (%s)", req.Path)
+			logger.Debugf("[CallChain] RateLimit > %s", req.Path)
 			// TokenBucket 검증
 			if !backendLimiter.Allow() {
-				logger.Warnf("[Backend Process Flow] RateLimit > CallChain (%s) ::: STOPPED!!", req.Path)
+				logger.Warnf("[CallChain] RateLimit > %s ::: STOPPED!!", req.Path)
 				return nil, ratelimit.ErrProxyLimited
 			}
-			logger.Debugf("[Backend Process Flow] RateLimit > CallChain (%s) ::: CONTINUE TO NEXT STEP!!", req.Path)
+			logger.Debugf("[CallChain] RateLimit > %s ::: CONTINUE TO NEXT STEP!!", req.Path)
 			return next[0](ctx, req)
 		}
 	}

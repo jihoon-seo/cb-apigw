@@ -184,7 +184,7 @@ type (
 		// Middleware - Endpoint 단위에서 적용할 Middleware 설정
 		Middleware MWConfig `yaml:"middleware" json:"middleware"`
 		// HealthCheck - Health Check 설정
-		HealthCheck *HealthCheck `yaml:"health_check" json:"health_check"`
+		HealthCheck *HealthCheck `yaml:"health_check" json:"health_check" default:"{}"`
 		// Backend - Endpoint에서 호출할 Backend API 서버 호출/응답 처리 설정 리스트
 		Backend []*BackendConfig `yaml:"backend" json:"backend"`
 
@@ -324,7 +324,7 @@ type (
 
 // IsHTTPS - HTTPS 활성화 여부 검증
 func (t *TLSConfig) IsHTTPS() bool {
-	return nil != t && t.PublicKey != "" && t.PrivateKey != ""
+	return t != nil && t.PublicKey != "" && t.PrivateKey != ""
 }
 
 // InitializeDefaults - 기본 값 설정
@@ -355,8 +355,8 @@ func (ba *BasicAuthConfig) Validate() error {
 func (cc *CredentialsConfig) InitializeDefaults() error {
 	// CredentialsConfig 초기화
 
-	if nil != cc.Basic {
-		if err := cc.Basic.InitializeDefaults(); nil != err {
+	if cc.Basic != nil {
+		if err := cc.Basic.InitializeDefaults(); err != nil {
 			return err
 		}
 	}
@@ -366,7 +366,7 @@ func (cc *CredentialsConfig) InitializeDefaults() error {
 
 // Validate - 설정 검증
 func (cc *CredentialsConfig) Validate() error {
-	if nil == cc.Basic {
+	if cc.Basic == nil {
 		return errors.New("basic account for admin required")
 	}
 	if !core.ContainsString(jwtAlgorithms, cc.Algorithm) {
@@ -404,14 +404,14 @@ func (h *HostConfig) Validate() error {
 func (admin *AdminConfig) InitializeDefaults() error {
 	// AdminConfig 초기화 설정
 
-	if nil != admin.TLS {
-		if err := admin.TLS.InitializeDefaults(); nil != err {
+	if admin.TLS != nil {
+		if err := admin.TLS.InitializeDefaults(); err != nil {
 			return err
 		}
 	}
 
-	if nil != admin.Credentials {
-		if err := admin.Credentials.InitializeDefaults(); nil != err {
+	if admin.Credentials != nil {
+		if err := admin.Credentials.InitializeDefaults(); err != nil {
 			return err
 		}
 	}
@@ -421,11 +421,11 @@ func (admin *AdminConfig) InitializeDefaults() error {
 
 // Validate - 설정 검증
 func (admin *AdminConfig) Validate() error {
-	if nil == admin.Credentials {
+	if admin.Credentials == nil {
 		return errors.New("crendential for admin required")
 	}
 
-	if err := admin.Credentials.Validate(); nil != err {
+	if err := admin.Credentials.Validate(); err != nil {
 		return err
 	}
 
@@ -515,7 +515,7 @@ func (mwConf *MWConfig) sanitize() {
 // Init - 설정에 대한 검사 및 초기화
 func (sConf *ServiceConfig) Init() error {
 	// 서비스 설정 초기화
-	if err := sConf.InitializeDefaults(); nil != err {
+	if err := sConf.InitializeDefaults(); err != nil {
 		return err
 	}
 
@@ -525,34 +525,34 @@ func (sConf *ServiceConfig) Init() error {
 // InitializeDefaults - 서비스 설정 초기화
 func (sConf *ServiceConfig) InitializeDefaults() error {
 	// ServiceConfig 초기화
-	if err := defaults.ApplyDefaultValues(sConf); nil != err {
+	if err := defaults.ApplyDefaultValues(sConf); err != nil {
 		return err
 	}
 
-	if nil != sConf.TLS {
+	if sConf.TLS != nil {
 		// TLS 설정 초기화
-		if err := sConf.TLS.InitializeDefaults(); nil != err {
+		if err := sConf.TLS.InitializeDefaults(); err != nil {
 			return err
 		}
 	}
 
-	if nil != sConf.Admin {
+	if sConf.Admin != nil {
 		// Admin API 초기화
-		if err := sConf.Admin.InitializeDefaults(); nil != err {
+		if err := sConf.Admin.InitializeDefaults(); err != nil {
 			return err
 		}
 	}
 
-	if nil != sConf.Repository {
+	if sConf.Repository != nil {
 		// Repository 초기화
-		if err := sConf.Repository.InitializeDefaults(); nil != err {
+		if err := sConf.Repository.InitializeDefaults(); err != nil {
 			return err
 		}
 	}
 
-	if nil != sConf.Cluster {
+	if sConf.Cluster != nil {
 		// Cluster 초기화
-		if err := sConf.Cluster.InitializeDefaults(); nil != err {
+		if err := sConf.Cluster.InitializeDefaults(); err != nil {
 			return err
 		}
 	}
@@ -575,25 +575,14 @@ func (sConf *ServiceConfig) Validate() error {
 	if sConf.Name == "" {
 		return errors.New("service name reqired")
 	}
-	if nil == sConf.Admin {
+	if sConf.Admin == nil {
 		return errors.New("admin configuration required")
 	}
-	if nil == sConf.Repository {
+	if sConf.Repository == nil {
 		return errors.New("repository configuration required")
 	}
-	if nil != sConf.TLS {
-		if err := sConf.TLS.Validate(); nil != err {
-			return err
-		}
-	}
-	if err := sConf.Admin.Validate(); nil != err {
-		return err
-	}
-	if err := sConf.Repository.Validate(); nil != err {
-		return err
-	}
-	if nil != sConf.Cluster {
-		if err := sConf.Cluster.Validate(); nil != err {
+	if sConf.Cluster != nil {
+		if err := sConf.Cluster.Validate(); err != nil {
 			return err
 		}
 	}
@@ -621,20 +610,20 @@ func (eConf *EndpointConfig) InheriteFromService(sConf *ServiceConfig) {
 
 // InitializeDefaults - Endpoint에 미 설정된 항목들을 기본 값으로 초기화
 func (eConf *EndpointConfig) InitializeDefaults() error {
-	if err := defaults.ApplyDefaultValues(eConf); nil != err {
+	if err := defaults.ApplyDefaultValues(eConf); err != nil {
 		return err
 	}
 
-	if nil != eConf.Hosts {
+	if eConf.Hosts != nil {
 		for _, host := range eConf.Hosts {
-			if err := host.InitializeDefaults(); nil != err {
+			if err := host.InitializeDefaults(); err != nil {
 				return err
 			}
 		}
 
 	}
-	if nil != eConf.HealthCheck {
-		if err := eConf.HealthCheck.InitializeDefaults(); nil != err {
+	if eConf.HealthCheck != nil {
+		if err := eConf.HealthCheck.InitializeDefaults(); err != nil {
 			return err
 		}
 	}
@@ -645,7 +634,7 @@ func (eConf *EndpointConfig) InitializeDefaults() error {
 // AdjustValues - 설정 정보를 사용가능한 정보로 재 구성
 func (eConf *EndpointConfig) AdjustValues(sConf *ServiceConfig) error {
 	// 생략된 속성들에 대한 기본 값 설정
-	if err := eConf.InitializeDefaults(); nil != err {
+	if err := eConf.InitializeDefaults(); err != nil {
 		return errors.Wrapf(err, "couldn't initialize api definition (default values): '%s'", eConf.Name)
 	}
 
@@ -660,7 +649,7 @@ func (eConf *EndpointConfig) AdjustValues(sConf *ServiceConfig) error {
 
 	eConf.Endpoint = core.GetParameteredPath(eConf.Endpoint, inputParams)
 
-	if eConf.OutputEncoding == encoding.NOOP && 1 < len(eConf.Backend) {
+	if eConf.OutputEncoding == encoding.NOOP && len(eConf.Backend) > 1 {
 		return errInvalidNoOpEncoding
 	}
 
@@ -668,11 +657,11 @@ func (eConf *EndpointConfig) AdjustValues(sConf *ServiceConfig) error {
 	eConf.Middleware.sanitize()
 
 	for bIdx, bConf := range eConf.Backend {
-		if err := eConf.InitBackendDefaults(bIdx); nil != err {
+		if err := eConf.InitBackendDefaults(bIdx); err != nil {
 			return err
 		}
 
-		if err := eConf.InitBackendURLMappings(bIdx, inputSet); nil != err {
+		if err := eConf.InitBackendURLMappings(bIdx, inputSet); err != nil {
 			return err
 		}
 
@@ -681,7 +670,7 @@ func (eConf *EndpointConfig) AdjustValues(sConf *ServiceConfig) error {
 	}
 
 	// 최종 Endpoint 정보 검사
-	if err := eConf.Validate(); nil != err {
+	if err := eConf.Validate(); err != nil {
 		return err
 	}
 
@@ -710,7 +699,7 @@ func (eConf *EndpointConfig) InitBackendDefaults(bIdx int) error {
 	}
 
 	// 생략된 데이터 구성
-	if err := backend.InitializeDefaults(); nil != err {
+	if err := backend.InitializeDefaults(); err != nil {
 		return err
 	}
 
@@ -768,7 +757,7 @@ func (eConf *EndpointConfig) Validate() error {
 	}
 
 	matched, err := regexp.MatchString(core.DebugPattern, eConf.Endpoint)
-	if nil != err {
+	if err != nil {
 		return &EndpointMatchError{
 			Err:    err,
 			Path:   eConf.Endpoint,
@@ -789,7 +778,7 @@ func (eConf *EndpointConfig) Validate() error {
 		return &NoBackendsError{Path: eConf.Endpoint, Method: eConf.Method}
 	}
 	for _, backend := range eConf.Backend {
-		if err := backend.Validate(); nil != err {
+		if err := backend.Validate(); err != nil {
 			return err
 		}
 	}
@@ -800,7 +789,7 @@ func (eConf *EndpointConfig) Validate() error {
 // InitializeDefaults - 설정 초기화
 func (bConf *BackendConfig) InitializeDefaults() error {
 	// Endpoint InitializeDefault 처리보다 먼저 설정되어야 하는 값이 존재하기 때문에 여기서 처리
-	if err := defaults.ApplyDefaultValues(bConf); nil != err {
+	if err := defaults.ApplyDefaultValues(bConf); err != nil {
 		return err
 	}
 

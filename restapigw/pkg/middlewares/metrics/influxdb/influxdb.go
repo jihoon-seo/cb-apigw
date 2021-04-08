@@ -47,7 +47,7 @@ type clientWrapper struct {
 // keepUpdated - 주기적 (ReportingPeriod)으로 Metrics 데이터를 InfluxDB에 반영
 func (cw clientWrapper) keepUpdated(ctx context.Context, ticker <-chan time.Time) {
 	hostname, err := os.Hostname()
-	if nil != err {
+	if err != nil {
 		cw.logger.Error("[METRICS] InfluxDB > influxdb resolving the local hostname:", err.Error())
 	}
 
@@ -61,7 +61,7 @@ func (cw clientWrapper) keepUpdated(ctx context.Context, ticker <-chan time.Time
 		// Collection Function을 호출해서 Metric에 수집되어 있는 Stats에 대한 Snapshot 추출
 		snapshot := cw.stats().(metrics.Stats)
 
-		if shouldSendPoints := 0 < len(snapshot.Counters) || 0 < len(snapshot.Gauges); !shouldSendPoints {
+		if shouldSendPoints := len(snapshot.Counters) > 0 || len(snapshot.Gauges) > 0; !shouldSendPoints {
 			continue
 		}
 
@@ -83,7 +83,7 @@ func (cw clientWrapper) keepUpdated(ctx context.Context, ticker <-chan time.Time
 			bp.AddPoint(p)
 		}
 
-		if err := cw.influxClient.Write(bp); nil != err {
+		if err := cw.influxClient.Write(bp); err != nil {
 			cw.logger.Warn("[METRICS] InfluxDB > Writing to influx (batch):", err.Error())
 			cw.buff.Add(bp)
 			continue
@@ -101,7 +101,7 @@ func (cw clientWrapper) keepUpdated(ctx context.Context, ticker <-chan time.Time
 		})
 		retryBatch.AddPoints(pts)
 
-		if err := cw.influxClient.Write(retryBatch); nil != err {
+		if err := cw.influxClient.Write(retryBatch); err != nil {
 			cw.logger.Warn("[METRICS] InfluxDB > Writing to influx (retry batch):", err.Error())
 			cw.buff.Add(bpPending...)
 			continue
@@ -115,9 +115,7 @@ func (cw clientWrapper) keepUpdated(ctx context.Context, ticker <-chan time.Time
 
 // SetupAndRun - InfluxDB로 Metric 처리를 반영하기 위한 Client 생성하고 주기적으로 Metrics 의 수집된 Stats 처리
 func SetupAndRun(ctx context.Context, idbConf Config, collectFunc func() interface{}, logger *logging.Logger) error {
-	// creating a new influxdb client
-
-	if nil == &idbConf || idbConf.Address == "" {
+	if idbConf.Address == "" {
 		return errNoConfig
 	}
 
@@ -128,14 +126,14 @@ func SetupAndRun(ctx context.Context, idbConf Config, collectFunc func() interfa
 		Password: idbConf.Password,
 		Timeout:  10 * time.Second,
 	})
-	if nil != err {
+	if err != nil {
 		return err
 	}
 
 	// InfluxDB Ping 테스트
 	go func() {
 		_, _, err := influxClient.Ping(time.Second)
-		if nil != err {
+		if err != nil {
 			logger.Warnf("[METRICS] InfluxDB > unable to ping the influxdb server: %v", err.Error())
 			return
 		}

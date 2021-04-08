@@ -33,7 +33,7 @@ func checkAndLoad(cmd *cobra.Command, args []string) (*config.ServiceConfig, err
 	}
 
 	cmd.Printf("[CHECK] Parsing configuration file: %s\n", configFile)
-	if sConf, err = parser.Parse(configFile); nil != err {
+	if sConf, err = parser.Parse(configFile); err != nil {
 		return sConf, err
 	}
 
@@ -49,7 +49,7 @@ func checkAndLoad(cmd *cobra.Command, args []string) (*config.ServiceConfig, err
 	cmd.Println("[CHECK - SYSTEM CONFIGURATION] \n", core.ToJSON(sConf))
 
 	// 서비스 설정 검증
-	if err = sConf.Validate(); nil != err {
+	if err = sConf.Validate(); err != nil {
 		return nil, err
 	}
 
@@ -62,7 +62,7 @@ func checkFunc(cmd *cobra.Command, args []string) {
 		err error
 	)
 
-	if _, err = checkAndLoad(cmd, args); nil != err {
+	if _, err = checkAndLoad(cmd, args); err != nil {
 		fmt.Printf("[CHECK - ERROR] %s \n", err)
 		os.Exit(1)
 		return

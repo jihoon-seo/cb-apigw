@@ -153,7 +153,7 @@ func RecoveryHandler(rw http.ResponseWriter, req *http.Request, err interface{})
 
 // Wrap - Stack Trace 정보들을 추가 설정한 오류 구성
 func Wrap(err error, message string) error {
-	if nil == err {
+	if err == nil {
 		return nil
 	}
 	err = &withMessage{
@@ -168,7 +168,7 @@ func Wrap(err error, message string) error {
 
 // Wrapf - Format 정보를 기준으로 Stack Trace 정보들을 추가 설정한 오류 구성
 func Wrapf(err error, format string, args ...interface{}) error {
-	if nil == err {
+	if err == nil {
 		return nil
 	}
 	err = &withMessage{
@@ -183,7 +183,7 @@ func Wrapf(err error, format string, args ...interface{}) error {
 
 // WithStack - 오류검증을 위한 Stack Trace 정보 추가
 func WithStack(err error) error {
-	if nil == err {
+	if err == nil {
 		return nil
 	}
 	return &withStack{
@@ -194,7 +194,7 @@ func WithStack(err error) error {
 
 // WithMessage - 오류에 지정한 메시지 정보 추가
 func WithMessage(err error, message string) error {
-	if nil == err {
+	if err == nil {
 		return nil
 	}
 	return &withMessage{
@@ -209,7 +209,7 @@ func Cause(err error) error {
 		Cause() error
 	}
 
-	for nil != err {
+	for err != nil {
 		cause, ok := err.(causer)
 		if !ok {
 			break

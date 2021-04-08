@@ -84,7 +84,7 @@ func parseEndpoint(sConf *config.ServiceConfig, apiDef []byte) (*GroupDefinition
 	var apiConfigs *GroupDefinitions
 
 	// API 정의들 Unmarshalling
-	if err := yaml.Unmarshal(apiDef, &apiConfigs); nil != err {
+	if err := yaml.Unmarshal(apiDef, &apiConfigs); err != nil {
 		return nil, err
 	}
 
@@ -94,7 +94,7 @@ func parseEndpoint(sConf *config.ServiceConfig, apiDef []byte) (*GroupDefinition
 		def.InheriteFromService(sConf)
 
 		// 서비스 설정과 연계해서 처리할 정보들 설정
-		if err := def.AdjustValues(sConf); nil != err {
+		if err := def.AdjustValues(sConf); err != nil {
 			return nil, errors.Wrapf(err, "couldn't initialize api definition (adjust values): '%s'", def.Name)
 		}
 	}
@@ -106,7 +106,7 @@ func parseEndpoint(sConf *config.ServiceConfig, apiDef []byte) (*GroupDefinition
 func groupDefinitions(dm *DefinitionMap) ([]byte, error) {
 	sd := &GroupDefinitions{Definitions: dm.Definitions}
 	data, err := yaml.Marshal(sd)
-	if nil != err {
+	if err != nil {
 		return nil, err
 	}
 	return data, nil
@@ -118,7 +118,7 @@ func groupDefinitions(dm *DefinitionMap) ([]byte, error) {
 func BuildRepository(sConf *config.ServiceConfig, refreshTime time.Duration) (Repository, error) {
 	log := logging.GetLogger()
 	dsnURL, err := url.Parse(sConf.Repository.DSN)
-	if nil != err {
+	if err != nil {
 		return nil, errors.Wrap(err, "Error parsing the DSN")
 	}
 	if dsnURL.Path == "" {
@@ -128,7 +128,7 @@ func BuildRepository(sConf *config.ServiceConfig, refreshTime time.Duration) (Re
 	// File 모드인 경우는 상대경로 처리 검증
 	if strings.EqualFold(dsnURL.Scheme, "file") && strings.EqualFold(dsnURL.Host, ".") {
 		path, err := filepath.Abs(dsnURL.Host + dsnURL.Path)
-		if nil != err {
+		if err != nil {
 			return nil, err
 		}
 		dsnURL.Path = path
@@ -142,7 +142,7 @@ func BuildRepository(sConf *config.ServiceConfig, refreshTime time.Duration) (Re
 
 		log.WithField("key", storeKey).Debug("[REPOSITORY] Trying to load API configuration files")
 		repo, err := NewCbStoreRepository(sConf, storeKey, refreshTime)
-		if nil != err {
+		if err != nil {
 			return nil, errors.Wrap(err, "could not create a CB-Store repository")
 		}
 		return repo, nil
@@ -153,7 +153,7 @@ func BuildRepository(sConf *config.ServiceConfig, refreshTime time.Duration) (Re
 
 		log.WithField("path", apiPath).Debug("[REPOSITORY] Trying to load API configuration files")
 		repo, err := NewFileSystemRepository(sConf, apiPath)
-		if nil != err {
+		if err != nil {
 			return nil, errors.Wrap(err, "could not create a file system repository")
 		}
 		return repo, nil

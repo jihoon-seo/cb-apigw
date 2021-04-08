@@ -2,6 +2,7 @@ package opencensus
 
 import (
 	"context"
+	"net/http"
 	"strings"
 
 	"github.com/cloud-barista/cb-apigw/restapigw/pkg/config"
@@ -36,50 +37,53 @@ func CallChain(tag string, isBypass bool, url string) proxy.CallChain {
 		return proxy.EmptyChain
 	}
 	return func(next ...proxy.Proxy) proxy.Proxy {
-		if 1 < len(next) {
+		if len(next) > 1 {
 			panic(proxy.ErrTooManyProxies)
 		}
-		if 1 > len(next) {
+		if len(next) < 1 {
 			panic(proxy.ErrNotEnoughProxies)
 		}
 
 		return func(ctx context.Context, req *proxy.Request) (*proxy.Response, error) {
 			var span *trace.Span
-			var name = tag + " "
-			if isBypass {
-				name += req.Path
-			} else {
+			var name = "[" + tag + "] " + req.Path
+			var path = req.Path
+			if req.Path == "" {
 				name += url
+				path = url
 			}
 
-			logger.Debugf("[Backend Process Flow] Opencensus > CallChain (%s) > %s", req.Path, tag)
+			logger.Debugf("[CallChain] Opencensus > %s layer > %s", tag, path)
 
 			ctx, span = trace.StartSpan(trace.NewContext(ctx, fromContext(ctx)), name)
 			resp, err := next[0](ctx, req)
 			// 응답과 오류 여부에 따른 Trace 정보 설정
-			if nil != err {
+			if err != nil {
 				if err.Error() != errCtxCanceledMsg {
-					if nil != resp {
+					if resp != nil {
+						// 오류가 발생했지만 Response가 존재하는 경우 정보 설정
 						span.SetStatus(trace.Status{Code: int32(resp.Metadata.StatusCode), Message: err.Error()})
 					} else {
 						if we, ok := err.(core.WrappedError); ok {
-							if tag != "[backend]" {
-								//span.SetStatus(trace.Status{Code: 500, Message: err.Error()})
+							if tag != "backend" {
 								span.SetStatus(trace.Status{Code: int32(we.Code()), Message: we.GetError().Error()})
 							} else {
 								// Backend 호출의 경우는 원본 오류 메시지를 그대로 출력
 								span.SetStatus(trace.Status{Code: int32(we.Code()), Message: we.Error()})
 							}
 						} else {
-							span.SetStatus(trace.Status{Code: 500, Message: err.Error()})
+							span.SetStatus(trace.Status{Code: http.StatusInternalServerError, Message: err.Error()})
 						}
 					}
 				} else {
 					span.AddAttributes(trace.BoolAttribute("error", true))
 					span.AddAttributes(trace.BoolAttribute("canceled", true))
 				}
+			} else if resp != nil && !resp.IsComplete {
+				// return_fail_details 등의 옵션으로 오류를 정상처리한 경우 Trace 정보 재 설정
+				span.SetStatus(trace.Status{Code: int32(resp.Metadata.StatusCode), Message: resp.Metadata.Message})
 			}
-			span.AddAttributes(trace.BoolAttribute(("complete"), nil != resp && resp.IsComplete))
+			span.AddAttributes(trace.BoolAttribute(("complete"), resp != nil && resp.IsComplete))
 			span.End()
 
 			return resp, err
@@ -94,12 +98,12 @@ func ProxyFactory(pf proxy.Factory) proxy.FactoryFunc {
 	}
 	return func(eConf *config.EndpointConfig) (proxy.Proxy, error) {
 		next, err := pf.New(eConf)
-		if nil != err {
+		if err != nil {
 			return next, err
 		}
 		// Endpoint Bypass 검증 및 Flag 설정
 		eConf.IsBypass = strings.HasSuffix(eConf.Endpoint, core.Bypass)
-		return CallChain("[proxy]", eConf.IsBypass, eConf.Endpoint)(next), nil
+		return CallChain("proxy", eConf.IsBypass, eConf.Endpoint)(next), nil
 	}
 }
 
@@ -110,6 +114,6 @@ func BackendFactory(bf proxy.BackendFactory) proxy.BackendFactory {
 	}
 	return func(bConf *config.BackendConfig) proxy.Proxy {
 		// Backend Bypass 검증
-		return CallChain("[backend]", strings.HasSuffix(bConf.URLPattern, core.Bypass), bConf.URLPattern)(bf(bConf))
+		return CallChain("backend", strings.HasSuffix(bConf.URLPattern, core.Bypass), bConf.URLPattern)(bf(bConf))
 	}
 }

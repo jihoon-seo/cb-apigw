@@ -49,7 +49,7 @@ func parseConfig(mwConf config.MWConfig) *Config {
 
 	buf := new(bytes.Buffer)
 	yaml.NewEncoder(buf).Encode(tmp)
-	if err := yaml.NewDecoder(buf).Decode(conf); nil != err {
+	if err := yaml.NewDecoder(buf).Decode(conf); err != nil {
 		return nil
 	}
 
@@ -72,7 +72,7 @@ func validateToken(conf *Config, req *http.Request) error {
 func tokenValidator(conf *Config, logger logging.Logger) AuthMiddleware {
 	return func(next gin.HandlerFunc) gin.HandlerFunc {
 		return func(c *gin.Context) {
-			if err := validateToken(conf, c.Request); nil != err {
+			if err := validateToken(conf, c.Request); err != nil {
 				logger.Error("[HMAC AUTH] Unauthorized accessing")
 				c.AbortWithError(http.StatusUnauthorized, err)
 				return

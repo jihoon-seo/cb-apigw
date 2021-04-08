@@ -130,7 +130,7 @@ definitions:
   - name: Public Test
     active: true
     endpoint: /public
-    timeout: 1s
+    timeout: 100m
     backend:
       - hosts:
           - host: https://api.github.com
@@ -170,7 +170,7 @@ definitions:
             return_error_details: fail_1
   - name: Error Test
     active: true
-    endpoint: /error
+    endpoint: /errortest
     hosts:
       - host: http://localhost:8100
         weight: 0
@@ -221,3 +221,33 @@ definitions:
         secure_key: "###TEST_SECURE_KEY###"
     backend:
       - url_pattern: /user/1.json
+  - name: Error with Data Test
+    active: true
+    endpoint: /errordata
+    hosts:
+      - host: http://localhost:8010
+        weight: 0
+    backend:
+      - url_pattern: /error/500
+        middleware:
+          mw-http:
+            return_error_details: "err"
+        group: data
+      - hosts:
+          - host: http://localhost:8100
+            weight: 3
+          - host: http://localhost:8200
+            weight: 5
+        url_pattern: /shop/campaigns.json
+        group: campaigns
+  - name: Error with Data on ByPass Test
+    active: true
+    endpoint: /error/*bypass
+    hosts:
+      - host: http://localhost:8010
+        weight: 0
+    backend:
+      - url_pattern: /*bypass
+        middleware:
+          mw-http:
+            return_error_details: "err"

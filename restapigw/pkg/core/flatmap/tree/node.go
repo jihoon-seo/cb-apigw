@@ -79,7 +79,7 @@ func (n *node) Del(path ...string) {
 	}
 
 	if path[0] == wildcard {
-		if 1 < lenKs {
+		if lenKs > 1 {
 			for _, e := range n.edges {
 				e.n.Del(path[1:]...)
 			}
@@ -112,7 +112,7 @@ func (n *node) Get(path ...string) interface{} {
 	lenKs := len(path)
 	lenEdges := len(n.edges)
 
-	if lenEdges == 0 && 0 < lenKs {
+	if lenEdges == 0 && lenKs > 0 {
 		return nil
 	}
 

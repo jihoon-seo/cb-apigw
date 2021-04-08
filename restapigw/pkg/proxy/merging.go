@@ -28,48 +28,65 @@ var (
 
 // ===== [ Types ] =====
 
-// incrementalMergeAccumulator - 점진적인 Merging 처리를 위한 데이터 구조
-type incrementalMergeAccumulator struct {
-	pending  int
-	data     *Response
-	combiner ResponseCombiner
-	errs     []error
-}
+type (
+	// incrementalMergeAccumulator - 점진적인 Merging 처리를 위한 데이터 구조
+	incrementalMergeAccumulator struct {
+		pending  int
+		data     *Response
+		combiner ResponseCombiner
+		errs     []error
+	}
 
-// mergeError - Merging 과정에서 발생하는 오류들 관리 구조
-type mergeError struct {
-	errs []error
-}
+	// mergeError - Merging 과정에서 발생하는 오류들 관리 구조
+	mergeError struct {
+		errs []error
+	}
 
-// ResponseCombiner - 여러 Response의 데이터를 Merging 처리해서 하나의 Response 데이터로 구성하는 함수 정의
-type ResponseCombiner func(int, []*Response) *Response
+	// ResponseCombiner - 여러 Response의 데이터를 Merging 처리해서 하나의 Response 데이터로 구성하는 함수 정의
+	ResponseCombiner func(int, []*Response) *Response
+
+	// partResult - Backend 처리를 통해 반환된 http.Response와 발생한 Error 정보를 관리하는 구조 정의
+	partResult struct {
+		Response *Response
+		Error    error
+	}
+)
 
 // ===== [ Implementations ] =====
 
 // Merge - 지정한 Response에 대한 점진적인 Merging 처리
 func (ima *incrementalMergeAccumulator) Merge(res *Response, err error) {
 	ima.pending--
-	if nil != err {
+	if err != nil {
 		ima.errs = append(ima.errs, err)
-		if nil != ima.data {
+		if ima.data != nil {
+			ima.data.IsComplete = false
+		} else if res != nil {
+			// Error 상태지만 Response가 존재하는 경우
+			ima.data = res
 			ima.data.IsComplete = false
 		}
 		return
 	}
-	if nil == res {
+	if res == nil {
+		// 정상이지만 Response가 없는 경우
 		ima.errs = append(ima.errs, errNullResult)
 		return
 	}
-	if nil == ima.data {
+
+	if ima.data == nil {
+		// 정상이면 Resposne 존재하는 경우
 		ima.data = res
 		return
 	}
+
+	// 이전 데이터와 Merge 처리
 	ima.data = ima.combiner(2, []*Response{ima.data, res})
 }
 
 // Result - 처리된 Merging 결과 반환
 func (ima *incrementalMergeAccumulator) Result() (*Response, error) {
-	if nil == ima.data {
+	if ima.data == nil {
 		return &Response{Data: make(map[string]interface{}), IsComplete: false}, newMergeError(ima.errs)
 	}
 
@@ -98,26 +115,47 @@ func newMergeError(errs []error) error {
 	return mergeError{errs}
 }
 
-// requestPart - 지정한 요청을 호출하고 오류나 null 반환에 대해 cancel 처리
-func requestPart(ctx context.Context, next Proxy, req *Request, out chan<- *Response, failed chan<- error) {
+// requestPart - 지정한 요청을 호출하고 오류와 Response 정보를 반환
+func requestPart(ctx context.Context, next Proxy, req *Request, out chan<- *partResult) {
 	localCtx, cancel := context.WithCancel(ctx)
 
+	// Backend Request 호출
 	res, err := next(localCtx, req)
-	if nil != err {
-		failed <- err
+	pr := &partResult{}
+
+	// 오류가 발생한 경우
+	if err != nil {
+		pr.Error = err
+		if res == nil {
+			// 오류 발생
+			out <- pr
+			cancel()
+			return
+		}
+
+		// 오류가 발생했지만 Reponse가 존재하는 경우
+		pr.Response = res
+		out <- pr
 		cancel()
 		return
-	}
-	if nil == res {
-		failed <- errNullResult
+	} else if res == nil {
+		// 오류없이 Empty Response인 경우
+		pr.Error = errNullResult
+		out <- pr
 		cancel()
 		return
+	} else {
+		// 정상 처리
+		pr.Response = res
 	}
+
 	select {
-	case out <- res:
+	case out <- pr:
 	case <-ctx.Done():
-		failed <- ctx.Err()
+		pr.Error = ctx.Err()
+		out <- pr
 	}
+
 	cancel()
 }
 
@@ -135,13 +173,13 @@ func combineData(backendCount int, reses []*Response) *Response {
 	isComplete := len(reses) == backendCount
 	var mergedResponse *Response
 	for _, res := range reses {
-		if nil == res || nil == res.Data {
+		if res == nil || res.Data == nil {
 			isComplete = false
 			continue
 		}
 
 		isComplete = isComplete && res.IsComplete
-		if nil == mergedResponse {
+		if mergedResponse == nil {
 			mergedResponse = res
 			continue
 		}
@@ -151,7 +189,7 @@ func combineData(backendCount int, reses []*Response) *Response {
 		}
 	}
 
-	if nil == mergedResponse {
+	if mergedResponse == nil {
 		// do not allow nil data to response
 		return &Response{Data: make(map[string]interface{}), IsComplete: isComplete}
 	}
@@ -188,21 +226,17 @@ func parallelMerge(timeout time.Duration, rc ResponseCombiner, next ...Proxy) Pr
 	return func(ctx context.Context, req *Request) (*Response, error) {
 		localCtx, cancel := context.WithTimeout(ctx, timeout)
 
-		parts := make(chan *Response, len(next))
-		failed := make(chan error, len(next))
+		out := make(chan *partResult, len(next))
 
+		// 병렬로 Backend 호출
 		for _, n := range next {
-			go requestPart(localCtx, n, req, parts, failed)
+			go requestPart(localCtx, n, req, out)
 		}
 
 		acc := newIncrementalMergeAccumultor(len(next), rc)
 		for i := 0; i < len(next); i++ {
-			select {
-			case err := <-failed:
-				acc.Merge(nil, err)
-			case response := <-parts:
-				acc.Merge(response, nil)
-			}
+			resultData := <-out
+			acc.Merge(resultData.Response, resultData.Error)
 		}
 
 		result, err := acc.Result()
@@ -217,18 +251,18 @@ func sequentialMerge(patterns []string, timeout time.Duration, rc ResponseCombin
 		localCtx, cancel := context.WithTimeout(ctx, timeout)
 
 		parts := make([]*Response, len(next))
-		out := make(chan *Response, 1)
-		errCh := make(chan error, 1)
+
+		out := make(chan *partResult, 1)
 
 		acc := newIncrementalMergeAccumultor(len(next), rc)
 	TxLoop:
 		for i, n := range next {
 			// 두번째 부터 전 호출의 결과에서 파라미터 검증
-			if 0 < i {
+			if i > 0 {
 				for _, match := range reMergeKey.FindAllStringSubmatch(patterns[i], -1) {
-					if 1 < len(match) {
+					if len(match) > 1 {
 						rNum, err := strconv.Atoi(match[1])
-						if nil != err || rNum >= i || nil == parts[rNum] {
+						if err != nil || rNum >= i || parts[rNum] == nil {
 							continue
 						}
 						key := "Resp" + match[1] + "_" + match[2]
@@ -238,7 +272,7 @@ func sequentialMerge(patterns []string, timeout time.Duration, rc ResponseCombin
 
 						data := parts[rNum].Data
 						keys := strings.Split(match[2], ".")
-						if 1 < len(keys) {
+						if len(keys) > 1 {
 							for _, k := range keys[:len(keys)-1] {
 								v, ok = data[k]
 								if !ok {
@@ -273,21 +307,24 @@ func sequentialMerge(patterns []string, timeout time.Duration, rc ResponseCombin
 					}
 				}
 			}
-			requestPart(localCtx, n, req, out, errCh)
-			select {
-			case err := <-errCh:
+
+			// 순차적 호출
+			requestPart(localCtx, n, req, out)
+			resultData := <-out
+			if resultData.Error != nil {
 				if i == 0 {
 					cancel()
-					return nil, err
+					return resultData.Response, resultData.Error
 				}
-				acc.Merge(nil, err)
+
+				acc.Merge(resultData.Response, resultData.Error)
 				break TxLoop
-			case response := <-out:
-				acc.Merge(response, nil)
-				if !response.IsComplete {
+			} else {
+				acc.Merge(resultData.Response, resultData.Error)
+				if resultData.Response.IsComplete {
 					break TxLoop
 				}
-				parts[i] = response
+				parts[i] = resultData.Response
 			}
 		}
 

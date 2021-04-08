@@ -43,7 +43,7 @@ func (t token) makeToken() []byte {
 // resolveToken - 전달된 원본 Auth Token을 HMAC Token과 추가 정보로 분리
 func (t token) resolveToken(rawToken string, ids []string) error {
 	tokenBytes, err := hex.DecodeString(rawToken)
-	if nil != err {
+	if err != nil {
 		return err
 	}
 
@@ -80,18 +80,18 @@ func (t token) resolveToken(rawToken string, ids []string) error {
 // checkDuration - 현재 시간과 Token에 지정된 Duration 검증
 func (t token) checkDuration() bool {
 	td, err := parseDuration(t.duration)
-	if nil != err {
+	if err != nil {
 		return false
 	}
 
 	ts, err := time.Parse(time.UnixDate, t.timestamp)
-	if nil != err {
+	if err != nil {
 		return false
 	}
 
 	ts = ts.Add(td)
 
-	return 0 <= ts.Sub(getTime())
+	return ts.Sub(getTime()) >= 0
 }
 
 // setTimestamp - Token 구성을 위한 기준 시간 (현재 시간) 설정
@@ -114,7 +114,7 @@ func getTimestamp() string {
 // parseDuration - 유효 액세스 기간을 검증하기 위한 time.Duration 정보 검증
 func parseDuration(duration string) (time.Duration, error) {
 	td, err := time.ParseDuration(duration)
-	if nil != err {
+	if err != nil {
 		return 0, err
 	}
 
@@ -135,7 +135,7 @@ func ValidateToken(secretKey string, rawToken string, ids []string) error {
 	hmacToken := token{
 		secretKey: secretKey,
 	}
-	if err := hmacToken.resolveToken(rawToken, ids); nil != err {
+	if err := hmacToken.resolveToken(rawToken, ids); err != nil {
 		return err
 	}
 
@@ -150,7 +150,7 @@ func CreateToken(secretKey string, accessID string, duration string) (string, er
 	if accessID == "" {
 		return "", errors.New("accessID is required")
 	}
-	if _, err := parseDuration(duration); nil != err {
+	if _, err := parseDuration(duration); err != nil {
 		return "", err
 	}
 
