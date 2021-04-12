@@ -1,32 +1,43 @@
-# CB-RESTAPIGW : REST API Gateway in `CB-APIGW`
+# cb-restapigw : REST API Gateway in `cb-apigw`
 
-CB-RESTAPIGW는 PoC (Proof of Concepts) 수준의 RESTful API Gateway 기능을 제공한다.
+cb-restapigw는 PoC (Proof of Concepts) 수준의 RESTful API Gateway 기능을 제공한다.
+
+```
+[NOTE]
+cb-restapigw is currently under development. (the latest version is 0.3 espresso)
+So, we do not recommend using the current release in production.
+Please note that the functionalities of cb-restapigw are not stable and secure yet.
+If you have any difficulties in using cb-restapigw, please let us know.
+(Open an issue or Join the cloud-barista Slack)
+```
+
 
 # [ 목차 ]
 
 - [컨테이너 기반 실행](#컨테이너-기반-실행)
-- [Cloud-Barista 시스템 통합 실행 참고 (Docker-Compose 기반)](#cloud-barista-시스템-통합-실행-참고-docker-compose-기반)
+- [Cloud-Barista 시스템 통합 실행 참고 (Docker Compose 기반)](#cloud-barista-시스템-통합-실행-참고-docker-compose-기반)
 - [소스 기반 설치 및 실행](#소스-기반-설치-및-실행)
   - [설치](#설치)
   - [설정](#설정)
   - [실행](#실행)
 
 # [컨테이너 기반 실행]
-- CB-RESTAPIGW 이미지 확인(https://hub.docker.com/r/cloudbaristaorg/cb-restapigw/tags)
-- CB-RESTAPIGW 컨테이너 실행
+- cb-restapigw 이미지 확인(https://hub.docker.com/r/cloudbaristaorg/cb-restapigw/tags)
+- cb-restapigw 컨테이너 실행
 
 ```
 docker run -p 8000:8000 -p 8001:8001 --name cb-restapigw \
 -v /root/go/src/github.com/cloud-barista/cb-apigw/restapigw/conf:/app/conf \
-cloudbaristaorg/cb-restapigw:v0.1-yyyymmdd
+cloudbaristaorg/cb-restapigw:0.3.4
 ```
 
-# [Cloud-Barista 시스템 통합 실행 참고 (Docker-Compose 기반)]
+# [Cloud-Barista 시스템 통합 실행 참고 (Docker Compose 기반)]
 
 ```
-# git clone https://github.com/jihoon-seo/cb-deployer.git
-# cd cb-deployer
-# docker-compose up
+# git clone https://github.com/cloud-barista/cb-operator.git
+# cd cb-operator/src
+# make
+# make run
 ```
 
 # [소스 기반 설치 및 실행]
@@ -1502,7 +1513,7 @@ const apigw = {
 - **클라이언트의 테스트**<br/>
   - [Postman으로 작성된 문서](https://documenter.getpostman.com/view/1735092/SW15wbJf?version=latest#c720d518-1830-4283-b512-5153ef879747)를 참고
   - _**HMAC 적용 부분은 내부 검증용으로 공식적으로는 지원하지 않음**_
-  - API 호출의 결과는 CB-RESTAPIGW 수행 기준으로 판단한다.
+  - API 호출의 결과는 cb-restapigw 수행 기준으로 판단한다.
 
 - **클라이언트의 결과 확인**
 
