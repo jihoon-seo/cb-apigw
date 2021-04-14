@@ -1455,6 +1455,7 @@ const apigw = {
 
 > API G/W 실행 테스트를 위한 백그라운드 서비스들은 `Deploy` 폴더에 구성되어 있으므로 이를 활용한다.<br/>
 > - <b>테스트를 위한 설정은 /deploy/docker-compose.yaml을 기준으로 Fake-API 부분을 용도에 맞도록 변경하고 설정을 맞춰서 사용.</b>
+> - <b>ubuntu 환경이라면 grafana 실행과 관련해서 /deploy/data/grafana/data 폴더를 `chown -R 427:427 /deploy/data/grafanfa/data`과 `chmod -R 777 /deploy/data/grafanfa/data` 로 설정해서 사용</b>
 > - <b>ETCD 운영을 위한 설정은 /deploy/dc-etcd.yaml을 기준으로 환경을 설정해서 사용</b>
 > - <b>HMAC 관련된 Server 기능은 내부 테스트를 위한 것으로 공식적으로는 지원하지 않음.</b>
 

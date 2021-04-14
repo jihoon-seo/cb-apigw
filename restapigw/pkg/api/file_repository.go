@@ -79,23 +79,27 @@ func (fsr *FileSystemRepository) Watch(ctx context.Context, repoChan chan<- Repo
 				if event.Op&fsnotify.Write == fsnotify.Write {
 					body, err := ioutil.ReadFile(event.Name)
 					if err != nil {
-						log.WithError(err).Errorf("[REPOSITORY] FILE > Couldn't load the api definition file: '%s'. Ignored!!", event.Name)
-						continue
-					}
-					apiDef, err := parseEndpoint(fsr.sConf, body)
-					if err != nil {
-						log.WithError(err).Errorf("[REPOSITORY] FILE > Couldn't parsing api definition: '%s'. Ignored!!", event.Name)
+						log.WithError(err).Warnf("[REPOSITORY] FILE > Couldn't load the api definition file: '%s'. Ignored!!", event.Name)
 						continue
 					}
 
-					repoChan <- RepoChangedMessage{
-						Configurations: &Configuration{DefinitionMaps: []*DefinitionMap{
-							{
-								Name:        core.GetLastPart(event.Name, "/"),
-								State:       CHANGED,
-								Definitions: apiDef.Definitions,
-							},
-						}},
+					// 변경된 파일에서 실제 데이터 읽힌 경우만 처리
+					if len(body) > 0 {
+						apiDef, err := parseEndpoint(fsr.sConf, body)
+						if err != nil {
+							log.WithError(err).Errorf("[REPOSITORY] FILE > Couldn't parsing api definition: '%s'. Ignored!!", event.Name)
+							continue
+						}
+
+						repoChan <- RepoChangedMessage{
+							Configurations: &Configuration{DefinitionMaps: []*DefinitionMap{
+								{
+									Name:        core.GetLastPart(event.Name, "/"),
+									State:       CHANGED,
+									Definitions: apiDef.Definitions,
+								},
+							}},
+						}
 					}
 				}
 				// 삭제 및 이름 변경된 경우

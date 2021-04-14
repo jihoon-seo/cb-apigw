@@ -9,7 +9,7 @@ GOINSTALL=$(GOCMD) install
 BINARY_NAME=cb-restapigw
 BINARY_LINUX=$(BINARY_NAME)
 TAGS=$(BINARY_NAME)
-CONF=./conf/$(BINARY_NAME).yaml
+CONF=./conf/$(BINARY_NAME)-local.yaml
 
 export CBLOG_ROOT=$(CURDIR)
 export CBSTORE_ROOT=$(CURDIR)

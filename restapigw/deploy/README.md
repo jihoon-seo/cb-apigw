@@ -4,6 +4,18 @@
 > ---
 > **<font color="red">이 테스트 구성은 모두 Docker Container를 기준으로 하고 있으므로 사전에 docker 와 docker-compose 가 설치되어 있어야 합니다.</font>**
 
+## Grafana 관련 설정 (Ubuntu에서 검증)
+
+Docker Container 내에서 Grafana의 실행 계정은 `uid:grafana(427), gid:grafana(427)` 을 기본으로 동작하기 때문에 데이터 저장을 위해 Mount되는 폴더의 권한에 따라 오류가 발생할 수 있으므로 아래와 같이 Mount 대상 폴더를 Grafana가 접근할 수 있도록 조정해야 한다.
+
+```bash
+# grafana 사용자 설정
+$ sudo chown -R 427:427 ./deploy/data/grafana/data
+
+# 전체 접근 권한 허용
+$ sudo chmod -R 777 ./deploy/data/grafana/data
+```
+
 ## ETCD 관련 테스트 설정 (Mac에서 검증)
 
 > API G/W 가 Docker Container가 아닌 경우에 ETCD (Docker compose)에 특정 IP로 접근하기 위한 로컬 테스트용
