@@ -1,5 +1,6 @@
 version: "3.3"
 services:
+  # Metrics store
   influxdb:
     # 21/03/15 - DB V2 구조 변경으로 기존 버전 연결 문제 발생: 1.8.4 버전으로 고정해서 처리, 향후 Influx관련 코드를 v2에 맞도록 처리할 필요 있음.
     image: influxdb:1.8.4
@@ -12,6 +13,7 @@ services:
     volumes:
       - ./data/influxdb/data:/var/lib/influxdb
 
+  # Metrics UI
   grafana:
     image: grafana/grafana
     container_name: cb-restapigw-grafana
@@ -28,6 +30,7 @@ services:
       - ./data/grafana/data:/var/lib/grafana
       - ./data/grafana/provisioning:/etc/grafana/provisioning
 
+  # Trace store and UI
   jaeger:
     image: jaegertracing/all-in-one:latest
     container_name: cb-restapigw-jaeger
