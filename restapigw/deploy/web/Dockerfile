@@ -9,14 +9,15 @@ RUN apk update && apk add --no-cache git
 
 WORKDIR /app
 
-ADD go.mod .
-ADD main.go .
+ADD go.mod go.sum main.go ./
 
 # download dependencies
-RUN go get github.com/labstack/echo/v4 && \
-  go get github.com/spf13/viper && \
+#RUN go get github.com/labstack/echo/v4 && \
+#  go get github.com/spf13/viper && \
   # build the binary
-  CGO_ENABLED=0 go build -o ./hmac_server -v ./... && \
+#  CGO_ENABLED=0 go build -o ./hmac_server -v ./... && \
+#  chmod +x ./hmac_server
+RUN CGO_ENABLED=0 go build -o ./hmac_server -v ./... && \
   chmod +x ./hmac_server
 
 ##############################################################
@@ -33,3 +34,4 @@ COPY --from=builder /app/hmac_server .
 ENTRYPOINT [ "/app/hmac_server" ]
 
 EXPOSE 8010
+
