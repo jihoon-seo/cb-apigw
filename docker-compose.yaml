@@ -56,11 +56,11 @@ services:
     
   hmac_site:
     build:
-        context: ./web
+        context: ./restapigw/deploy/web
     container_name: hmac_server
     volumes:
-        - ./web/public:/app/public
-        - ./web/conf:/app/conf
+        - ./restapigw/deploy/web/public:/app/public
+        - ./restapigw/deploy/web/conf:/app/conf
     ports:
         - "8010:8010"
 
