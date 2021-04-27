@@ -15,7 +15,7 @@ services:
 
   # Metrics UI
   grafana:
-    image: grafana/grafana
+    image: grafana/grafana:7.4.5
     container_name: cb-restapigw-grafana
     user: "1000"
     ports:
