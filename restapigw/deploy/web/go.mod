@@ -1,4 +1,4 @@
-module github.com/ccambo/gosamples/hmac
+module github.com/cloud-barista/cb-apigw/restapigw/deploy/web
 
 go 1.13
 
